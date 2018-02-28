@@ -1,15 +1,63 @@
 /*******************************************************************************************
- * Filename: feedforwardfunctions.cu
+ * Filename: backpropagationfunctions.cu
  * Author: Drew Hans (github.com/drewhans555)
  * Description: This file contains the host and device backpropagation functions.
  *******************************************************************************************
  */
 
 /*
+ * backpropagateErrorsKernel
+ * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * @params:
+ */
+__global__ void backpropagateErrorsKernel() {
+    int id = threadIdx.x + blockIdx.x * blockDim.x;
+    if (id < numberOfNeuronsInLayer) {
+        for (int w = 0; w < weightsInLayer; w += numberOfNeuronsInCurrentLayer) {
+            int errortemp += (devWeights[firstWeightInPrevLayer + w] * devNeuronErrors[firstNeuronInPrevLayer + w]);
+            devNeuronErrors[firstNeuronInCurrentLayer + id] = errortemp * sigmoidDerivative(devNeurons[firstNeuronInCurrentLayer + id]);
+        }
+    }
+}//end backpropagate errors kernel
+
+/*
+ * weightUpdateKernel
+ * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * @params:
+ */
+__global__ void weightUpdateKernel() {
+    int neuronId = blockIdx.x;
+    int weightId = threadIdx.x;
+    if (neuronId < numberOfNeuronsInLeftLayer && weightId < numberOfWeightsBetweenLayers) {
+        devWeights[firstWeightInBetweenLayers + numNeuronsInRightLayer*neuronId + weightId] += (learningRate * devNeuronErrors[firstNeuronInLeftLayer + neuronId] * devNeurons[firstNeuronInLeftLayer + neuronId]);
+    }
+}//end weight update kernel
+
+/*
  * backpropagateWithDevice method
  */
 void backpropagateWithDevice() {
+#ifdef DEBUG
+    printf("Entering backpropagateWithDevice method.\n");
+#endif
 
+    int numBlocks = 5;
+    int threadsPerBlock = 32;
+
+    // for each node in the output layer, calculate the output error
+    //costFunctionKernel<<<numBlocks, threadsPerBlock>>>(devExpectedOutput, devNeurons, devNeuronErrors, neuronIndexStart, numberOfNeuronsInLayer);
+
+    // for each layer l between output and input, visit in reverse order, backpropagate error values and update weights
+    int outputLayerIndex = numberOfLayers-1;
+    for (int l = outputLayerIndex - 1; l > 0; l--) {
+        //backpropagateErrorsKernel<<<numBlocks, threadsPerBlock>>>();
+        //weightUpdateKernel<<<numNeuronsInLayer, numNeuronsInPrevLayer>>>();
+    }
+
+#ifdef DEBUG
+    printf("Leaving backpropagateWithDevice method.\n");
+    printf("\n");
+#endif
 }//end backpropagateWithDevice method
 
 

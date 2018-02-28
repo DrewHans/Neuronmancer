@@ -48,8 +48,8 @@ int main(int argc, char * argv[]) {
     double* weights; // store the weight values of our neural network in a 1d array of size weightSize (1d arrays are easy to work with in CUDA)
     double* outputExpected; // store the outputExpected output values for backpropagation
     double* neuronErrors; // store the error "cost" of each neuron during backpropagation
-    char activationFunction; // store the user's choice of activation function
-    int epochs = 10000; // store the number of epochs for training
+    char runOn; // store the user's choice of host or device
+    int epochs = 5; // store the number of epochs for training
     double learningRate = 0.5; // store the rate that our network will learn
     
     // declare our device variables
@@ -58,6 +58,9 @@ int main(int argc, char * argv[]) {
     double* deviceNeurons;
     double* deviceWeights;
     double* deviceWeightCosts;
+
+    // declare our cudaStatus variable
+    // cudaError_t cudaStatus;
 
     printf("For the following please enter a positive number with no spaces, commas, or decimal points and in less than 31 characters.\n");
 
@@ -86,9 +89,9 @@ int main(int argc, char * argv[]) {
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     sscanf(inputBuffer, "%d", &numberOfNeuronsPerLayer[numberOfLayers - 1]); // format and dump the user's input
 
-    printf("What type of activation do you want the neurons to have?\nEnter s for sigmoid, t for tanh, or r for relu:\n~");
+    printf("Do you want to run on the host CPU or device GPU?\nEnter h for host or d for device:\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-    sscanf(inputBuffer, "%c", &activationFunction); // format and dump the user's input
+    sscanf(inputBuffer, "%c", &runOn); // format and dump the user's input
 
     // Calculate the number of neuron/weight values we need space for and also the first Neuron/Weight index for each layer
     firstNeuronIndexPerLayer[0] = 0;  // input layer's first neuron starts at 0
@@ -118,44 +121,48 @@ int main(int argc, char * argv[]) {
 
     printf("initNeurons & initWeights successful!\n\n");
 
-    printf("Allocating GPU device memory and copying host values over...\n");
+    if (runOn == 'd') {
+        printf("Allocating GPU device memory and copying host values over...\n");
 
-    // allocate device memory for device variables and copy host values to device copies
-    cudaMalloc((void **) &deviceNumberOfNeuronsPerLayer, numberOfLayers * sizeof (int)); //cudaMalloc allocates a chunk of device memory
-    cudaMalloc((void **) &deviceNumberOfWeightsPerLayer, numberOfLayers * sizeof (int)); //cudaMalloc allocates a chunk of device memory
-    cudaMalloc((void **) &deviceNeurons, (numberOfNeuronsTotal * sizeof (double))); //cudaMalloc allocates a chunk of device memory
-    cudaMalloc((void **) &deviceWeights, (numberOfWeightsTotal * sizeof (double))); //cudaMalloc allocates a chunk of device memory
-    cudaMalloc((void **) &deviceWeightCosts, (numberOfWeightsTotal * sizeof (double))); //cudaMalloc allocates a chunk of device memory
-    cudaMemcpy(deviceNumberOfNeuronsPerLayer, numberOfNeuronsPerLayer, (numberOfLayers * sizeof (int)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
-    cudaMemcpy(deviceNumberOfWeightsPerLayer, numberOfWeightsPerLayer, (numberOfLayers * sizeof (int)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
-    cudaMemcpy(deviceNeurons, neurons, (numberOfNeuronsTotal * sizeof (double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
-    cudaMemcpy(deviceWeights, weights, (numberOfWeightsTotal * sizeof (double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
+        // allocate device memory for device variables and copy host values to device copies
+        cudaMalloc((void **) &deviceNumberOfNeuronsPerLayer, numberOfLayers * sizeof (int)); //cudaMalloc allocates a chunk of device memory
+        cudaMalloc((void **) &deviceNumberOfWeightsPerLayer, numberOfLayers * sizeof (int)); //cudaMalloc allocates a chunk of device memory
+        cudaMalloc((void **) &deviceNeurons, (numberOfNeuronsTotal * sizeof (double))); //cudaMalloc allocates a chunk of device memory
+        cudaMalloc((void **) &deviceWeights, (numberOfWeightsTotal * sizeof (double))); //cudaMalloc allocates a chunk of device memory
+        cudaMalloc((void **) &deviceWeightCosts, (numberOfWeightsTotal * sizeof (double))); //cudaMalloc allocates a chunk of device memory
+        cudaMemcpy(deviceNumberOfNeuronsPerLayer, numberOfNeuronsPerLayer, (numberOfLayers * sizeof (int)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
+        cudaMemcpy(deviceNumberOfWeightsPerLayer, numberOfWeightsPerLayer, (numberOfLayers * sizeof (int)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
+        cudaMemcpy(deviceNeurons, neurons, (numberOfNeuronsTotal * sizeof (double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
+        cudaMemcpy(deviceWeights, weights, (numberOfWeightsTotal * sizeof (double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
 
-    printf("Allocation successful!\n\n");
+        printf("Allocation successful!\n\n");
+    }
 
-    // HOST - LOADINPUT, FEEDFORWARD, & BACKPROPAGATE
-    printf("Starting load input step now...\n");
-    loadInput(neurons, numberOfNeuronsPerLayer[0]); // load some random input for feedforward testing
-    printarray("neurons", neurons, numberOfNeuronsTotal);
+    for (int i = 0; i < epochs; i++) {
+        // HOST - LOADINPUT, FEEDFORWARD, & BACKPROPAGATE
+        printf("Starting load input step now...\n");
+        loadInput(neurons, numberOfNeuronsPerLayer[0]); // load some random input for feedforward testing
+        printarray("neurons", neurons, numberOfNeuronsTotal);
     
-    printf("Starting feedforward step now...\n");
-    feedforwardWithHost(neurons, weights, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer); // feed the input forward
+        printf("Starting feedforward step now...\n");
+        feedforwardWithHost(neurons, weights, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer); // feed the input forward
 
-    printf("Network state post feedforward:\n");
-    printarray("neurons", neurons, numberOfNeuronsTotal);
-    printarray("weights", weights, numberOfWeightsTotal);
+        printf("Network state post feedforward:\n");
+        printarray("neurons", neurons, numberOfNeuronsTotal);
+        printarray("weights", weights, numberOfWeightsTotal);
 
-    printf("Generating random training labels for testing backpropagation now...\n");
-    loadInput(outputExpected, numberOfNeuronsPerLayer[numberOfLayers - 1]); // load some random input for backpropagation testing
-    printarray("outputExpected", outputExpected, numberOfNeuronsPerLayer[numberOfLayers - 1]);
+        printf("Generating random training labels for testing backpropagation now...\n");
+        loadInput(outputExpected, numberOfNeuronsPerLayer[numberOfLayers - 1]); // load some random input for backpropagation testing
+        printarray("outputExpected", outputExpected, numberOfNeuronsPerLayer[numberOfLayers - 1]);
     
 
-    printf("Starting backpropagation step now...\n");
-    backpropagateWithHost(outputExpected, neurons, weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer, learningRate); // calculate and back propagate errors
+        printf("Starting backpropagation step now...\n");
+        backpropagateWithHost(outputExpected, neurons, weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer, learningRate); // calculate and back propagate errors
 
-    printf("Network state post backpropagation:\n");
-    printarray("neurons", neurons, numberOfNeuronsTotal);
-    printarray("weights", weights, numberOfWeightsTotal);
+        printf("Network state post backpropagation:\n");
+        printarray("neurons", neurons, numberOfNeuronsTotal);
+        printarray("weights", weights, numberOfWeightsTotal);
+    }
 
     printf("Press enter to free dynamically allocated memory.\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
@@ -172,12 +179,14 @@ int main(int argc, char * argv[]) {
     free(neuronErrors);
     free(outputExpected);
 
-    // free the chunks of device memory that were dynamically allocated by cudaMalloc
-    cudaFree(deviceNumberOfNeuronsPerLayer);
-    cudaFree(deviceNumberOfWeightsPerLayer);
-    cudaFree(deviceNeurons);
-    cudaFree(deviceWeights);
-    cudaFree(deviceWeightCosts);
+    if (runOn == 'd') {
+        // free the chunks of device memory that were dynamically allocated by cudaMalloc
+        cudaFree(deviceNumberOfNeuronsPerLayer);
+        cudaFree(deviceNumberOfWeightsPerLayer);
+        cudaFree(deviceNeurons);
+        cudaFree(deviceWeights);
+        cudaFree(deviceWeightCosts);
+    }
 
     printf("Memory freed!\n");
 

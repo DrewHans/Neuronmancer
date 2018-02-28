@@ -6,12 +6,12 @@
  */
 
 /*
- * printarray method
+ * printarray method - prints out array values to terminal
  * @params: name - a pointer to a char string
  * @params: array - a pointer to an array of double values
  * @params: n - the size of array
  */
-void printarray(char* name, double* array, int n) {
+void printarray(const char* name, double* array, int n) {
     for (int i = 0; i < n; i++) {
         printf("%s[%d]=%f\n", name, i, array[i]);
     }

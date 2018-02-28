@@ -2,7 +2,7 @@
 #
 # This Makefile was modified from NVIDIA's nbody sample by Drew Hans on Feb 10,
 # 2018 to make Neuronmancer. Modifications, not including this comment block, 
-# begin after line 280 # Target Rules.
+# begin after line 282: # Target Rules
 #
 ################################################################################
 #
@@ -296,14 +296,14 @@ main.o:main.cu
 
 neuronmancer: main.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p ./bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
-	$(EXEC) cp $@ ./bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
+#	$(EXEC) mkdir -p ./bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
+#	$(EXEC) cp $@ ./bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 
 run: build
 	$(EXEC) ./neuronmancer
 
 clean:
 	rm -f neuronmancer main.o
-	rm -rf ./bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/neuronmancer
+#	rm -rf ./bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/neuronmancer
 
 clobber: clean
