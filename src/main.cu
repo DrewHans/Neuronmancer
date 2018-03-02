@@ -18,6 +18,8 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
+#include "neuronmancer.h"
+
 #include "initnetwork.cu"
 #include "loadinput.cu"
 
