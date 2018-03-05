@@ -10,12 +10,15 @@
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
  * @params:
  */
-__global__ void backpropagateErrorsKernel() {
+__global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, \
+                                          int numberOfNeuronsInLeftLayer, int numberOfWeightsBetweenLayers, \
+                                          int indexOfFirstNeuronInLeft, int indexOfFirstNeuronInRight, int indexOfFirstWeight) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
-    if (id < numberOfNeuronsInLayer) {
-        for (int w = 0; w < weightsInLayer; w += numberOfNeuronsInCurrentLayer) {
-            int errortemp += (devWeights[firstWeightInPrevLayer + w] * devNeuronErrors[firstNeuronInPrevLayer + w]);
-            devNeuronErrors[firstNeuronInCurrentLayer + id] = errortemp * sigmoidDerivative(devNeurons[firstNeuronInCurrentLayer + id]);
+    if (id < numberOfNeuronsInLeftLayer) {
+        int errortemp = 0;
+        for (int w = 0; w < numberOfWeightsBetweenLayers; w += numberOfNeuronsInLeftLayer) {
+            errortemp = errortemp + (devWeights[indexOfFirstWeight + w] * devNeuronErrors[indexOfFirstNeuronInRight + w]);
+            devNeuronErrors[indexOfFirstNeuronInLeft + id] = errortemp * sigmoidDerivative(devNeurons[indexOfFirstNeuronInLeft + id]);
         }
     }
 }//end backpropagate errors kernel
@@ -25,18 +28,22 @@ __global__ void backpropagateErrorsKernel() {
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
  * @params:
  */
-__global__ void weightUpdateKernel() {
-    int neuronId = blockIdx.x;
-    int weightId = threadIdx.x;
-    if (neuronId < numberOfNeuronsInLeftLayer && weightId < numberOfWeightsBetweenLayers) {
-        devWeights[firstWeightInBetweenLayers + numNeuronsInRightLayer*neuronId + weightId] += (learningRate * devNeuronErrors[firstNeuronInLeftLayer + neuronId] * devNeurons[firstNeuronInLeftLayer + neuronId]);
+__global__ void weightUpdateKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, \
+                                   int numberOfNeuronsInLeftLayer, int numberOfNeuronsInRightLayer, int numberOfWeightsBetweenLayers, \
+                                   int indexOfFirstNeuronInLeft, int indexOfFirstWeight, double learningRate) {
+    if (blockIdx.x < numberOfNeuronsInLeftLayer && threadIdx.x < numberOfWeightsBetweenLayers) {
+        int weightIndex = indexOfFirstWeight + numberOfNeuronsInRightLayer*blockIdx.x + threadIdx.x;
+        int neuronIndex = indexOfFirstNeuronInLeft + blockIdx.x;
+        devWeights[weightIndex] = devWeights[weightIndex] + (learningRate * devNeuronErrors[neuronIndex] * devNeurons[neuronIndex]);
     }
 }//end weight update kernel
 
 /*
  * backpropagateWithDevice method
  */
-void backpropagateWithDevice() {
+void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, double* devWeights, double* devNeuronErrors, \
+                             int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, \
+                             int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate) {
 #ifdef DEBUG
     printf("Entering backpropagateWithDevice method.\n");
 #endif
@@ -44,14 +51,21 @@ void backpropagateWithDevice() {
     int numBlocks = 5;
     int threadsPerBlock = 32;
 
-    // for each node in the output layer, calculate the output error
-    //costFunctionKernel<<<numBlocks, threadsPerBlock>>>(devExpectedOutput, devNeurons, devNeuronErrors, neuronIndexStart, numberOfNeuronsInLayer);
+    // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
+    int outputLayerIndex = numberOfLayers-1;
+    costFunctionKernel<<<numBlocks, threadsPerBlock>>>(devExpectedOutput, devNeurons, devNeuronErrors, \
+                                                       firstNeuronIndexPerLayer[outputLayerIndex], neuronsPerLayer[outputLayerIndex]);
 
     // for each layer l between output and input, visit in reverse order, backpropagate error values and update weights
-    int outputLayerIndex = numberOfLayers-1;
     for (int l = outputLayerIndex - 1; l > 0; l--) {
-        //backpropagateErrorsKernel<<<numBlocks, threadsPerBlock>>>();
-        //weightUpdateKernel<<<numNeuronsInLayer, numNeuronsInPrevLayer>>>();
+        // for each node in layer l, backpropagate the error from layer l+1 (spawn 1 thread for each neuron in layer l)
+        backpropagateErrorsKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, devWeights, devNeuronErrors, neuronsPerLayer[l], weightsPerLayer[l+1], \
+                                                                  firstNeuronIndexPerLayer[l], firstNeuronIndexPerLayer[l+1], firstWeightIndexPerLayer[l+1]);
+
+        // spawn 1 block for each neuron in layer l and, in each block, spawn 1 thread for each neuron in layer l+1
+        weightUpdateKernel<<<neuronsPerLayer[l], neuronsPerLayer[l+1]>>>(devNeurons, devWeights, devNeuronErrors, \
+                                                                         neuronsPerLayer[l], neuronsPerLayer[l+1], weightsPerLayer[l+1], \
+                                                                         firstNeuronIndexPerLayer[l], firstNeuronIndexPerLayer[l+1], learningRate);
     }
 
 #ifdef DEBUG
@@ -74,7 +88,9 @@ void backpropagateWithDevice() {
  * @params: firstWeightIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first weight)
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights 
  */
-void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate) {
+void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* neuronErrors, \
+                           int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, \
+                           int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate) {
 #ifdef DEBUG
     printf("Entering backpropagate method.\n");
 #endif
@@ -107,7 +123,9 @@ void backpropagateWithHost(double* expectedOutput, double* neurons, double* weig
         // for each neuron in layer l
         for (int n = 0; n < neuronsPerLayer[l]; n++) {
             for (int w = 0; w < neuronsPerLayer[l-1]; w++) {
-                weights[firstWeightIndexPerLayer[l] + neuronsPerLayer[l-1]*n + w] += (learningRate * neuronErrors[firstNeuronIndexPerLayer[l] + n] * neurons[firstNeuronIndexPerLayer[l] + n]);
+                int weightIndex = firstWeightIndexPerLayer[l] + neuronsPerLayer[l-1]*n + w;
+                int neuronIndex = firstNeuronIndexPerLayer[l] + n;
+                weights[weightIndex] = weights[weightIndex] + (learningRate * neuronErrors[neuronIndex] * neurons[neuronIndex]);
             }
         }
     }
