@@ -34,7 +34,8 @@ void combinationFunction(double* neurons, double* weights, int neuronIndex, int 
  * @params: numberOfNeuronsInLayer - the number of neurons in the current layer
  * @params: numberOfNeuronsInPrevLayer - the number of neurons in the previous layer
  */
-__global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, int neuronIndexStart, int prevLayerNeuronIndexStart, int weightIndexStart, int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer) {
+__global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, int neuronIndexStart, int prevLayerNeuronIndexStart, \
+                                          int weightIndexStart, int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < numberOfNeuronsInLayer) {
         for (int n = 0; n < numberOfNeuronsInPrevLayer; n++) {

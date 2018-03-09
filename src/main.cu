@@ -18,18 +18,20 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-#include "neuronmancer.h"
+#include "./neuronmancer.h"
 
-#include "initnetwork.cu"
-#include "loadinput.cu"
+#include "./initnetwork.cu"
+#include "./loadinput.cu"
 
-#include "activationfunctions.cu"
-#include "combinationfunctions.cu"
-#include "costfunctions.cu"
-#include "helperfunctions.cu"
+#include "./activationfunctions.cu"
+#include "./combinationfunctions.cu"
+#include "./costfunctions.cu"
+#include "./helperfunctions.cu"
 
-#include "feedforwardfunctions.cu"
-#include "backpropagationfunctions.cu"
+#include "./feedforwardfunctions.cu"
+#include "./backpropagationfunctions.cu"
+
+#include "./savemodel.c"
 
 
 /* main method - the program starts here */

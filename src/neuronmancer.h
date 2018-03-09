@@ -27,38 +27,82 @@
 
     __global__ void reluKernel(double* devNeurons, int neuronIndexStart, int numberOfNeuronsInLayer);
     
+
+
     // define function prototypes for backpropagationfunctions.cu
-    __global__ void backpropagateErrorsKernel();
+    __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, \
+                                              int numberOfNeuronsInLeftLayer, int numberOfWeightsBetweenLayers, \
+                                              int indexOfFirstNeuronInLeft, int indexOfFirstNeuronInRight, int indexOfFirstWeight);
 
-    __global__ void weightUpdateKernel();
+    __global__ void weightUpdateKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, \
+                                       int numberOfNeuronsInLeftLayer, int numberOfNeuronsInRightLayer, int numberOfWeightsBetweenLayers, \
+                                       int indexOfFirstNeuronInLeft, int indexOfFirstWeight, double learningRate);
 
-    void backpropagateWithDevice();
+    void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, double* devWeights, double* devNeuronErrors, \
+                                 int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, \
+                                 int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate);
 
-    void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate);
-    
+    void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* neuronErrors, \
+                               int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, \
+                               int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate);
+
+
+
     // define function prototypes for combinationfunctions.cu
     void combinationFunction(double* neurons, double* weights, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize);
 
-    __global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, int neuronIndexStart, int prevLayerNeuronIndexStart, int weightIndexStart, int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer);
+    __global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, int neuronIndexStart, int prevLayerNeuronIndexStart, \
+                                              int weightIndexStart, int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer);
     
+
+
     // define function prototypes for costfunctions.cu
     double costFunction(double* expectedValue, double* calculatedValue);
 
-    __global__ void costFunctionKernel(double* devExpectedOutput, double* devNeurons, double* devNeuronErrors, int neuronIndexStart, int numberOfNeuronsInLayer);
+    __global__ void costFunctionKernel(double* devExpectedOutput, double* devNeurons, double* devNeuronErrors, \
+                                       int neuronIndexStart, int numberOfNeuronsInLayer);
     
+
+
     // define function prototypes for feedforwardfunctions.cu
-    void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfLayers, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
+    void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfLayers, \
+                           int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, \
+                           int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
     
-    void feedforwardWithHost(double* neurons, double* weights, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
-    
+    void feedforwardWithHost(double* neurons, double* weights, int numberOfLayers, \
+                         int* neuronsPerLayer, int* weightsPerLayer, \
+                         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
+
+
     // define function prototypes for helperfunctions.cu
     void printarray(const char* name, double* array, int n);
     
+
+
     // define function prototypes for initnetwork.cu
     void initNeurons(double* neurons, int n);
     void initWeights(double* weights, int n);
 
+
+
     // define function prototypes for loadinput.cu
     void loadInput(double* neurons, int n);
+
+
+
+    // define function prototypes for savemodel.c
+    void saveKeyValuesToDisk(int numberOfLayers, int numberOfNeuronsTotal, int numberOfWeightsTotal, int epochs, double learningRate);
+
+    void saveLayerValuesToDisk(int numberOfLayers, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, \
+                               int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
+
+    void saveWeightsToDisk(double* weights, int numberOfWeightsTotal);
+
+    void saveBiasesToDisk(double* biases, int numberOfBiasesTotal);
+
+    void saveModel(int numberOfLayers, int numberOfNeuronsTotal, int numberOfWeightsTotal, int epochs, double learningRate, \
+                   int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, \
+                   int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, \
+                   double* weights );
 
 #endif

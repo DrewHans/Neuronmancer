@@ -15,7 +15,9 @@
  * @params: firstNeuronIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first neuron)
  * @params: firstWeightIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first weight)
  */
-void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfLayers, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer){
+void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfLayers, \
+                           int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, \
+                           int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
 #ifdef DEBUG
     printf("Entering feedforwardWithDevice method.\n");
 #endif
@@ -45,7 +47,9 @@ void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfL
  * @params: firstNeuronIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first neuron)
  * @params: firstWeightIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first weight)
  */
-void feedforwardWithHost(double* neurons, double* weights, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
+void feedforwardWithHost(double* neurons, double* weights, int numberOfLayers, \
+                         int* neuronsPerLayer, int* weightsPerLayer, \
+                         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
 #ifdef DEBUG
     printf("Entering feedforwardWithHost method.\n");
 #endif
