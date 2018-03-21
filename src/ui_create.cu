@@ -150,34 +150,49 @@ void ui_create() {
     weights = (double*) malloc(numberOfWeightsTotal * sizeof (double)); //malloc allocates a chunk of host memory
     if(weights == NULL) { onMallocError(numberOfWeightsTotal * sizeof (double)); }
 
-    printf("...allocation successful!\n");
+    printf("...allocation successful!\nBeginning value initialization (this might take a while)...\n");
 
     printf("...initializing biases to zero...\n");
     initArrayToZeros(biases, numberOfNeuronsTotal); // cleans up any garbage we may have picked up
     #ifdef DEBUG
         printarray("biases", biases, numberOfNeuronsTotal);
     #endif
-    printf("...initializing weights to random double values in range 0.0-1.0 (inclusive)...\n");
+    printf("...initializing weights to random double floating-point values in range 0.0-1.0 (inclusive)...\n");
     initArrayToRandomDoubles(weights, numberOfWeightsTotal);
     #ifdef DEBUG
         printarray("weights", weights, numberOfWeightsTotal);
     #endif
     printf("...initialization successful!\n");
 
-    // get user input for the learningRate and epochs
+    printf("Now you need to decide the learning rate and number of epochs (don't worry, you can change these later).\n");
+    
+    // get user input for the learningRate
     learningRate = -1.0; // assign -1.0 to enter loop
-    while(learningRate < 0) {
+    while(learningRate < 0.0) {
         // get the learning rate
-        printf("? (note, 1 is the minimum)\n~");
+        printf("Please enter a positive floating-point number greater than 0.0 for the learning rate:\n~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-        sscanf(inputBuffer, "%d", &numberOfNeuronsPerLayer[0]); // format and dump the user's input
-        if(numberOfNeuronsPerLayer[0] < 1) {
+        sscanf(inputBuffer, "%lf", &learningRate); // format and dump the user's input
+        if(learningRate < 0.0) {
             onInvalidInput(myPatience);
             myPatience--;
         }
     }
     myPatience = 2; // restore my patience
     
+    // get user input for the epochs
+    epochs = 0; // assign -1.0 to enter loop
+    while(epochs < 0) {
+        // get the learning rate
+        printf("Pleae enter a positive whole number greater than 0 for the number of epochs:\n~");
+        fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
+        sscanf(inputBuffer, "%lf", &epochs); // format and dump the user's input
+        if(epochs < 0) {
+            onInvalidInput(myPatience);
+            myPatience--;
+        }
+    }
+    myPatience = 2; // restore my patience
     
     
     // save the model to disk
@@ -186,27 +201,18 @@ void ui_create() {
                    numberOfNeuronsPerLayer, numberOfWeightsPerLayer, \
                    firstNeuronIndexPerLayer, firstWeightIndexPerLayer, \
                    weights, biases, learningRate, epochs);
-    
-    
-    
-    
-    printf("Press enter to free dynamically allocated memory:\n~");
-    fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-
-    printf("Freeing dynamically allocated memory...\n");
+    printf("Model saved!");
 
     // free the chunks of host memory that were dynamically allocated by malloc
     free(numberOfNeuronsPerLayer);
     free(numberOfWeightsPerLayer);
     free(firstNeuronIndexPerLayer);
     free(firstWeightIndexPerLayer);
+    free(activationsPerLayer);
     free(biases);
     free(weights);
-    free(activationsPerLayer);
 
-    printf("Memory freed!\n");
-
-    printf("Press enter to return:\n~");
+    printf("Press enter to return to the main menu:\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     printf("\n");
 }//end ui_create method
