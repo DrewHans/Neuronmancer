@@ -7,9 +7,26 @@
 
 #ifndef NEURONMANCER_H
     #define NEURONMANCER_H
+    
+    // define locations for readmodel.cu and savemodel.cu
+    #define VALUEDELIM ","
+    #define MODELVALUESLOCATION "./nmModel/modelvalues.csv"
+    #define WEIGHTSFILELOCATION "./nmModel/weights.csv"
+    #define BIASESFILELOCATION "./nmModel/biases.csv"
+    #define EPOCHSFILELOCATION "./nmModel/epochs.txt"
+    #define LEARNINGRATEFILELOCATION "./nmModel/learningrate.txt"
 
+
+    
     // define enum for available activation functions
     typedef enum {SIGMACT, RELUACT, TANHACT} Activation;
+    
+    
+    
+    // define struct for using the stat command
+    struct stat st = {0};
+
+    
     
     // define function prototypes for activationfunctions.cu
     __host__ __device__ double sigmoidFunction(double d);

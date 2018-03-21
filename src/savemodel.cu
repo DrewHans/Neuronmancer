@@ -5,19 +5,6 @@
  *******************************************************************************************
  */
 
-#define VALUEDELIM ","
-#define MODELVALUESLOCATION "./nmModel/modelvalues.csv"
-#define WEIGHTSFILELOCATION "./nmModel/weights.csv"
-#define BIASESFILELOCATION "./nmModel/biases.csv"
-#define EPOCHSFILELOCATION "./nmModel/epochs.txt"
-#define LEARNINGRATEFILELOCATION "./nmModel/learningrate.txt"
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-struct stat st = {0}; // needed for using stat
-
 void saveBiasesToDisk(double* biases, int numberOfBiasesTotal) {
     FILE* thefile = fopen(BIASESFILELOCATION, "w");
     if (thefile == NULL) {
