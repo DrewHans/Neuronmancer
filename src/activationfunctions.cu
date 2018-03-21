@@ -5,8 +5,6 @@
  *******************************************************************************************
  */
 
-#include <math.h>
-
 /*
  * sigmoidFunction
  * __host__ decoration tells NVCC this function should run on CPU, and be callable from the CPU host
@@ -16,7 +14,7 @@
  */
 __host__ __device__ double sigmoidFunction(double d) {
     return 1.0 / (1.0 + exp(-1.0 * d));
-}//end sigmoid activation function
+} //end sigmoid activation function
 
 /*
  * sigmoidDerivative
@@ -27,7 +25,7 @@ __host__ __device__ double sigmoidFunction(double d) {
  */
 __host__ __device__ double sigmoidDerivative(double d) {
     return sigmoidFunction(d) * (1.0 - sigmoidFunction(d));
-}//end sigmoid derivative function
+} //end sigmoid derivative function
 
 /*
  * sigmoidKernel
@@ -41,7 +39,7 @@ __global__ void sigmoidKernel(double* devNeurons, int neuronIndexStart, int numb
     if (id < numberOfNeuronsInLayer) {
         devNeurons[neuronIndexStart + id] = sigmoidFunction(devNeurons[neuronIndexStart + id]);
     }
-}//end sigmoid activation kernel
+} //end sigmoid activation kernel
 
 /*
  * tanhFunction
@@ -52,7 +50,7 @@ __global__ void sigmoidKernel(double* devNeurons, int neuronIndexStart, int numb
  */
 __host__ __device__ double tanhFunction(double d) {
     return (2.0 / (1.0 + exp(-2.0 * d))) - 1.0;
-}//end tanh activation function
+} //end tanh activation function
 
 /*
  * tanhDerivative
@@ -63,7 +61,7 @@ __host__ __device__ double tanhFunction(double d) {
  */
 __host__ __device__ double tanhDerivative(double d) {
     return 1.0 - pow(tanhFunction(d), 2.0);
-}//end tanh derivative function
+} //end tanh derivative function
 
 /*
  * tanhKernel
@@ -77,7 +75,7 @@ __global__ void tanhKernel(double* devNeurons, int neuronIndexStart, int numberO
     if (id < numberOfNeuronsInLayer) {
         devNeurons[neuronIndexStart + id] = tanhFunction(devNeurons[neuronIndexStart + id]);
     }
-}//end tanh activation kernel
+} //end tanh activation kernel
 
 /*
  * reluFunction
@@ -92,7 +90,7 @@ __host__ __device__ double reluFunction(double d) {
     } else {
         return d;
     }
-}//end relu activation function
+} //end relu activation function
 
 /*
  * reluDerivative
@@ -107,7 +105,7 @@ __host__ __device__ double reluDerivative(double d) {
     } else {
         return 1;
     }
-}//end relu derivative function
+} //end relu derivative function
 
 /*
  * reluKernel
@@ -121,5 +119,4 @@ __global__ void reluKernel(double* devNeurons, int neuronIndexStart, int numberO
     if (id < numberOfNeuronsInLayer) {
         devNeurons[neuronIndexStart + id] = reluFunction(devNeurons[neuronIndexStart + id]);
     }
-}//end relu activation kernel
-
+} //end relu activation kernel

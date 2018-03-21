@@ -8,61 +8,60 @@
 void saveBiasesToDisk(double* biases, int numberOfBiasesTotal) {
     FILE* thefile = fopen(BIASESFILELOCATION, "w");
     if (thefile == NULL) {
-        onFileOpenError(BIASESFILELOCATION);
+        onFileOpenError (BIASESFILELOCATION);
     }
 
     for (int i = 0; i < numberOfBiasesTotal; i++) {
         fprintf(thefile, "%lf", biases[i]);   // write long float (double) to file
         fprintf(thefile, "%s", VALUEDELIM);   // write delimiter to file
     }
-    
+
     fprintf(thefile, "\n"); // write newline to file
     fclose(thefile); // close the file once we're done with it
-}//end saveBiasesToDisk function
+} //end saveBiasesToDisk function
 
 void saveEpochsToDisk(int epochs) {
     FILE* thefile = fopen(EPOCHSFILELOCATION, "w");
     if (thefile == NULL) {
-        onFileOpenError(EPOCHSFILELOCATION);
+        onFileOpenError (EPOCHSFILELOCATION);
     }
 
     fprintf(thefile, "%d", epochs); // write int to file
     fprintf(thefile, "\n"); // write newline to file
     fclose(thefile); // close the file once we're done with it
-}//end saveEpochsToDisk function
+} //end saveEpochsToDisk function
 
 void saveLearningRateToDisk(double learningRate) {
     FILE* thefile = fopen(LEARNINGRATEFILELOCATION, "w");
     if (thefile == NULL) {
-        onFileOpenError(LEARNINGRATEFILELOCATION);
+        onFileOpenError (LEARNINGRATEFILELOCATION);
     }
 
     fprintf(thefile, "%lf", learningRate); // write long float (double) to file
     fprintf(thefile, "\n"); // write newline to file
     fclose(thefile); // close the file once we're done with it
-}//end saveLearningRateToDisk function
+} //end saveLearningRateToDisk function
 
 void saveWeightsToDisk(double* weights, int numberOfWeightsTotal) {
     FILE* thefile = fopen(WEIGHTSFILELOCATION, "w");
     if (thefile == NULL) {
-        onFileOpenError(WEIGHTSFILELOCATION);
+        onFileOpenError (WEIGHTSFILELOCATION);
     }
 
     for (int i = 0; i < numberOfWeightsTotal; i++) {
         fprintf(thefile, "%lf", weights[i]);  // write long float (double) to file
         fprintf(thefile, "%s", VALUEDELIM);   // write delimiter to file
     }
-    
+
     fprintf(thefile, "\n"); // write newline to file
     fclose(thefile); // close the file once we're done with it
-}//end saveWeightsToDisk function
+} //end saveWeightsToDisk function
 
-void saveModelValuesToDisk(int numberOfLayers, int numberOfNeuronsTotal, int numberOfWeightsTotal, \
-                           int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, \
-                           int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
+void saveModelValuesToDisk(int numberOfLayers, int numberOfNeuronsTotal, int numberOfWeightsTotal, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer,
+        int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
     FILE* thefile = fopen(MODELVALUESLOCATION, "w");
     if (thefile == NULL) {
-        onFileOpenError(MODELVALUESLOCATION);
+        onFileOpenError (MODELVALUESLOCATION);
     }
 
     fprintf(thefile, "%d", numberOfLayers);       // write int to file
@@ -84,21 +83,18 @@ void saveModelValuesToDisk(int numberOfLayers, int numberOfNeuronsTotal, int num
     }
 
     fclose(thefile); // close the file once we're done with it
-}//end saveModelValuesToDisk function
+} //end saveModelValuesToDisk function
 
-void saveModel(int numberOfLayers, int numberOfNeuronsTotal, int numberOfWeightsTotal, \
-               int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, \
-               int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, \
-               double* weights, double* biases, double learningRate, int epochs) {
+void saveModel(int numberOfLayers, int numberOfNeuronsTotal, int numberOfWeightsTotal, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer,
+        int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double* weights, double* biases, double learningRate, int epochs) {
     // make directory to store the model
     if (stat("./nmModel", &st) == -1) {
         mkdir("./nmModel", 0700);
     }
-    saveModelValuesToDisk(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, \
-                          numberOfNeuronsPerLayer, numberOfWeightsPerLayer, \
-                          firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
+    saveModelValuesToDisk(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, numberOfNeuronsPerLayer, numberOfWeightsPerLayer,
+            firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
     saveWeightsToDisk(weights, numberOfWeightsTotal);
     saveBiasesToDisk(biases, numberOfNeuronsTotal); // num biases total is equal to num neurons total
     saveEpochsToDisk(epochs);
     saveLearningRateToDisk(learningRate);
-}//end saveModel function
+} //end saveModel function

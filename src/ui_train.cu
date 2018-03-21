@@ -7,6 +7,5 @@
 
 /* ui_train method - user interface for training a model */
 void ui_train() {
-    
-    
-}//end ui_train method
+
+} //end ui_train method

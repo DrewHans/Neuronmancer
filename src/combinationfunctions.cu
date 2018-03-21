@@ -16,15 +16,16 @@
  * @params: numberOfNeuronsInLayer - the number of neurons in the current layer
  * @params: numberOfNeuronsInPrevLayer - the number of neurons in the previous layer
  */
-__global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, int neuronIndexStart, int prevLayerNeuronIndexStart, \
-                                          int weightIndexStart, int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer) {
+__global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, int neuronIndexStart, int prevLayerNeuronIndexStart, int weightIndexStart,
+        int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < numberOfNeuronsInLayer) {
         for (int n = 0; n < numberOfNeuronsInPrevLayer; n++) {
-            devNeurons[neuronIndexStart + id] = devNeurons[neuronIndexStart + id] + (devNeurons[prevLayerNeuronIndexStart + n] * devWeights[weightIndexStart + n]);
+            devNeurons[neuronIndexStart + id] = devNeurons[neuronIndexStart + id]
+                    + (devNeurons[prevLayerNeuronIndexStart + n] * devWeights[weightIndexStart + n]);
         }
     }
-}//end combination function kernel
+} //end combination function kernel
 
 /*
  * combinationFunction method - combines input from previous layer into the neuron at index neuronIndex
@@ -37,8 +38,8 @@ __global__ void combinationFunctionKernel(double* devNeurons, double* devWeights
  */
 void combinationFunction(double* neurons, double* weights, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize) {
     neurons[neuronIndex] = 0.0; // clear out any garbage left over from previous feedforward
-    // go neuron to neuron in the previous layer 
+    // go neuron to neuron in the previous layer
     for (int i = 0; i < prevLayerSize; i++) {
         neurons[neuronIndex] = neurons[neuronIndex] + (neurons[prevLayerIndexStart + i] * weights[weightIndexStart + i]);
     }
-}//end combinationFunction method
+}    //end combinationFunction method

@@ -20,7 +20,7 @@ __global__ void costFunctionKernel(double* devExpectedOutput, double* devNeurons
         int difference = devExpectedOutput[id] - devNeurons[neuronIndexStart + id];
         devNeuronErrors[neuronIndexStart + id] = difference * sigmoidDerivative(devNeurons[neuronIndexStart + id]);
     }
-}//end cost function kernel
+} //end cost function kernel
 
 /*
  * costFunction method - compares a calculated output value to the outputExpected value and returns the error amount
@@ -30,4 +30,4 @@ __global__ void costFunctionKernel(double* devExpectedOutput, double* devNeurons
  */
 double costFunction(double* expectedValue, double* calculatedValue) {
     return expectedValue - calculatedValue;
-}//end costFunction method
+} //end costFunction method
