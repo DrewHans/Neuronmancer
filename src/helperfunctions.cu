@@ -55,10 +55,20 @@ void printFarewellMSG() {
  * @params: path - file that failed to open
  */
 void onFileOpenError(const char* path) {
-    printf("ERROR: Failed to open file %s!\n", path);
+    printf("ERROR: Failed to open %s!\n", path);
     printFarewellMSG();
     exit(1);
 }//end onFileOpenError method
+
+/*
+ * onFileReadError method - SOS, we're going down
+ * @params: path - file that failed to open
+ */
+void onFileReadError(const char* path) {
+    printf("ERROR: Failed to read value from file %s!\n", path);
+    printFarewellMSG();
+    exit(1);
+}//end onFileReadError method
 
 /*
  * onInvalidInput method - prints out insults when the user screws up (silly humans)

@@ -18,8 +18,6 @@
 
 struct stat st = {0}; // needed for using stat
 
-
-
 void saveBiasesToDisk(double* biases, int numberOfBiasesTotal) {
     FILE* thefile = fopen(BIASESFILELOCATION, "w");
     if (thefile == NULL) {
@@ -30,7 +28,8 @@ void saveBiasesToDisk(double* biases, int numberOfBiasesTotal) {
         fprintf(thefile, "%lf", biases[i]);   // write long float (double) to file
         fprintf(thefile, "%s", VALUEDELIM);   // write delimiter to file
     }
-
+    
+    fprintf(thefile, "\n"); // write newline to file
     fclose(thefile); // close the file once we're done with it
 }//end saveBiasesToDisk function
 
@@ -41,6 +40,7 @@ void saveEpochsToDisk(int epochs) {
     }
 
     fprintf(thefile, "%d", epochs); // write int to file
+    fprintf(thefile, "\n"); // write newline to file
     fclose(thefile); // close the file once we're done with it
 }//end saveEpochsToDisk function
 
@@ -51,6 +51,7 @@ void saveLearningRateToDisk(double learningRate) {
     }
 
     fprintf(thefile, "%lf", learningRate); // write long float (double) to file
+    fprintf(thefile, "\n"); // write newline to file
     fclose(thefile); // close the file once we're done with it
 }//end saveLearningRateToDisk function
 
@@ -64,7 +65,8 @@ void saveWeightsToDisk(double* weights, int numberOfWeightsTotal) {
         fprintf(thefile, "%lf", weights[i]);  // write long float (double) to file
         fprintf(thefile, "%s", VALUEDELIM);   // write delimiter to file
     }
-
+    
+    fprintf(thefile, "\n"); // write newline to file
     fclose(thefile); // close the file once we're done with it
 }//end saveWeightsToDisk function
 
@@ -109,7 +111,7 @@ void saveModel(int numberOfLayers, int numberOfNeuronsTotal, int numberOfWeights
                           numberOfNeuronsPerLayer, numberOfWeightsPerLayer, \
                           firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
     saveWeightsToDisk(weights, numberOfWeightsTotal);
-    saveBiasesToDisk(biases, numberOfBiasesTotal);
+    saveBiasesToDisk(biases, numberOfNeuronsTotal); // num biases total is equal to num neurons total
     saveEpochsToDisk(epochs);
     saveLearningRateToDisk(learningRate);
 }//end saveModel function
