@@ -44,9 +44,9 @@ __global__ void weightUpdateKernel(double* devNeurons, double* devWeights, doubl
 void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, double* devWeights, double* devNeuronErrors, \
                              int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, \
                              int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate) {
-#ifdef DEBUG
-    printf("Entering backpropagateWithDevice method.\n");
-#endif
+    #ifdef DEBUG
+        printf("Entering backpropagateWithDevice method.\n");
+    #endif
 
     int numBlocks = 5;
     int threadsPerBlock = 32;
@@ -68,10 +68,9 @@ void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, doub
                                                                          firstNeuronIndexPerLayer[l], firstNeuronIndexPerLayer[l+1], learningRate);
     }
 
-#ifdef DEBUG
-    printf("Leaving backpropagateWithDevice method.\n");
-    printf("\n");
-#endif
+    #ifdef DEBUG
+        printf("Leaving backpropagateWithDevice method.\n\n");
+    #endif
 }//end backpropagateWithDevice method
 
 
@@ -91,9 +90,9 @@ void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, doub
 void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* neuronErrors, \
                            int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, \
                            int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate) {
-#ifdef DEBUG
-    printf("Entering backpropagate method.\n");
-#endif
+    #ifdef DEBUG
+        printf("Entering backpropagate method.\n");
+    #endif
 
     // for each node in the output layer, calculate the output error
     int outputLayerIndex = numberOfLayers-1;
@@ -130,9 +129,7 @@ void backpropagateWithHost(double* expectedOutput, double* neurons, double* weig
         }
     }
 
-#ifdef DEBUG
-    printf("Leaving backpropagate method.\n");
-    printf("\n");
-#endif
+    #ifdef DEBUG
+        printf("Leaving backpropagate method.\n\n");
+    #endif
 }//end backpropagateWithHost method
-

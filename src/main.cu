@@ -20,19 +20,18 @@
 
 #include "./neuronmancer.h"
 
-#include "./initnetwork.cu"
+#include "./helperfunctions.cu"
+#include "./readmodel.cu"
+#include "./savemodel.cu"
+
 #include "./loadinput.cu"
 
 #include "./activationfunctions.cu"
 #include "./combinationfunctions.cu"
 #include "./costfunctions.cu"
-#include "./helperfunctions.cu"
 
 #include "./feedforwardfunctions.cu"
 #include "./backpropagationfunctions.cu"
-
-#include "./savemodel.c"
-
 
 /* main method - the program starts here */
 int main(int argc, char * argv[]) {
@@ -85,7 +84,7 @@ int main(int argc, char * argv[]) {
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     sscanf(inputBuffer, "%d", &numberOfNeuronsPerLayer[0]); // format and dump the user's input
     for (int i = 1; i < numberOfLayers - 1; i++) {
-        printf("How many neurons do you want hidden layer %i to have?\n~", i);
+        printf("How many neurons do you want hidden layer %d to have?\n~", i);
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
         sscanf(inputBuffer, "%d", &numberOfNeuronsPerLayer[i]); // format and dump the user's input
     }

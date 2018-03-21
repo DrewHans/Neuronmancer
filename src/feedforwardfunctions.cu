@@ -18,9 +18,9 @@
 void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfLayers, \
                            int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, \
                            int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
-#ifdef DEBUG
-    printf("Entering feedforwardWithDevice method.\n");
-#endif
+    #ifdef DEBUG
+        printf("Entering feedforwardWithDevice method.\n");
+    #endif
     int numBlocks = 5;
     int threadsPerBlock = 32;
 
@@ -31,10 +31,9 @@ void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfL
         sigmoidKernel<<<numBlocks, threadsPerBlock>>> (devNeurons, firstNeuronIndexPerLayer[l], numberOfNeuronsPerLayer[l]);
     }
 
-#ifdef DEBUG
-    printf("Leaving feedforwardWithDevice method.\n");
-    printf("\n");
-#endif
+    #ifdef DEBUG
+        printf("Leaving feedforwardWithDevice method.\n\n");
+    #endif
 }//end feedforwardWithDevice method
 
 /*
@@ -50,9 +49,9 @@ void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfL
 void feedforwardWithHost(double* neurons, double* weights, int numberOfLayers, \
                          int* neuronsPerLayer, int* weightsPerLayer, \
                          int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
-#ifdef DEBUG
-    printf("Entering feedforwardWithHost method.\n");
-#endif
+    #ifdef DEBUG
+        printf("Entering feedforwardWithHost method.\n");
+    #endif
 
     // go layer to layer
     for (int i = 1; i < numberOfLayers; i++) {
@@ -64,9 +63,7 @@ void feedforwardWithHost(double* neurons, double* weights, int numberOfLayers, \
         }
     }
 
-#ifdef DEBUG
-    printf("Leaving feedforwardWithHost method.\n");
-    printf("\n");
-#endif
+    #ifdef DEBUG
+        printf("Leaving feedforwardWithHost method.\n\n");
+    #endif
 }//end feedforwardWithHost method
-
