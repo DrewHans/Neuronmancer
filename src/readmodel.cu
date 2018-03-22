@@ -85,7 +85,7 @@ void readLearningRateFromDisk(double* learningRate) {
 /*
  * readWeightsFromDisk
  * @params: weights - pointer to an array of double values (used to store value before return)
- * @params: numberOfWeightsTotal - pointer to an int value (used to store value before return)
+ * @params: numberOfWeightsTotal - pointer to an int value
  */
 void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
     FILE* thefile = fopen(WEIGHTSFILELOCATION, "w");
@@ -204,8 +204,8 @@ void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int
 void readModel(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeightsTotal, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer,
         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double* weights, double* biases, double* learningRate, int* epochs) {
     // verify directory containing model exists
-    if (stat("./nmModel", &st) == -1) {
-        onFileOpenError("./nmModel");
+    if (stat(MODELDIRECTORY, &st) == -1) {
+        onFileOpenError(MODELDIRECTORY);
     }
     readModelValuesFromDisk(&numberOfLayers, &numberOfNeuronsTotal, &numberOfWeightsTotal, &numberOfBiasesTotal, numberOfNeuronsPerLayer,
             numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer);

@@ -1,8 +1,8 @@
 /*******************************************************************************************
  * Filename: helperfunctions.cu
  * Author: Drew Hans (github.com/drewhans555)
- * Description: This file contains helper functions - simple array operations, dealing
- with critical errors, printing insults, etc.
+ * Description: This file contains helper functions - simple array operations, dealing with
+ *              critical errors, printing insults, etc.
  *******************************************************************************************
  */
 
@@ -33,18 +33,18 @@ void initArrayToZeros(double* a, int n) {
 /*
  * printarray - prints out array values to terminal
  * @params: name - a pointer to a char string
- * @params: array - a pointer to an array of double values
- * @params: n - the size of array
+ * @params: a - a pointer to an array of double values
+ * @params: n - the size of array a
  */
-void printarray(const char* name, double* array, int n) {
+void printarray(const char* name, double* a, int n) {
     for (int i = 0; i < n; i++) {
-        printf("%s[%d]=%f\n", name, i, array[i]);
+        printf("%s[%d]=%lf\n", name, i, a[i]);
     }
     printf("\n");
 } //end printarray method
 
 /*
- * printFarewellMSG - prints out one final insult
+ * printFarewellMSG - prints out one final insult before we crash
  */
 void printFarewellMSG() {
     printf("Sorry, I did everything I could but it looks like I'm crashing...\n...\n...your computer sucks, good-bye.\n");
@@ -62,7 +62,7 @@ void onFileOpenError(const char* path) {
 
 /*
  * onFileReadError - SOS, we're going down
- * @params: path - file that failed to open
+ * @params: path - file that failed to read
  */
 void onFileReadError(const char* path) {
     printf("ERROR: Failed to read value from file %s!\n", path);

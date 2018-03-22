@@ -10,6 +10,7 @@
 
 // define locations for readmodel.cu and savemodel.cu
 #define VALUEDELIM ","
+#define MODELDIRECTORY "./nmModel"
 #define MODELVALUESLOCATION "./nmModel/modelvalues.csv"
 #define WEIGHTSFILELOCATION "./nmModel/weights.csv"
 #define BIASESFILELOCATION "./nmModel/biases.csv"

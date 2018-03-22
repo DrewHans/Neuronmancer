@@ -2,10 +2,10 @@
  * Filename: main.cu
  * Author: Drew Hans (github.com/drewhans555)
  * Description: This program creates a simple feed-forward artificial neural network
- * and trains it on the CPU or GPU. The user will input (1) the number
- * of layers (not including the input layer, which is required), (2) the
- * number of neurons in each layer (including the input layer), and (3)
- * whether to run on the CPU or GPU
+ *              and trains it on the CPU or GPU. The user will input (1) the number
+ *              of layers (not including the input layer, which is required), (2) the
+ *              number of neurons in each layer (including the input layer), and (3)
+ *              whether to run on the CPU or GPU
  *******************************************************************************************
  */
 
