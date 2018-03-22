@@ -122,9 +122,9 @@ int main(int argc, char * argv[]) {
 
     // initialize every neuron and weight value to zero (clean up any garbage we may have picked up)
     printf("Starting init step now...\n");
-    initNeurons(neurons, numberOfNeuronsTotal);
+    initArrayToZeros(neurons, numberOfNeuronsTotal);
     printf("\n");
-    initWeights(weights, numberOfWeightsTotal);
+    initArrayToRandomDoubles(weights, numberOfWeightsTotal);
 
     printf("initNeurons & initWeights successful!\n\n");
 

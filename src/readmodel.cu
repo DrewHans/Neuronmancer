@@ -18,7 +18,7 @@ void readBiasesFromDisk(double* biases, int numberOfBiasesTotal) {
 
     // setup variables needed for getdelim function
     char* buffer = NULL; // stores stuff we pull from thefile
-    size_t linelength = 0; // store the number of chars shoved into buffer (not really needed, but nice to have)
+    size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
     ssize_t readStatus; // used to detect read error
 
     for (int i = 0; i < numberOfBiasesTotal; i++) {
@@ -27,7 +27,7 @@ void readBiasesFromDisk(double* biases, int numberOfBiasesTotal) {
         if (readStatus == -1) {
             onFileOpenError (BIASESFILELOCATION);
         }
-        sscanf(buffer, "%lf", biases[i]); // convert buffer string to double and shove in biases[i]
+        sscanf(buffer, "%lf", &(biases[i])); // convert buffer string to double and shove in biases[i]
     }
 
     fclose(thefile); // close the file once we're done with it
@@ -44,15 +44,15 @@ void readEpochsFromDisk(int* epochs) {
     }
     // setup variables needed for getdelim function
     char* buffer = NULL; // stores stuff we pull from thefile
-    size_t linelength = 0; // store the number of chars shoved into buffer (not really needed, but nice to have)
+    size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
     ssize_t readStatus; // used to detect read error
 
     // get learningRate from file
-    readStatus = getdelim(&buffer, &lineLength, "\n", thefile);
+    readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
     if (readStatus == -1) {
         onFileOpenError (EPOCHSFILELOCATION);
     }
-    sscanf(buffer, "%d", &epochs); // convert buffer string to double and shove in epochs
+    sscanf(buffer, "%d", epochs); // convert buffer string to double and shove in epochs
 
     fclose(thefile); // close the file once we're done with it
 } //end readEpochsFromDisk function
@@ -69,15 +69,15 @@ void readLearningRateFromDisk(double* learningRate) {
 
     // setup variables needed for getdelim function
     char* buffer = NULL; // stores stuff we pull from thefile
-    size_t linelength = 0; // store the number of chars shoved into buffer (not really needed, but nice to have)
+    size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
     ssize_t readStatus; // used to detect read error
 
     // get learningRate from file
-    readStatus = getdelim(&buffer, &lineLength, "\n", thefile);
+    readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
     if (readStatus == -1) {
         onFileOpenError (LEARNINGRATEFILELOCATION);
     }
-    sscanf(buffer, "%lf", &learningRate); // convert buffer string to double and shove in learningRate
+    sscanf(buffer, "%lf", learningRate); // convert buffer string to double and shove in learningRate
 
     fclose(thefile); // close the file once we're done with it
 } //end readLearningRateFromDisk function
@@ -95,7 +95,7 @@ void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
 
     // setup variables needed for getdelim function
     char* buffer = NULL; // stores stuff we pull from thefile
-    size_t linelength = 0; // store the number of chars shoved into buffer (not really needed, but nice to have)
+    size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
     ssize_t readStatus; // used to detect read error
 
     for (int i = 0; i < numberOfWeightsTotal; i++) {
@@ -104,7 +104,7 @@ void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
         if (readStatus == -1) {
             onFileOpenError (WEIGHTSFILELOCATION);
         }
-        sscanf(buffer, "%lf", weights[i]); // convert buffer string to double and shove in weights[i]
+        sscanf(buffer, "%lf", &(weights[i])); // convert buffer string to double and shove in weights[i]
     }
 
     fclose(thefile); // close the file once we're done with it
@@ -129,7 +129,7 @@ void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int
 
     // setup variables needed for getdelim function
     char* buffer = NULL; // stores stuff we pull from thefile
-    size_t linelength = 0; // store the number of chars shoved into buffer (not really needed, but nice to have)
+    size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
     ssize_t readStatus; // used to detect read error
 
     // get numberOfLayers from file
@@ -137,21 +137,21 @@ void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int
     if (readStatus == -1) {
         onFileOpenError (MODELVALUESLOCATION);
     }
-    sscanf(buffer, "%d", &numberOfLayers); // convert buffer string to int and shove in numberOfLayers
+    sscanf(buffer, "%d", numberOfLayers); // convert buffer string to int and shove in numberOfLayers
 
     // get numberOfNeuronsTotal from file
     readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
     if (readStatus == -1) {
         onFileOpenError (MODELVALUESLOCATION);
     }
-    sscanf(buffer, "%d", &numberOfNeuronsTotal); // convert buffer string to int and shove in numberOfNeuronsTotal
+    sscanf(buffer, "%d", numberOfNeuronsTotal); // convert buffer string to int and shove in numberOfNeuronsTotal
 
     // get numberOfWeightsTotal from file
-    readStatus = getdelim(&buffer, &lineLength, "\n", thefile);
+    readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
     if (readStatus == -1) {
         onFileOpenError (MODELVALUESLOCATION);
     }
-    sscanf(buffer, "%d", &numberOfWeightsTotal); // convert buffer string to int and shove in numberOfNeuronsTotal
+    sscanf(buffer, "%d", numberOfWeightsTotal); // convert buffer string to int and shove in numberOfNeuronsTotal
 
     // get information about each layer
     for (int i = 0; i < (*numberOfLayers); i++) {
@@ -160,28 +160,28 @@ void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int
         if (readStatus == -1) {
             onFileReadError (MODELVALUESLOCATION);
         }
-        sscanf(buffer, "%d", (numberOfNeuronsPerLayer[i]));
+        sscanf(buffer, "%d", &(numberOfNeuronsPerLayer[i]));
 
         // get numberOfWeightsPerLayer[i] from file
         readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
         if (readStatus == -1) {
             onFileReadError (MODELVALUESLOCATION);
         }
-        sscanf(buffer, "%d", (numberOfWeightsPerLayer[i]));
+        sscanf(buffer, "%d", &(numberOfWeightsPerLayer[i]));
 
         // get firstNeuronIndexPerLayer[i] from file
         readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
         if (readStatus == -1) {
             onFileReadError (MODELVALUESLOCATION);
         }
-        sscanf(buffer, "%d", (firstNeuronIndexPerLayer[i]));
+        sscanf(buffer, "%d", &(firstNeuronIndexPerLayer[i]));
 
         // get firstWeightIndexPerLayer[i] from file
-        readStatus = getdelim(&buffer, &lineLength, "\n", thefile);
+        readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
         if (readStatus == -1) {
             onFileReadError (MODELVALUESLOCATION);
         }
-        sscanf(buffer, "%d", (firstWeightIndexPerLayer[i]));
+        sscanf(buffer, "%d", &(firstWeightIndexPerLayer[i]));
     }
 
     fclose(thefile); // close the file once we're done with it
@@ -207,10 +207,10 @@ void readModel(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeig
     if (stat(MODELDIRECTORY, &st) == -1) {
         onFileOpenError(MODELDIRECTORY);
     }
-    readModelValuesFromDisk(&numberOfLayers, &numberOfNeuronsTotal, &numberOfWeightsTotal, &numberOfBiasesTotal, numberOfNeuronsPerLayer,
+    readModelValuesFromDisk(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, numberOfNeuronsPerLayer,
             numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
     readWeightsFromDisk(weights, *numberOfWeightsTotal);
     readBiasesFromDisk(biases, *numberOfNeuronsTotal); // num biases total is equal to num neurons total
-    readEpochsFromDisk(&epochs);
-    readLearningRateFromDisk(&learningRate);
+    readEpochsFromDisk(epochs);
+    readLearningRateFromDisk(learningRate);
 } //end readModel function

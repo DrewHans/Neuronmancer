@@ -8,8 +8,9 @@
 #ifndef NEURONMANCER_H
 #define NEURONMANCER_H
 
-// define locations for readmodel.cu and savemodel.cu
-#define VALUEDELIM ","
+// define delimiters and locations for readmodel.cu and savemodel.cu
+#define VALUEDELIM ','
+#define VALUEDELIMCHARSTAR ","
 #define MODELDIRECTORY "./nmModel"
 #define MODELVALUESLOCATION "./nmModel/modelvalues.csv"
 #define WEIGHTSFILELOCATION "./nmModel/weights.csv"

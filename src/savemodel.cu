@@ -18,7 +18,7 @@ void saveBiasesToDisk(double* biases, int numberOfBiasesTotal) {
 
     for (int i = 0; i < numberOfBiasesTotal; i++) {
         fprintf(thefile, "%lf", biases[i]);   // write long float (double) to file
-        fprintf(thefile, "%s", VALUEDELIM);   // write delimiter to file
+        fprintf(thefile, "%s", VALUEDELIMCHARSTAR);   // write delimiter to file
     }
 
     fprintf(thefile, "\n"); // write newline to file
@@ -68,7 +68,7 @@ void saveWeightsToDisk(double* weights, int numberOfWeightsTotal) {
 
     for (int i = 0; i < numberOfWeightsTotal; i++) {
         fprintf(thefile, "%lf", weights[i]);  // write long float (double) to file
-        fprintf(thefile, "%s", VALUEDELIM);   // write delimiter to file
+        fprintf(thefile, "%s", VALUEDELIMCHARSTAR);   // write delimiter to file
     }
 
     fprintf(thefile, "\n"); // write newline to file
@@ -93,19 +93,19 @@ void saveModelValuesToDisk(int numberOfLayers, int numberOfNeuronsTotal, int num
     }
 
     fprintf(thefile, "%d", numberOfLayers);       // write int to file
-    fprintf(thefile, "%s", VALUEDELIM);           // write delimiter to file
+    fprintf(thefile, "%s", VALUEDELIMCHARSTAR);           // write delimiter to file
     fprintf(thefile, "%d", numberOfNeuronsTotal); // write int to file
-    fprintf(thefile, "%s", VALUEDELIM);           // write delimiter to file
+    fprintf(thefile, "%s", VALUEDELIMCHARSTAR);           // write delimiter to file
     fprintf(thefile, "%d", numberOfWeightsTotal); // write int to file
     fprintf(thefile, "\n");                       // write newline to file
 
     for (int i = 0; i < numberOfLayers; i++) {
         fprintf(thefile, "%d", numberOfNeuronsPerLayer[i]);  // write int to file
-        fprintf(thefile, "%s", VALUEDELIM);                  // write delimiter to file
+        fprintf(thefile, "%s", VALUEDELIMCHARSTAR);                  // write delimiter to file
         fprintf(thefile, "%d", numberOfWeightsPerLayer[i]);  // write int to file
-        fprintf(thefile, "%s", VALUEDELIM);                  // write delimiter to file
+        fprintf(thefile, "%s", VALUEDELIMCHARSTAR);                  // write delimiter to file
         fprintf(thefile, "%d", firstNeuronIndexPerLayer[i]); // write int to file
-        fprintf(thefile, "%s", VALUEDELIM);                  // write delimiter to file
+        fprintf(thefile, "%s", VALUEDELIMCHARSTAR);                  // write delimiter to file
         fprintf(thefile, "%d", firstWeightIndexPerLayer[i]); // write int to file
         fprintf(thefile, "\n");                              // write newline to file (indicates new layer)
     }
