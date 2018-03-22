@@ -6,7 +6,7 @@
  */
 
 /*
- * loadInput method
+ * loadInput
  * @params: neurons - a pointer to an array of double values (the input layer)
  * @params: n - the size of the input layer
  */
@@ -15,4 +15,4 @@ void loadInput(double* neurons, int n) {
     for (int i = 0; i < n; i++) {
         neurons[i] = ((double) rand()) / ((double) rand());
     }
-}//end loadInput method
+} //end loadInput method
