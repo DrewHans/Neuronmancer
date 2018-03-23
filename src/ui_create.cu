@@ -179,7 +179,7 @@ void ui_create() {
 #endif
     printf("...initialization successful!\n");
 
-    printf("Now you need to decide the learning rate and number of epochs (don't worry, you can change these later).\n");
+    printf("Now you need to decide the learning rate and number of epochs.\n");
 
     // get user input for the learningRate
     learningRate = -1.0; // assign -1.0 to enter loop
