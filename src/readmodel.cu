@@ -16,6 +16,14 @@ void readBiasesFromDisk(double* biases, int numberOfBiasesTotal) {
         onFileOpenError (BIASESFILELOCATION);
     }
 
+    // stretch array to be numberOfWeightsTotal * sizeof(double)
+    double* tempPtr = biases; // keep track of old memory
+    biases = (double*) malloc(numberOfBiasesTotal * sizeof(double));
+    if (biases == NULL) {
+        onMallocError(numberOfBiasesTotal * sizeof(double));
+    }
+    free(tempPtr); // release old memory
+
     // setup variables needed for getdelim function
     char* buffer = NULL; // stores stuff we pull from thefile
     size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
@@ -93,6 +101,14 @@ void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
         onFileOpenError (WEIGHTSFILELOCATION);
     }
 
+    // stretch array to be numberOfWeightsTotal * sizeof(double)
+    double* tempPtr = weights; // keep track of old memory
+    weights = (double*) malloc(numberOfWeightsTotal * sizeof(double));
+    if (weights == NULL) {
+        onMallocError(numberOfWeightsTotal * sizeof(double));
+    }
+    free(tempPtr); // release old memory
+
     // setup variables needed for getdelim function
     char* buffer = NULL; // stores stuff we pull from thefile
     size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
@@ -153,6 +169,35 @@ void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int
     }
     sscanf(buffer, "%d", numberOfWeightsTotal); // convert buffer string to int and shove in numberOfNeuronsTotal
 
+    // stretch arrays to be numberOfLayers * sizeof(type)
+    int* tempPtr = numberOfNeuronsPerLayer; // keep track of old memory
+    numberOfNeuronsPerLayer = (int *) malloc((*numberOfLayers) * sizeof(int));
+    if (numberOfNeuronsPerLayer == NULL) {
+        onMallocError((*numberOfLayers) * sizeof(int));
+    }
+    free(tempPtr); // release old memory
+
+    tempPtr = numberOfWeightsPerLayer; // keep track of old memory
+    numberOfWeightsPerLayer = (int *) malloc((*numberOfLayers) * sizeof(int));
+    if (numberOfWeightsPerLayer == NULL) {
+        onMallocError((*numberOfLayers) * sizeof(int));
+    }
+    free(tempPtr); // release old memory
+
+    tempPtr = firstNeuronIndexPerLayer; // keep track of old memory
+    firstNeuronIndexPerLayer = (int *) malloc((*numberOfLayers) * sizeof(int));
+    if (firstNeuronIndexPerLayer == NULL) {
+        onMallocError((*numberOfLayers) * sizeof(int));
+    }
+    free(tempPtr); // release old memory
+
+    tempPtr = firstWeightIndexPerLayer; // keep track of old memory
+    firstWeightIndexPerLayer = (int *) malloc((*numberOfLayers) * sizeof(int));
+    if (firstWeightIndexPerLayer == NULL) {
+        onMallocError((*numberOfLayers) * sizeof(int));
+    }
+    free(tempPtr); // release old memory
+
     // get information about each layer
     for (int i = 0; i < (*numberOfLayers); i++) {
         // get numberOfNeuronsPerLayer[i] from file
@@ -205,10 +250,10 @@ void readModel(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeig
         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double* weights, double* biases, double* learningRate, int* epochs) {
     // verify directory containing model exists
     if (stat(MODELDIRECTORY, &st) == -1) {
-        onFileOpenError(MODELDIRECTORY);
+        onFileOpenError (MODELDIRECTORY);
     }
-    readModelValuesFromDisk(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, numberOfNeuronsPerLayer,
-            numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
+    readModelValuesFromDisk(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, numberOfNeuronsPerLayer, numberOfWeightsPerLayer,
+            firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
     readWeightsFromDisk(weights, *numberOfWeightsTotal);
     readBiasesFromDisk(biases, *numberOfNeuronsTotal); // num biases total is equal to num neurons total
     readEpochsFromDisk(epochs);

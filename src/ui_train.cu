@@ -24,6 +24,42 @@ void ui_train() {
 
     int myPatience = 2; // stores the amount of patience I have for the user's nonsense
 
+    // initialize pointers with malloc (will be resized in readmodel.cu later)
+    numberOfNeuronsPerLayer = (int *) malloc(sizeof(int));
+    if (numberOfNeuronsPerLayer == NULL) {
+        onMallocError(sizeof(int));
+    }
+
+    numberOfWeightsPerLayer = (int *) malloc(sizeof(int));
+    if (numberOfWeightsPerLayer == NULL) {
+        onMallocError(sizeof(int));
+    }
+
+    firstNeuronIndexPerLayer = (int *) malloc(sizeof(int));
+    if (firstNeuronIndexPerLayer == NULL) {
+        onMallocError(sizeof(int));
+    }
+
+    firstWeightIndexPerLayer = (int *) malloc(sizeof(int));
+    if (firstWeightIndexPerLayer == NULL) {
+        onMallocError(sizeof(int));
+    }
+
+    activationsPerLayer = (Activation *) malloc(sizeof(Activation));
+    if (activationsPerLayer == NULL) {
+        onMallocError(sizeof(Activation));
+    }
+
+    weights = (double *) malloc(sizeof(double));
+    if (weights == NULL) {
+        onMallocError(sizeof(double));
+    }
+
+    biases = (double *) malloc(sizeof(double));
+    if (biases == NULL) {
+        onMallocError(sizeof(double));
+    }
+
     printf("Lets train an artificial neural network!\n");
     printf("Searching ./nmModel for files...\n");
 
@@ -63,7 +99,7 @@ void ui_train() {
     inputBuffer[0] = 'z'; // assign 'z' to enter loop
     while (inputBuffer[0] != 'h' || inputBuffer[0] != 'H' || inputBuffer[0] != 'd' || inputBuffer[0] != 'D') {
         // get the activation for layer i
-        printf("Do you want to train on the host machine or GPU device?\nEnter h for host or d for device:\n~", i);
+        printf("Do you want to train on the host machine or GPU device?\nEnter h for host or d for device:\n~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
         if (inputBuffer[0] != 'h' || inputBuffer[0] != 'H' || inputBuffer[0] != 'd' || inputBuffer[0] != 'D') {
             onInvalidInput(myPatience);
@@ -73,9 +109,9 @@ void ui_train() {
     myPatience = 2; // restore my patience
 
     if (inputBuffer[0] != 'h' || inputBuffer[0] != 'H') {
-        printf("");
+        printf("Today we keep tradition, looks like we're training on the host machine!\n");
     } else if (inputBuffer[0] != 'd' || inputBuffer[0] != 'D') {
-
+        printf("Today we break with tradition, looks like we're training on the GPU device!\n");
     }
 
 } //end ui_train method

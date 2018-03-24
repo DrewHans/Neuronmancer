@@ -63,6 +63,7 @@ void feedforwardWithHost(double* neurons, double* weights, int numberOfLayers, i
         int* firstWeightIndexPerLayer);
 
 // define function prototypes for helperfunctions.cu
+void getDeviceProperties(int* multiProcessorCount, int* warpSize);
 void initArrayToRandomDoubles(double* a, int n);
 void initArrayToZeros(double* a, int n);
 void printarray(const char* name, double* array, int n);

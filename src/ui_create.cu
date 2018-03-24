@@ -116,7 +116,7 @@ void ui_create() {
                 || inputBuffer[0] != 'T') {
             // get the activation for layer i
             if (i == (numberOfLayers - 1)) {
-                printf("What activation do you want the output layer to have?\nEnter s for sigmoid, r for relu, or t for tanh:\n~", i);
+                printf("What activation do you want the output layer to have?\nEnter s for sigmoid, r for relu, or t for tanh:\n~");
             } else {
                 printf("What activation do you want hidden layer %d to have?\nEnter s for sigmoid, r for relu, or t for tanh:\n~", i);
             }
@@ -201,7 +201,7 @@ void ui_create() {
         // get the learning rate
         printf("Pleae enter a positive whole number greater than 0 for the number of epochs:\n~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-        sscanf(inputBuffer, "%lf", &epochs); // format and dump the user's input
+        sscanf(inputBuffer, "%d", &epochs); // format and dump the user's input
         if (epochs < 0) {
             onInvalidInput(myPatience);
             myPatience--;
@@ -211,7 +211,7 @@ void ui_create() {
 
     // save the model to disk
     printf("Saving model to disk...");
-    void saveModel(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
+    saveModel(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
             firstWeightIndexPerLayer, weights, biases, learningRate, epochs);
     printf("Model saved!");
 

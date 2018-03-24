@@ -37,14 +37,19 @@
 #include "./feedforwardfunctions.cu"
 #include "./backpropagationfunctions.cu"
 
+#include "./ui_create.cu"
+#include "./ui_train.cu"
+#include "./ui_evaluate.cu"
+
 /* main - the program starts here */
 int main(int argc, char * argv[]) {
     printf("Starting %s...\n", argv[0]);
     printf("Lets create a simple artificial neural network!\n");
+    ui_create();
 
     // declare our host variables
     char inputBuffer[MAXINPUT]; // store the user's input (gets recycled a lot)
-    int numberOfLayers; // store the total number of layers in the network
+/*    int numberOfLayers; // store the total number of layers in the network
     int numberOfNeuronsTotal; // store the total number of neurons in our neural network
     int numberOfWeightsTotal; // store the total number of weights in our neural network
     int* numberOfNeuronsPerLayer; // store the total number of neurons in each layer in our neural network in a 1d array of size numberOfLayers
@@ -197,7 +202,7 @@ int main(int argc, char * argv[]) {
     }
 
     printf("Memory freed!\n");
-
+*/
     printf("%s will now end. ", argv[0]);
     printf("Press enter to end.\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input

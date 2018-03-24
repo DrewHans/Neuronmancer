@@ -20,8 +20,10 @@ void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfL
 #ifdef DEBUG
     printf("Entering feedforwardWithDevice method.\n");
 #endif
-    int numBlocks = 5;
-    int threadsPerBlock = 32;
+    // use getDeviceProperties helper function to determine the numBlocks and threadsPerBlock before launching CUDA Kernels
+    int numBlocks = 5; // set 5 as default, should be equal to the number of SMs on the GPU device
+    int threadsPerBlock = 32; // set 32 as default, should be equal to the warpsize on the GPU device
+    getDeviceProperties(&numBlocks, &threadsPerBlock);
 
     // go layer to layer and for each neuron in the current layer: spawn a thread, perform combination, sync threads, spawn a thread
     for (int l = 1; l < numberOfLayers; l++) {

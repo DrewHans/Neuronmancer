@@ -7,6 +7,50 @@
  */
 
 /*
+ * getDeviceProperties
+ * @params: multiProcessorCount - a pointer an int value (stores multiProcessorCount of the device)
+ * @params: warpSize - a pointer an int value (stores the warpSize of the device)
+ */
+void getDeviceProperties(int* multiProcessorCount, int* warpSize) {
+    cudaDeviceProp devProp; //initialize cudaDeviceProp struct
+    cudaGetDeviceProperties(&devProp, 0); //getDeviceProperties of device 0 and stuff them into address of devProp
+
+    /*
+     //basic device information
+     printf("Name:                                   %s\n", devProp.name);
+     printf("Major revision number:                  %d\n", devProp.major);
+     printf("Minor revision number:                  %d\n", devProp.minor);
+
+     //grid, block, thread info
+     printf("Clock rate:                             %d kHz\n", devProp.clockRate);
+     printf("Number of multiprocessors:              %d multiprocessors\n", devProp.multiProcessorCount);
+     printf("Warp size:                              %d threads\n", devProp.warpSize);
+     printf("Maximum threads per block:              %d threads\n", devProp.maxThreadsPerBlock);
+     for (int i = 0; i < 3; ++i)
+     printf("Maximum dimension %d of block:          %d\n", i, devProp.maxThreadsDim[i]);
+     for (int i = 0; i < 3; ++i)
+     printf("Maximum dimension %d of grid:           %d\n", i, devProp.maxGridSize[i]);
+
+     //memory info
+     printf("Total registers per multiprocessor:     %d 32-bits each\n", devProp.regsPerMultiprocessor);
+     printf("Total registers per block:              %d 32-bits each\n", devProp.regsPerBlock);
+     printf("Total shared memory per block:          %lu bytes\n", devProp.sharedMemPerBlock);
+     printf("Total global memory:                    %lu bytes\n", devProp.totalGlobalMem);
+
+     printf("Maximum memory pitch:                   %lu\n", devProp.memPitch);
+     printf("Total constant memory:                  %lu bytes\n", devProp.totalConstMem);
+
+     //other info
+     printf("Texture alignment:                      %lu\n", devProp.textureAlignment);
+     printf("Concurrent copy and execution:          %s\n", (devProp.deviceOverlap ? "Yes" : "No"));
+     printf("Kernel execution timeout:               %s\n", (devProp.kernelExecTimeoutEnabled ? "Yes" : "No"));
+     */
+
+    *multiProcessorCount = devProp.multiProcessorCount;
+    *warpSize = devProp.warpSize;
+} //end getDeviceProperties
+
+/*
  * initArrayToRandomDoubles
  * @params: a - a pointer to an array of double values
  * @params: n - the size of array a

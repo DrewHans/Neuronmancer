@@ -71,8 +71,10 @@ void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, doub
     printf("Entering backpropagateWithDevice method.\n");
 #endif
 
-    int numBlocks = 5;
-    int threadsPerBlock = 32;
+    // use getDeviceProperties helper function to determine the numBlocks and threadsPerBlock before launching CUDA Kernels
+    int numBlocks = 5; // set 5 as default, should be equal to the number of SMs on the GPU device
+    int threadsPerBlock = 32; // set 32 as default, should be equal to the warpsize on the GPU device
+    getDeviceProperties(&numBlocks, &threadsPerBlock);
 
     // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
     int outputLayerIndex = numberOfLayers - 1;
