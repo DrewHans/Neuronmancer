@@ -40,27 +40,25 @@ __global__ void tanhKernel(double* devNeurons, int neuronIndexStart, int numberO
 // define function prototypes for backpropagationfunctions.cu
 __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
         int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstNeuronInRight, int indexOfFirstWeight);
-__global__ void weightUpdateKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
-        int numberOfNeuronsInRightLayer, int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstWeight, double learningRate);
-void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, double* devWeights, double* devNeuronErrors, int numberOfLayers,
+void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, double* devWeights, double* devBiases, double* devNeuronErrors, int numberOfLayers,
         int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate);
-void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer,
-        int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate);
+void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double* neuronErrors, int numberOfLayers,
+        int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate);
 
 // define function prototypes for combinationfunctions.cu
-__global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, int neuronIndexStart, int prevLayerNeuronIndexStart, int weightIndexStart,
-        int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer);
-void combinationFunction(double* neurons, double* weights, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize);
+__global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, double* devBiases, int neuronIndexStart, int prevLayerNeuronIndexStart,
+        int weightIndexStart, int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer);
+void combinationFunction(double* neurons, double* weights, double* biases, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize);
 
 // define function prototypes for costfunctions.cu
 __global__ void costFunctionKernel(double* devExpectedOutput, double* devNeurons, double* devNeuronErrors, int neuronIndexStart, int numberOfNeuronsInLayer);
 double costFunction(double* expectedValue, double* calculatedValue);
 
 // define function prototypes for feedforwardfunctions.cu
-void feedforwardWithDevice(double* devNeurons, double* devWeights, int numberOfLayers, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer,
+void feedforwardWithDevice(double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers, int* numberOfNeuronsPerLayer,
+        int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
+void feedforwardWithHost(double* neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer,
         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
-void feedforwardWithHost(double* neurons, double* weights, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer,
-        int* firstWeightIndexPerLayer);
 
 // define function prototypes for helperfunctions.cu
 void getDeviceProperties(int* multiProcessorCount, int* warpSize);
@@ -95,5 +93,15 @@ void ui_evaluate();
 
 // define function prototypes for ui_train.cu
 void ui_train();
+
+// define function prototypes for updatebiasesfunctions.cu
+__global__ void biasUpdateKernel(double* devNeurons, double* devBiases, double* devNeuronErrors, int numberOfNeuronsTotal, double learningRate);
+void updateBiases(double* neurons, double* biases, double* neuronErrors, int numberOfNeuronsTotal, double learningRate);
+
+// define function prototypes for updateweightsfunctions.cu
+__global__ void weightUpdateKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
+        int numberOfNeuronsInRightLayer, int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstWeight, double learningRate);
+void updateWeights(double* neurons, double* weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* firstNeuronIndexPerLayer,
+        int* firstWeightIndexPerLayer, double learningRate);
 
 #endif
