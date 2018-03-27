@@ -9,6 +9,7 @@
 void ui_create() {
     // declare variables needed to store the model information
     char inputBuffer[MAXINPUT]; // store the user's input (gets recycled a lot)
+    int tempInt; // store temp int input from user (used for determining layer activation)
     int numberOfLayers; // store the total number of layers in the network
     int numberOfNeuronsTotal; // store the total number of neurons in our neural network
     int numberOfWeightsTotal; // store the total number of weights in our neural network
@@ -111,9 +112,8 @@ void ui_create() {
         myPatience = 2; // restore my patience
 
         // get user input for the activation for layer i
-        inputBuffer[0] = 'd'; // assign 'd' to enter loop
-        while (inputBuffer[0] != 's' || inputBuffer[0] != 'S' || inputBuffer[0] != 'r' || inputBuffer[0] != 'R' || inputBuffer[0] != 't'
-                || inputBuffer[0] != 'T') {
+        tempInt = 'd'; // assign 'd' to enter loop
+        while (tempInt != 's' || tempInt != 'S' || tempInt != 'r' || tempInt != 'R' || tempInt != 't' || tempInt != 'T') {
             // get the activation for layer i
             if (i == (numberOfLayers - 1)) {
                 printf("What activation do you want the output layer to have?\nEnter s for sigmoid, r for relu, or t for tanh:\n~");
@@ -121,15 +121,15 @@ void ui_create() {
                 printf("What activation do you want hidden layer %d to have?\nEnter s for sigmoid, r for relu, or t for tanh:\n~", i);
             }
             fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-            if (inputBuffer[0] != 's' || inputBuffer[0] != 'S' || inputBuffer[0] != 'r' || inputBuffer[0] != 'R' || inputBuffer[0] != 't'
-                    || inputBuffer[0] != 'T') {
+            sscanf(inputBuffer, "%d", &tempInt); // format and dump the user's input
+            if (tempInt != 's' || tempInt != 'S' || tempInt != 'r' || tempInt != 'R' || tempInt != 't' || tempInt != 'T') {
                 onInvalidInput(myPatience);
                 myPatience--;
-            } else if (inputBuffer[0] == 's' || inputBuffer[0] == 'S') {
+            } else if (tempInt == 's' || tempInt == 'S') {
                 activationsPerLayer[i] = SIGMACT;
-            } else if (inputBuffer[0] == 'r' || inputBuffer[0] == 'R') {
+            } else if (tempInt == 'r' || tempInt == 'R') {
                 activationsPerLayer[i] = RELUACT;
-            } else if (inputBuffer[0] == 't' || inputBuffer[0] == 'T') {
+            } else if (tempInt == 't' || tempInt == 'T') {
                 activationsPerLayer[i] = TANHACT;
             }
         }

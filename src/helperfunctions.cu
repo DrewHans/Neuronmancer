@@ -95,6 +95,26 @@ void printFarewellMSG() {
 } //end printFarewellMSG method
 
 /*
+ * onCudaMallocError - SOS, we're going down
+ * @params: size - the size of the device memory that we couldn't allocate
+ */
+void onCudaMallocError(int size) {
+    printf("ERROR: Failed to cudaMalloc %d of memory!\n", size);
+    printFarewellMSG();
+    exit(1);
+} //end onCudaMallocError method
+
+/*
+ * onCudaMemcpyError - SOS, we're going down
+ * @params: size - the name of the host variable that we couldn't copy
+ */
+void onCudaMemcpyError(char* hostVariable) {
+    printf("ERROR: Failed to cudaMemcpy %s to device!\n", hostVariable);
+    printFarewellMSG();
+    exit(1);
+} //end onCudaMemcpyError method
+
+/*
  * onFileOpenError - SOS, we're going down
  * @params: path - file that failed to open
  */
@@ -113,6 +133,15 @@ void onFileReadError(const char* path) {
     printFarewellMSG();
     exit(1);
 } //end onFileReadError method
+
+/*
+ * onFailToSetGPUDevice - SOS, we're going down
+ */
+void onFailToSetGPUDevice() {
+    printf("ERROR: Failed find GPU device!\n", size);
+    printFarewellMSG();
+    exit(1);
+}//end onFailToSetGPUDevice
 
 /*
  * onInvalidInput - prints out insults when the user screws up (silly humans)
