@@ -123,10 +123,6 @@ void backpropagateWithHost(double* expectedOutput, double* neurons, double* weig
         }
     }
 
-    // use error signal (neuronErrors) to update the weights and biases
-    updateWeights(neurons, weights, neuronErrors, numberOfLayers, neuronsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer, learningRate);
-    updateBiases(neurons, biases, neuronErrors, numberOfNeuronsTotal, learningRate);
-
 #ifdef DEBUG
     printf("Leaving backpropagate method.\n\n");
 #endif

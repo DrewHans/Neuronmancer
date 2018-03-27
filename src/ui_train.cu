@@ -123,8 +123,8 @@ void ui_train() {
             //printarray("neurons", neurons, numberOfNeuronsTotal);
 
             //printf("Starting feedforward step now...\n");
-            feedforwardWithHost(neurons, weights, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
-                    firstWeightIndexPerLayer); // feed the input forward
+            // feed the input forward
+            feedforwardWithHost(neurons, weights, biases, numberOfLayers, neuronsPerLayer, weightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
 
             //printf("Network state post feedforward:\n");
             //printarray("neurons", neurons, numberOfNeuronsTotal);
@@ -135,18 +135,22 @@ void ui_train() {
             //printarray("outputExpected", outputExpected, numberOfNeuronsPerLayer[numberOfLayers - 1]);
 
             //printf("Starting backpropagation step now...\n");
-            backpropagateWithHost(outputExpected, neurons, weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer,
-                    firstNeuronIndexPerLayer, firstWeightIndexPerLayer, learningRate); // calculate and back propagate errors
+            // calculate and back propagate errors
+            backpropagateWithHost(expectedOutput, neurons, weights, biases, neuronErrors, numberOfLayers, neuronsPerLayer, weightsPerLayer,
+                    firstNeuronIndexPerLayer, firstWeightIndexPerLayer, learningRate);
+
+            // use error signal (neuronErrors) to update the weights and biases
+            updateWeights(neurons, weights, neuronErrors, numberOfLayers, neuronsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer, learningRate);
+            updateBiases(neurons, biases, neuronErrors, numberOfNeuronsTotal, learningRate);
 
             //printf("Network state post backpropagation:\n");
             //printarray("neurons", neurons, numberOfNeuronsTotal);
             //printarray("weights", weights, numberOfWeightsTotal);
-            if(i % 10 == 0) {
+            if (i % 10 == 0) {
                 printf("...%d epochs complete...", i);
             }
 
         }
-
 
     } else if (tempInt != 'd' || tempInt != 'D') {
         printf("Today we break with tradition, looks like we're training on the GPU device!\n");
@@ -162,7 +166,7 @@ void ui_train() {
 
         // run on GPU 0, change this on a multi-GPU system.
         cudaStatus = cudaSetDevice(0);
-	    if (cudaStatus != cudaSuccess) {
+        if (cudaStatus != cudaSuccess) {
             onFailToSetGPUDevice();
         }
 
@@ -170,54 +174,74 @@ void ui_train() {
 
         // allocate device memory for device variables and copy host values to device copies
         cudaStatus = cudaMalloc((void **) &deviceNumberOfNeuronsPerLayer, numberOfLayers * sizeof(int)); //cudaMalloc allocates a chunk of device memory
-	    if (cudaStatus != cudaSuccess) {
-            onCudaMallocError(numberOfLayers * sizeof(int);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfLayers * sizeof(int));
         }
 
         cudaStatus = cudaMalloc((void **) &deviceNumberOfWeightsPerLayer, numberOfLayers * sizeof(int)); //cudaMalloc allocates a chunk of device memory
-	    if (cudaStatus != cudaSuccess) {
-            onCudaMallocError(numberOfLayers * sizeof(int);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfLayers * sizeof(int));
         }
 
         cudaStatus = cudaMalloc((void **) &deviceNeurons, (numberOfNeuronsTotal * sizeof(double))); //cudaMalloc allocates a chunk of device memory
-	    if (cudaStatus != cudaSuccess) {
-            onCudaMallocError(numberOfNeuronsTotal * sizeof(double);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfNeuronsTotal * sizeof(double));
         }
 
         cudaStatus = cudaMalloc((void **) &deviceWeights, (numberOfWeightsTotal * sizeof(double))); //cudaMalloc allocates a chunk of device memory
-	    if (cudaStatus != cudaSuccess) {
-            onCudaMallocError(numberOfWeightsTotal * sizeof(double);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfWeightsTotal * sizeof(double));
         }
 
         cudaStatus = cudaMalloc((void **) &deviceWeightCosts, (numberOfWeightsTotal * sizeof(double))); //cudaMalloc allocates a chunk of device memory
-	    if (cudaStatus != cudaSuccess) {
-            onCudaMallocError(numberOfWeightsTotal * sizeof(double);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfWeightsTotal * sizeof(double));
         }
 
         cudaStatus = cudaMemcpy(deviceNumberOfNeuronsPerLayer, numberOfNeuronsPerLayer, (numberOfLayers * sizeof(int)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
-	    if (cudaStatus != cudaSuccess) {
+        if (cudaStatus != cudaSuccess) {
             onCudaMemcpyError("numberOfNeuronsPerLayer");
         }
 
         cudaStatus = cudaMemcpy(deviceNumberOfWeightsPerLayer, numberOfWeightsPerLayer, (numberOfLayers * sizeof(int)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
-	    if (cudaStatus != cudaSuccess) {
+        if (cudaStatus != cudaSuccess) {
             onCudaMemcpyError("numberOfWeightsPerLayer");
         }
 
         cudaStatus = cudaMemcpy(deviceNeurons, neurons, (numberOfNeuronsTotal * sizeof(double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
-	    if (cudaStatus != cudaSuccess) {
+        if (cudaStatus != cudaSuccess) {
             onCudaMemcpyError("numberOfNeuronsTotal");
         }
 
         cudaStatus = cudaMemcpy(deviceWeights, weights, (numberOfWeightsTotal * sizeof(double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
-	    if (cudaStatus != cudaSuccess) {
+        if (cudaStatus != cudaSuccess) {
             onCudaMemcpyError("numberOfWeightsTotal");
         }
         printf("...allocation successful!\n");
 
         // TODO: START GPU DEVICE TRAINING
+        // use getDeviceProperties helper function to determine the numBlocks and threadsPerBlock before launching CUDA Kernels
+        int numBlocks = 5; // set 5 as default, should be equal to the number of SMs on the GPU device
+        int threadsPerBlock = 32; // set 32 as default, should be equal to the warpsize on the GPU device
+        getDeviceProperties(&numBlocks, &threadsPerBlock);
+
+
         // TODO: do(LOADINPUT, FEEDFORWARD, COMPAREOUTPUT, BACKPROPAGATEERRS) for all samples in batch, WEIGHTUPDATE & BIASUPDATE, then repeat until i == epochs
-        
+
+
+
+        // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
+        int outputLayerIndex = numberOfLayers - 1;
+
+        // for each layer l between output and input, visit in reverse order, backpropagate error values and update weights
+        for (int l = outputLayerIndex - 1; l > 0; l--) {
+            // for each node in layer l, use error signal (devNeuronErrors) to update the devWeights and devBiases
+            // spawn 1 block for each neuron in layer l and, in each block, spawn 1 thread for each neuron in layer l+1
+            weightUpdateKernel<<<neuronsPerLayer[l], neuronsPerLayer[l + 1]>>>(devNeurons, devWeights, devNeuronErrors, neuronsPerLayer[l],
+                    neuronsPerLayer[l + 1], weightsPerLayer[l + 1], firstNeuronIndexPerLayer[l], firstNeuronIndexPerLayer[l + 1], learningRate);
+            cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
+            biasUpdateKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, devBiases, devNeuronErrors, numberOfNeuronsTotal, learningRate);
+        }
 
         // TODO: COPY DEVICE VARIABLE VALUES BACK TO HOST
 
@@ -246,10 +270,10 @@ void ui_train() {
     free(numberOfWeightsPerLayer);
     free(firstNeuronIndexPerLayer);
     free(firstWeightIndexPerLayer);
-    free(neurons);
+    free (neurons);
     free(weights);
-    free(neuronErrors);
-    free(outputExpected);
+    free (neuronErrors);
+    free (outputExpected);
 
     printf("Press enter to return to the main menu:\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
