@@ -108,7 +108,7 @@ void onCudaMallocError(int size) {
  * onCudaMemcpyError - SOS, we're going down
  * @params: size - the name of the host variable that we couldn't copy
  */
-void onCudaMemcpyError(char* hostVariable) {
+void onCudaMemcpyError(const char* hostVariable) {
     printf("ERROR: Failed to cudaMemcpy %s to device!\n", hostVariable);
     printFarewellMSG();
     exit(1);
@@ -138,7 +138,7 @@ void onFileReadError(const char* path) {
  * onFailToSetGPUDevice - SOS, we're going down
  */
 void onFailToSetGPUDevice() {
-    printf("ERROR: Failed find GPU device!\n", size);
+    printf("ERROR: Failed find GPU device!\n");
     printFarewellMSG();
     exit(1);
 }//end onFailToSetGPUDevice

@@ -17,7 +17,7 @@
 __global__ void biasUpdateKernel(double* devNeurons, double* devBiases, double* devNeuronErrors, int numberOfNeuronsTotal, double learningRate) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < numberOfNeuronsTotal) {
-        devBiases[id] = devBiases[id] + (learningRate * devNeuronErrors[i] * devNeurons[i]);
+        devBiases[id] = devBiases[id] + (learningRate * devNeuronErrors[id] * devNeurons[id]);
     }
 } //end bias update kernel
 

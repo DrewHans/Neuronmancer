@@ -38,12 +38,12 @@ __global__ void reluKernel(double* devNeurons, int neuronIndexStart, int numberO
 __global__ void tanhKernel(double* devNeurons, int neuronIndexStart, int numberOfNeuronsInLayer);
 
 // define function prototypes for backpropagationfunctions.cu
-__global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
+__global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights, double* devBiases, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
         int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstNeuronInRight, int indexOfFirstWeight);
 void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, double* devWeights, double* devBiases, double* devNeuronErrors, int numberOfLayers,
-        int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate);
+        int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
 void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double* neuronErrors, int numberOfLayers,
-        int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double learningRate);
+        int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
 
 // define function prototypes for combinationfunctions.cu
 __global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, double* devBiases, int neuronIndexStart, int prevLayerNeuronIndexStart,
@@ -103,5 +103,4 @@ __global__ void weightUpdateKernel(double* devNeurons, double* devWeights, doubl
         int numberOfNeuronsInRightLayer, int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstWeight, double learningRate);
 void updateWeights(double* neurons, double* weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* firstNeuronIndexPerLayer,
         int* firstWeightIndexPerLayer, double learningRate);
-
 #endif
