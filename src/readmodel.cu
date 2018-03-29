@@ -11,7 +11,7 @@
  * @params: numberOfBiasesTotal - equal to numberOfNeuronsTotal
  */
 void readBiasesFromDisk(double* biases, int numberOfBiasesTotal) {
-    FILE* thefile = fopen(BIASESFILELOCATION, "w");
+    FILE* thefile = fopen(BIASESFILELOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (BIASESFILELOCATION);
     }
@@ -46,7 +46,7 @@ void readBiasesFromDisk(double* biases, int numberOfBiasesTotal) {
  * @params: epochs - pointer to an int value (used to store value before return)
  */
 void readEpochsFromDisk(int* epochs) {
-    FILE* thefile = fopen(EPOCHSFILELOCATION, "w");
+    FILE* thefile = fopen(EPOCHSFILELOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (EPOCHSFILELOCATION);
     }
@@ -70,7 +70,7 @@ void readEpochsFromDisk(int* epochs) {
  * @params: learningRate - pointer to a double value (used to store value before return)
  */
 void readLearningRateFromDisk(double* learningRate) {
-    FILE* thefile = fopen(LEARNINGRATEFILELOCATION, "w");
+    FILE* thefile = fopen(LEARNINGRATEFILELOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (LEARNINGRATEFILELOCATION);
     }
@@ -96,7 +96,7 @@ void readLearningRateFromDisk(double* learningRate) {
  * @params: numberOfWeightsTotal - pointer to an int value
  */
 void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
-    FILE* thefile = fopen(WEIGHTSFILELOCATION, "w");
+    FILE* thefile = fopen(WEIGHTSFILELOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (WEIGHTSFILELOCATION);
     }
@@ -138,7 +138,7 @@ void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
  */
 void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeightsTotal, int* numberOfNeuronsPerLayer,
         int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
-    FILE* thefile = fopen(MODELVALUESLOCATION, "w");
+    FILE* thefile = fopen(MODELVALUESLOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (MODELVALUESLOCATION);
     }
