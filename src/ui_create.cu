@@ -112,24 +112,24 @@ void ui_create() {
         myPatience = 2; // restore my patience
 
         // get user input for the activation for layer i
-        tempInt = 'd'; // assign 'd' to enter loop
-        while (tempInt != 's' || tempInt != 'S' || tempInt != 'r' || tempInt != 'R' || tempInt != 't' || tempInt != 'T') {
+        tempInt = 0; // assign 'd' to enter loop
+        while (tempInt != 1 || tempInt != 2 || tempInt != 3) {
             // get the activation for layer i
             if (i == (numberOfLayers - 1)) {
-                printf("What activation do you want the output layer to have?\nEnter s for sigmoid, r for relu, or t for tanh:\n~");
+                printf("What activation do you want the output layer to have?\nEnter 1 for sigmoid, 2 for relu, or 3 for tanh:\n~");
             } else {
-                printf("What activation do you want hidden layer %d to have?\nEnter s for sigmoid, r for relu, or t for tanh:\n~", i);
+                printf("What activation do you want hidden layer %d to have?\nEnter 1 for sigmoid, 2 for relu, or 3 for tanh:\n~", i);
             }
-            fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
+            fgets(inputBuffer, 1, stdin); // read the user's input
             sscanf(inputBuffer, "%d", &tempInt); // format and dump the user's input
-            if (tempInt != 's' || tempInt != 'S' || tempInt != 'r' || tempInt != 'R' || tempInt != 't' || tempInt != 'T') {
+            if (tempInt != 1 || tempInt != 2 || tempInt != 3) {
                 onInvalidInput(myPatience);
                 myPatience--;
-            } else if (tempInt == 's' || tempInt == 'S') {
+            } else if (tempInt == 1) {
                 activationsPerLayer[i] = SIGMACT;
-            } else if (tempInt == 'r' || tempInt == 'R') {
+            } else if (tempInt == 2) {
                 activationsPerLayer[i] = RELUACT;
-            } else if (tempInt == 't' || tempInt == 'T') {
+            } else if (tempInt == 3) {
                 activationsPerLayer[i] = TANHACT;
             }
         }
