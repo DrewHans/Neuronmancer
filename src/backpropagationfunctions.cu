@@ -8,15 +8,6 @@
 /*
  * backpropagateErrorsKernel
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
- * @params: devNeurons - a pointer to an array of double values on device (the neuron values)
- * @params: devWeights - a pointer to an array of double values on device (the weight values)
- * @params: devBiases - a pointer to an array of double values on device (the biases values)
- * @params: devNeuronErrors - a pointer to an array of double values on device (the deltas for each neuron)
- * @params: numberOfNeuronsInLeftLayer - the number of neurons in the layer left of the weights
- * @params: numberOfWeightsBetweenLayers - the number of weights between the layers
- * @params: indexOfFirstNeuronInLeft - the index of left layer's first neuron
- * @params: indexOfFirstNeuronInRight - the index of right layer's first neuron
- * @params: indexOfFirstWeight - the index of the first weight between layers
  */
 __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights, double* devBiases, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
         int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstNeuronInRight, int indexOfFirstWeight) {
@@ -33,29 +24,9 @@ __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights
 
 /*
  * backpropagateWithDevice method
- * @params: devExpectedOutput - the expected output values on device (needed to calculate output layer delta)
- * @params: devNeurons - a pointer to an array of double values on device (the neuron values)
- * @params: devWeights - a pointer to an array of double values on device (the weight values)
- * @params: devBiases - a pointer to an array of double values on device (the biases values)
- * @params: devNeuronErrors - a pointer to an array of double values on device (the deltas for each neuron)
- * @params: numberOfLayers - the total number of layers in our artificial neural network
- * @params: neuronsPerLayer - a pointer to an array of int values (the number of neurons in each layer)
- * @params: weightsPerLayer - a pointer to an array of int values (the number of weights in each layer)
- * @params: firstNeuronIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first neuron)
- * @params: firstWeightIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first weight)
- * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
-void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, double* devWeights, double* devBiases, double* devNeuronErrors, int numberOfLayers,
-        int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
-#ifdef DEBUG
-    printf("Entering backpropagateWithDevice method.\n");
-#endif
-
-    // use getDeviceProperties helper function to determine the numBlocks and threadsPerBlock before launching CUDA Kernels
-    int numBlocks = 5; // set 5 as default, should be equal to the number of SMs on the GPU device
-    int threadsPerBlock = 32; // set 32 as default, should be equal to the warpsize on the GPU device
-    getDeviceProperties(&numBlocks, &threadsPerBlock);
-
+void backpropagateWithDevice(int numBlocks, int threadsPerBlock, double* devExpectedOutput, double* devNeurons, double* devWeights, double* devBiases,
+        double* devNeuronErrors, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
     // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
     int outputLayerIndex = numberOfLayers - 1;
     costFunctionKernel<<<numBlocks, threadsPerBlock>>>(devExpectedOutput, devNeurons, devNeuronErrors, firstNeuronIndexPerLayer[outputLayerIndex],
@@ -69,38 +40,20 @@ void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, doub
                 weightsPerLayer[l + 1], firstNeuronIndexPerLayer[l], firstNeuronIndexPerLayer[l + 1], firstWeightIndexPerLayer[l + 1]);
         cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
     }
-#ifdef DEBUG
-    printf("Leaving backpropagateWithDevice method.\n\n");
-#endif
 } //end backpropagateWithDevice method
 
 /*
  * backpropagateWithHost method
- * @params: expectedOutput - the expected output values (needed to calculate output layer delta)
- * @params: neurons - a pointer to an array of double values (the neuron values)
- * @params: weights - a pointer to an array of double values (the weight values)
- * @params: biases - a pointer to an array of double values (the biases values)
- * @params: neuronErrors - a pointer to an array of double values (the deltas for each neuron)
- * @params: numberOfLayers - the total number of layers in our artificial neural network
- * @params: neuronsPerLayer - a pointer to an array of int values (the number of neurons in each layer)
- * @params: weightsPerLayer - a pointer to an array of int values (the number of weights in each layer)
- * @params: firstNeuronIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first neuron)
- * @params: firstWeightIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first weight)
- * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
 void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double* neuronErrors, int numberOfLayers,
         int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
-#ifdef DEBUG
-    printf("Entering backpropagate method.\n");
-#endif
-
     // for each node in the output layer, calculate the output error
     int outputLayerIndex = numberOfLayers - 1;
     int neuronId = 0;
     double errortemp = 0.0;
     for (int i = 0; i < neuronsPerLayer[outputLayerIndex]; i++) {
         neuronId = firstNeuronIndexPerLayer[outputLayerIndex] + i;
-        errortemp = costFunction(&expectedOutput[i], &neurons[neuronId]);
+        errortemp = costFunction(&expectedOutput[i], &neurons[neuronId]); // store the cost/error/loss of expected - calculated
         neuronErrors[neuronId] = errortemp * sigmoidDerivative(neurons[neuronId] + biases[neuronId]);
     }
 
@@ -118,8 +71,4 @@ void backpropagateWithHost(double* expectedOutput, double* neurons, double* weig
             neuronErrors[firstNeuronIndexPerLayer[l] + n] = errortemp * sigmoidDerivative(neurons[firstNeuronIndexPerLayer[l] + n]);
         }
     }
-
-#ifdef DEBUG
-    printf("Leaving backpropagate method.\n\n");
-#endif
 } //end backpropagateWithHost method

@@ -116,6 +116,27 @@ void ui_train() {
         onMallocError(numberOfNeuronsTotal * sizeof(double));
     }
 
+    printf("Loading MNIST training samples into memory (this might take awhile)...");
+
+    // Load MNIST training data and labels into memory
+    unsigned char* trainingData;
+    char* trainingLabels;
+    int numberOfTrainingSamples = 0;
+
+    trainingData = (unsigned char *) malloc(sizeof(char));
+    if (trainingData == NULL) {
+        onMallocError(sizeof(char));
+    }
+
+    trainingLabels = (char *) malloc(sizeof(char));
+    if (trainingLabels == NULL) {
+        onMallocError(sizeof(char));
+    }
+
+    loadMnistTrainingSamples(trainingData, trainingLabels, &numberOfTrainingSamples);
+
+    printf("...MNIST training samples loaded!");
+
     // get user input for running on CPU or GPU
     tempInt = 5; // assign 5 to enter loop
     while (tempInt != 1 || tempInt != 2) {
@@ -131,75 +152,34 @@ void ui_train() {
 
     if (tempInt == 1) {
         printf("Today we keep tradition, looks like we're training on the host machine!\n");
-        
-        printf("Loading MNIST training samples into memory (this might take awhile)...");
-        
-        // Load MNIST training data and labels into memory
-        unsigned char* trainingData;
-        char* trainingLabels;
-        int numberOfTrainingSamples = 0;
-        
-        trainingData = (unsigned char *) malloc(sizeof(char));
-        if (trainingData == NULL) {
-            onMallocError(sizeof(char));
-        }
-        
-        trainingLabels = (char *) malloc(sizeof(char));
-        if (trainingLabels == NULL) {
-            onMallocError(sizeof(char));
-        }
-        
-        loadMnistTrainingSamples(trainingData, trainingLabels, &numberOfTrainingSamples);
-        
-        printf("...MNIST training samples loaded!");
-        
-        printf("Beginning training now...");
 
-        // TODO: do(LOADINPUT, FEEDFORWARD, COMPAREOUTPUT, BACKPROPAGATEERRS) for all samples in batch, WEIGHTUPDATE & BIASUPDATE, then repeat until i == epochs
+        printf("Beginning training on host now...");
+
+        // do(LOADINPUT, FEEDFORWARD, COMPAREOUTPUT, BACKPROPAGATEERRS) for all samples in batch, WEIGHTUPDATE & BIASUPDATE, then repeat until i == epochs
         for (int i = 0; i < epochs; i++) {
-        	// for each sample: loadTrainingData, feedforward, compareOutput, backpropagate error signal
-        	for (int s = 0; s < numberOfTrainingSamples; s++) {
-        		// TODO: implement the stuff listed in the comment above (line 157)
-        	}
-        	
-        	// after all samples have been processed, use error signal to update weights and biases
-        	
-        	/*
-            printf("Starting load input step now...\n");
-            loadInput(neurons, numberOfNeuronsPerLayer[0]); // load some random input for feedforward testing
-            printarray("neurons", neurons, numberOfNeuronsTotal);
+            // for each sample: loadTrainingData, feedforward, compareOutput, backpropagate error signal
+            for (int s = 0; s < numberOfTrainingSamples; s++) {
+                // load pixel data from an MNIST sample into the input layer
+                loadNextMnistSampleData(neurons, trainingData, s);
+                loadNextMnistSampleLabel(outputExpected, trainingLabels, s);
 
-            printf("Starting feedforward step now...\n");
-            // feed the input forward
-            feedforwardWithHost(neurons, weights, biases, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
-                    firstWeightIndexPerLayer);
+                // feedforward the data in the input layer
+                feedforwardWithHost(neurons, weights, biases, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
+                        firstWeightIndexPerLayer);
 
-            printf("Network state post feedforward:\n");
-            printarray("neurons", neurons, numberOfNeuronsTotal);
-            printarray("weights", weights, numberOfWeightsTotal);
+                // calculate and backpropagate error signals
+                backpropagateWithHost(outputExpected, neurons, weights, biases, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer,
+                        firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
+            }
 
-            printf("Generating random training labels for testing backpropagation now...\n");
-            loadInput(outputExpected, numberOfNeuronsPerLayer[numberOfLayers - 1]); // load some random input for backpropagation testing
-            printarray("outputExpected", outputExpected, numberOfNeuronsPerLayer[numberOfLayers - 1]);
-
-            printf("Starting backpropagation step now...\n");
-            // calculate and back propagate errors
-            backpropagateWithHost(outputExpected, neurons, weights, biases, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer,
-                    firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
-
-            // use error signal (neuronErrors) to update the weights and biases
+            // after all samples have been processed, use error signal to update weights and biases
             updateWeights(neurons, weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer,
                     learningRate);
             updateBiases(neurons, biases, neuronErrors, numberOfNeuronsTotal, learningRate);
 
-            printf("Network state post backpropagation:\n");
-            printarray("neurons", neurons, numberOfNeuronsTotal);
-            printarray("weights", weights, numberOfWeightsTotal);
-             */
             if (i % 10 == 0) {
                 printf("...%d epochs complete...", i);
             }
-
         }
 
     } else if (tempInt == 2) {
@@ -208,7 +188,10 @@ void ui_train() {
         double* devNeurons;
         double* devWeights;
         double* devBiases;
+        double* devOutputExpected;
         double* devNeuronErrors;
+        unsigned char* devTrainingData;
+        char* devTrainingLabels;
 
         // declare our cudaStatus variable
         cudaError_t cudaStatus;
@@ -219,7 +202,7 @@ void ui_train() {
             onFailToSetGPUDevice();
         }
 
-        printf("Allocating GPU device memory and copying host values over...\n");
+        printf("Allocating GPU device memory...\n");
 
         // allocate device memory for device variables and copy host values to device copies
         cudaStatus = cudaMalloc((void **) &devNeurons, (numberOfNeuronsTotal * sizeof(double))); //cudaMalloc allocates a chunk of device memory
@@ -242,20 +225,46 @@ void ui_train() {
             onCudaMallocError(numberOfNeuronsTotal * sizeof(double));
         }
 
-        cudaStatus = cudaMemcpy(devNeurons, neurons, (numberOfNeuronsTotal * sizeof(double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
+        cudaStatus = cudaMalloc((void **) &devOutputExpected, (numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(double))); //cudaMalloc allocates a chunk of device memory
         if (cudaStatus != cudaSuccess) {
-            onCudaMemcpyError("numberOfNeuronsTotal");
+            onCudaMallocError(numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(double));
         }
+
+        cudaStatus = cudaMalloc((void **) &devTrainingData, (MNISTSAMPLEDATASIZE * MNISTTRAININGSETSIZE * sizeof(char))); //cudaMalloc allocates a chunk of device memory
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(MNISTSAMPLEDATASIZE * MNISTTRAININGSETSIZE * sizeof(char));
+        }
+
+        cudaStatus = cudaMalloc((void **) &devTrainingLabels, (MNISTTRAININGSETSIZE * sizeof(char))); //cudaMalloc allocates a chunk of device memory
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(MNISTTRAININGSETSIZE * sizeof(char));
+        }
+
+        printf("...allocation successful!\n");
+
+        printf("Copying over Host values to GPU device...");
 
         cudaStatus = cudaMemcpy(devWeights, weights, (numberOfWeightsTotal * sizeof(double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
         if (cudaStatus != cudaSuccess) {
-            onCudaMemcpyError("numberOfWeightsTotal");
+            onCudaMemcpyError("weights");
         }
-        printf("...allocation successful!\n");
 
-        // TODO: Load MNIST Samples into memory as a 1D array
-                
-        // TODO: Load MNIST Samples Labels into memory as a 1D array
+        cudaStatus = cudaMemcpy(devBiases, biases, (numberOfNeuronsTotal * sizeof(double)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("biases");
+        }
+
+        cudaStatus = cudaMemcpy(devTrainingData, trainingData, (MNISTSAMPLEDATASIZE * MNISTTRAININGSETSIZE * sizeof(char)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("trainingData");
+        }
+
+        cudaStatus = cudaMemcpy(devTrainingLabels, trainingLabels, (MNISTTRAININGSETSIZE * sizeof(char)), cudaMemcpyHostToDevice); //cudaMemcpy copies host values to device copies
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("trainingLabels");
+        }
+
+        printf("...copy successful!\n");
 
         // TODO: START GPU DEVICE TRAINING
         // use getDeviceProperties helper function to determine the numBlocks and threadsPerBlock before launching CUDA Kernels
@@ -263,22 +272,62 @@ void ui_train() {
         int threadsPerBlock = 32; // set 32 as default, should be equal to the warpsize on the GPU device
         getDeviceProperties(&numBlocks, &threadsPerBlock);
 
-        // TODO: do(LOADINPUT, FEEDFORWARD, COMPAREOUTPUT, BACKPROPAGATEERRS) for all samples in batch, WEIGHTUPDATE & BIASUPDATE, then repeat until i == epochs
-
-        // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
-        int outputLayerIndex = numberOfLayers - 1;
-
-        // for each layer l between output and input, visit in reverse order, backpropagate error values and update weights
-        for (int l = outputLayerIndex - 1; l > 0; l--) {
-            // for each node in layer l, use error signal (devNeuronErrors) to update the devWeights and devBiases
-            // spawn 1 block for each neuron in layer l and, in each block, spawn 1 thread for each neuron in layer l+1
-            weightUpdateKernel<<<numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l + 1]>>>(devNeurons, devWeights, devNeuronErrors,
-                    numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l + 1], numberOfWeightsPerLayer[l + 1], firstNeuronIndexPerLayer[l],
-                    firstNeuronIndexPerLayer[l + 1], learningRate);
-            cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
+        // stretch threadsPerBlock when more threads are needed to call a kernel on all neurons
+        int scalar = 1;
+        int largestLayerSize = 0;
+        for (int i = 0; i < numberOfLayers; i++) {
+            if (largestLayerSize < numberOfNeuronsPerLayer[i]) {
+                largestLayerSize = numberOfNeuronsPerLayer[i];
+            }
         }
-        biasUpdateKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, devBiases, devNeuronErrors, numberOfNeuronsTotal, learningRate);
-        cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
+        if (numBlocks * threadsPerBlock < largestLayerSize) {
+            scalar = ((largestLayerSize / numBlocks) / threadsPerBlock) + 1;
+        }
+        threadsPerBlock = threadsPerBlock * scalar;
+
+        printf("Beginning training on GPU device now...");
+
+        // do(LOADINPUT, FEEDFORWARD, COMPAREOUTPUT, BACKPROPAGATEERRS) for all samples in batch, WEIGHTUPDATE & BIASUPDATE, then repeat until i == epochs
+        for (int i = 0; i < epochs; i++) {
+            // for each sample: loadTrainingData, feedforward, compareOutput, backpropagate error signal
+            for (int s = 0; s < numberOfTrainingSamples; s++) {
+                // load pixel data from an MNIST sample into the input layer
+                loadNextMnistSampleDataKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, devTrainingData, s);
+                loadNextMnistSampleLabelKernel<<<numBlocks, threadsPerBlock>>>(devOutputExpected, devTrainingLabels, s);
+
+                cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
+
+                // feedforward the data in the input layer
+                feedforwardWithDevice(numBlocks, threadsPerBlock, devNeurons, devWeights, devBiases, numberOfLayers, numberOfNeuronsPerLayer,
+                        numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
+
+                // calculate and backpropagate error signals
+                backpropagateWithDevice(numBlocks, threadsPerBlock, devOutputExpected, devNeurons, devWeights, devBiases, devNeuronErrors, numberOfLayers,
+                        neuronsPerLayer, weightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
+            }
+
+            // after all samples have been processed, use error signal to update weights and biases
+
+            // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
+            int outputLayerIndex = numberOfLayers - 1;
+
+            // for each layer l between output and input, visit in reverse order, backpropagate error values and update weights
+            for (int l = outputLayerIndex - 1; l > 0; l--) {
+
+                // for each node in layer l, use error signal (devNeuronErrors) to update the devWeights and devBiases
+                // spawn 1 block for each neuron in layer l and, in each block, spawn 1 thread for each neuron in layer l+1
+                weightUpdateKernel<<<numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l + 1]>>>(devNeurons, devWeights, devNeuronErrors,
+                        numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l + 1], numberOfWeightsPerLayer[l + 1], firstNeuronIndexPerLayer[l],
+                        firstNeuronIndexPerLayer[l + 1], learningRate);
+                cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
+            }
+            biasUpdateKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, devBiases, devNeuronErrors, numberOfNeuronsTotal, learningRate);
+            cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
+
+            if (i % 10 == 0) {
+                printf("...%d epochs complete...", i);
+            }
+        }
 
         // TODO: COPY DEVICE VARIABLE VALUES BACK TO HOST
 
@@ -290,10 +339,15 @@ void ui_train() {
         // free the chunks of device memory that were dynamically allocated by cudaMalloc
         cudaFree(devNeurons);
         cudaFree(devWeights);
+        cudaFree(devBiases);
         cudaFree(devNeuronErrors);
+        cudaFree(devTrainingData);
+        cudaFree(devTrainingLabels);
     }
 
-    // TODO: SAVE TRAINED WEIGHTS AND BIASES TO DISK
+    // SAVE TRAINED WEIGHTS AND BIASES TO DISK
+    saveWeightsToDisk(weights, numberOfWeightsTotal);
+    saveBiasesToDisk(biases, numberOfBiasesTotal);
 
     printf("Press enter to free dynamically allocated host memory.\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input

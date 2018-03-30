@@ -47,8 +47,8 @@ __global__ void tanhKernel(double* devNeurons, int neuronIndexStart, int numberO
 // define function prototypes for backpropagationfunctions.cu
 __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights, double* devBiases, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
         int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstNeuronInRight, int indexOfFirstWeight);
-void backpropagateWithDevice(double* devExpectedOutput, double* devNeurons, double* devWeights, double* devBiases, double* devNeuronErrors, int numberOfLayers,
-        int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
+void backpropagateWithDevice(int numBlocks, int threadsPerBlock, double* devExpectedOutput, double* devNeurons, double* devWeights, double* devBiases,
+        double* devNeuronErrors, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
 void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double* neuronErrors, int numberOfLayers,
         int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
 
@@ -62,8 +62,8 @@ __global__ void costFunctionKernel(double* devExpectedOutput, double* devNeurons
 double costFunction(double* expectedValue, double* calculatedValue);
 
 // define function prototypes for feedforwardfunctions.cu
-void feedforwardWithDevice(double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers, int* numberOfNeuronsPerLayer,
-        int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
+void feedforwardWithDevice(int numBlocks, int threadsPerBlock, double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers,
+        int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
 void feedforwardWithHost(double* neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer,
         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
 
@@ -71,16 +71,29 @@ void feedforwardWithHost(double* neurons, double* weights, double* biases, int n
 void getDeviceProperties(int* multiProcessorCount, int* warpSize);
 void initArrayToRandomDoubles(double* a, int n);
 void initArrayToZeros(double* a, int n);
+void loadRandomInput(double* neurons, int n);
 void printarray(const char* name, double* array, int n);
 void printFarewellMSG();
 void onFileOpenError(const char* path);
 void onInvalidInput(int myPatience);
 void onMallocError(int size);
 
-// define function prototypes for loadinput.cu
-void loadInput(double* neurons, int n);
+// define function prototypes for loadmnist.cu
+void loadMnistTestSamples(unsigned char* testData, char* testLabels, int* numberOfSamples);
+void loadMnistTrainingSamples(unsigned char* trainingData, char* trainingLabels, int* numberOfSamples);
+void loadNextMnistSampleData(double* neurons, const unsigned char* mnistData, int mnistSampleDataIndexStart);
+__global__ void loadNextMnistSampleDataKernel(double* devNeurons, const unsigned char* devMnistData, int mnistSampleDataIndexStart);
+void loadNextMnistSampleLabel(double* outputExpected, const char* mnistLabels, int mnistSampleLabelIndex);
 
 // define function prototypes for readmodel.cu
+void readBiasesFromDisk(double* biases, int numberOfBiasesTotal);
+void readEpochsFromDisk(int* epochs);
+void readLearningRateFromDisk(double* learningRate);
+void readWeightsFromDisk(double* weights, int numberOfWeightsTotal);
+void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeightsTotal, int* numberOfNeuronsPerLayer,
+        int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
+void readModel(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeightsTotal, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer,
+        int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double* weights, double* biases, double* learningRate, int* epochs);
 
 // define function prototypes for savemodel.cu
 void saveBiasesToDisk(double* biases, int numberOfBiasesTotal);

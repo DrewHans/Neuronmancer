@@ -75,6 +75,18 @@ void initArrayToZeros(double* a, int n) {
 } //end initArrayToZeros method
 
 /*
+ * loadRandomInput
+ * @params: neurons - a pointer to an array of double values (the input layer)
+ * @params: n - the size of the input layer
+ */
+void loadRandomInput(double* neurons, int n) {
+    // generate random doubles for testing purposes
+    for (int i = 0; i < n; i++) {
+        neurons[i] = ((double) rand()) / ((double) rand());
+    }
+} //end loadRandomInput method
+
+/*
  * printarray - prints out array values to terminal
  * @params: name - a pointer to a char string
  * @params: a - a pointer to an array of double values
@@ -141,7 +153,7 @@ void onFailToSetGPUDevice() {
     printf("ERROR: Failed find GPU device!\n");
     printFarewellMSG();
     exit(1);
-}//end onFailToSetGPUDevice
+} //end onFailToSetGPUDevice
 
 /*
  * onInvalidInput - prints out insults when the user screws up (silly humans)

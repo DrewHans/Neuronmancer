@@ -7,54 +7,24 @@
 
 /*
  * feedforwardWithDevice - propagates the inputs forward to compute the outputs
- * @params: devNeurons - a pointer to an array of double values (the neuron values) in device memory
- * @params: devWeights - a pointer to an array of double values (the weight values) in device memory
- * @params: devBiases - a pointer to an array of double values (the bias values) in device memory
- * @params: numberOfLayers - the total number of layers in our artificial neural network
- * @params: neuronsPerLayer - a pointer to an array of int values (the number of neurons in each layer)
- * @params: weightsPerLayer - a pointer to an array of int values (the number of weights in each layer)
- * @params: firstNeuronIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first neuron)
- * @params: firstWeightIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first weight)
  */
-void feedforwardWithDevice(double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers, int* numberOfNeuronsPerLayer,
-        int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
-#ifdef DEBUG
-    printf("Entering feedforwardWithDevice method.\n");
-#endif
-    // use getDeviceProperties helper function to determine the numBlocks and threadsPerBlock before launching CUDA Kernels
-    int numBlocks = 5; // set 5 as default, should be equal to the number of SMs on the GPU device
-    int threadsPerBlock = 32; // set 32 as default, should be equal to the warpsize on the GPU device
-    getDeviceProperties(&numBlocks, &threadsPerBlock);
-
+void feedforwardWithDevice(int numBlocks, int threadsPerBlock, double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers,
+        int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
     // go layer to layer and for each neuron in the current layer: spawn a thread, perform combination, sync threads, spawn a thread
     for (int l = 1; l < numberOfLayers; l++) {
         combinationFunctionKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, devWeights, devBiases, firstNeuronIndexPerLayer[l],
                 firstNeuronIndexPerLayer[l - 1], firstWeightIndexPerLayer[l], numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l - 1]);
         cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
         sigmoidKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, firstNeuronIndexPerLayer[l], numberOfNeuronsPerLayer[l]);
+        cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
     }
-
-#ifdef DEBUG
-    printf("Leaving feedforwardWithDevice method.\n\n");
-#endif
 } //end feedforwardWithDevice method
 
 /*
  * feedforwardWithHost - propagates the inputs forward to compute the outputs
- * @params: neurons - a pointer to an array of double values (the neuron values)
- * @params: weights - a pointer to an array of double values (the weight values)
- * @params: numberOfLayers - the total number of layers in our artificial neural network
- * @params: neuronsPerLayer - a pointer to an array of int values (the number of neurons in each layer)
- * @params: weightsPerLayer - a pointer to an array of int values (the number of weights in each layer)
- * @params: firstNeuronIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first neuron)
- * @params: firstWeightIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first weight)
  */
-void feedforwardWithHost(double* neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer,
-        int* firstWeightIndexPerLayer) {
-#ifdef DEBUG
-    printf("Entering feedforwardWithHost method.\n");
-#endif
-
+void feedforwardWithHost(double* neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer,
+        int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
     // go layer to layer
     for (int i = 1; i < numberOfLayers; i++) {
         // go neuron to neuron in layer i
@@ -65,8 +35,4 @@ void feedforwardWithHost(double* neurons, double* weights, double* biases, int n
             printf("neurons[%d]=%f\n", (firstNeuronIndexPerLayer[i] + j), neurons[firstNeuronIndexPerLayer[i] + j]);
         }
     }
-
-#ifdef DEBUG
-    printf("Leaving feedforwardWithHost method.\n\n");
-#endif
 } //end feedforwardWithHost method
