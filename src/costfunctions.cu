@@ -6,7 +6,7 @@
  */
 
 /*
- * costFunctionKernel
+ * costDerivativeKernel
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
  * @params: devExpectedOutput - a pointer to an array of double values in GPU device memory
  * @params: devNeurons - a pointer to an array of double values in GPU device memory
@@ -14,20 +14,21 @@
  * @params: neuronIndexStart - the index of the first neuron in the layer
  * @params: numberOfNeuronsInLayer - the total number of neurons in the layer
  */
-__global__ void costFunctionKernel(double* devExpectedOutput, double* devNeurons, double* devNeuronErrors, int neuronIndexStart, int numberOfNeuronsInLayer) {
+__global__ void costDerivativeKernel(double* devExpectedOutput, double* devNeurons, double* devNeuronErrors, int neuronIndexStart, int numberOfNeuronsInLayer) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < numberOfNeuronsInLayer) {
-        int difference = devExpectedOutput[id] - devNeurons[neuronIndexStart + id];
-        devNeuronErrors[neuronIndexStart + id] = difference * sigmoidDerivative(devNeurons[neuronIndexStart + id]);
+        devNeuronErrors[neuronIndexStart + id] = costDerivative(devExpectedOutput[id], devNeurons[neuronIndexStart + id]);
     }
-} //end cost function kernel
+} //end costDerivativeKernel
 
 /*
- * costFunction method - compares a calculated output value to the outputExpected value and returns the error amount
+ * costDerivative method
+ * __host__ decoration tells NVCC this function should run on CPU, and be callable from the CPU host
+ * __device__ decoration tells NVCC this function should run on GPU, and be callable from the GPU device
  * @params: expectedValue - a pointer to a double value
  * @params: calculatedValue - a pointer to a double value
  * @returns: the difference between outputExpected and calculated values
  */
-double costFunction(double* expectedValue, double* calculatedValue) {
+__host__ __device__ double costDerivative(double expectedValue, double calculatedValue) {
     return expectedValue - calculatedValue;
-} //end costFunction method
+} //end costDerivative method

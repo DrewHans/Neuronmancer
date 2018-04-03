@@ -25,11 +25,6 @@
 #define MNISTTESTFILELOCATION "../mnist/mnist_test.csv"
 #define MNISTTRAINFILELOCATION "../mnist/mnist_train.csv"
 
-// define enum for available activation functions
-typedef enum {
-    SIGMACT, RELUACT, TANHACT
-} Activation;
-
 // define struct for using the stat command
 struct stat st = { 0 };
 
@@ -58,8 +53,8 @@ __global__ void combinationFunctionKernel(double* devNeurons, double* devWeights
 void combinationFunction(double* neurons, double* weights, double* biases, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize);
 
 // define function prototypes for costfunctions.cu
-__global__ void costFunctionKernel(double* devExpectedOutput, double* devNeurons, double* devNeuronErrors, int neuronIndexStart, int numberOfNeuronsInLayer);
-double costFunction(double* expectedValue, double* calculatedValue);
+__global__ void costDerivativeKernel(double* devExpectedOutput, double* devNeurons, double* devNeuronErrors, int neuronIndexStart, int numberOfNeuronsInLayer);
+__host__ __device__ double costDerivative(double expectedValue, double calculatedValue);
 
 // define function prototypes for feedforwardfunctions.cu
 void feedforwardWithDevice(int numBlocks, int threadsPerBlock, double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers,
@@ -72,9 +67,13 @@ void getDeviceProperties(int* multiProcessorCount, int* warpSize);
 void initArrayToRandomDoubles(double* a, int n);
 void initArrayToZeros(double* a, int n);
 void loadRandomInput(double* neurons, int n);
-void printarray(const char* name, double* array, int n);
+void printarray(const char* name, double* a, int n);
 void printFarewellMSG();
+void onCudaMallocError(int size);
+void onCudaMemcpyError(const char* hostVariable);
 void onFileOpenError(const char* path);
+void onFileReadError(const char* path);
+void onFailToSetGPUDevice();
 void onInvalidInput(int myPatience);
 void onMallocError(int size);
 
@@ -84,6 +83,7 @@ void loadMnistTrainingSamples(unsigned char* trainingData, char* trainingLabels,
 void loadNextMnistSampleData(double* neurons, const unsigned char* mnistData, int mnistSampleDataIndexStart);
 __global__ void loadNextMnistSampleDataKernel(double* devNeurons, const unsigned char* devMnistData, int mnistSampleDataIndexStart);
 void loadNextMnistSampleLabel(double* outputExpected, const char* mnistLabels, int mnistSampleLabelIndex);
+__global__ void loadNextMnistSampleLabelKernel(double* devOutputExpected, const char* devMnistLabels, int mnistSampleLabelIndex);
 
 // define function prototypes for readmodel.cu
 void readBiasesFromDisk(double* biases, int numberOfBiasesTotal);
@@ -123,4 +123,5 @@ __global__ void weightUpdateKernel(double* devNeurons, double* devWeights, doubl
         int numberOfNeuronsInRightLayer, int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstWeight, double learningRate);
 void updateWeights(double* neurons, double* weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* firstNeuronIndexPerLayer,
         int* firstWeightIndexPerLayer, double learningRate);
+
 #endif

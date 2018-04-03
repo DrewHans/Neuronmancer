@@ -28,7 +28,7 @@
 #include "./readmodel.cu"
 #include "./savemodel.cu"
 
-#include "./loadinput.cu"
+#include "./loadmnist.cu"
 
 #include "./activationfunctions.cu"
 #include "./combinationfunctions.cu"

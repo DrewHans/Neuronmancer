@@ -17,7 +17,6 @@ void ui_train() {
     int* numberOfWeightsPerLayer; // store the total number of weights between each layer in our neural network in a 1d array of size numberOfLayers-1
     int* firstNeuronIndexPerLayer; // store the indexes of each layer's first neuron value
     int* firstWeightIndexPerLayer; // store the indexes of each layer's first weight value
-    Activation* activationsPerLayer; // store the activation of each layer
     double* neurons; // store the neuron values of our neural network in a 1d array of size neuronSize (1d arrays are easy to work with in CUDA)
     double* weights; // store the weight values of our neural network in a 1d array of size weightSize (1d arrays are easy to work with in CUDA)
     double* biases; // store the biases values of our neural network in a 1d array of size weightSize (1d arrays are easy to work with in CUDA)
@@ -47,11 +46,6 @@ void ui_train() {
     firstWeightIndexPerLayer = (int *) malloc(sizeof(int));
     if (firstWeightIndexPerLayer == NULL) {
         onMallocError(sizeof(int));
-    }
-
-    activationsPerLayer = (Activation *) malloc(sizeof(Activation));
-    if (activationsPerLayer == NULL) {
-        onMallocError(sizeof(Activation));
     }
 
     weights = (double *) malloc(sizeof(double));
@@ -85,15 +79,6 @@ void ui_train() {
         printf("numberOfWeightsPerLayer[%d]  = %d\n", i, numberOfWeightsPerLayer[i]);
         printf("firstNeuronIndexPerLayer[%d] = %d\n", i, firstNeuronIndexPerLayer[i]);
         printf("firstWeightIndexPerLayer[%d] = %d\n", i, firstWeightIndexPerLayer[i]);
-        if(activationsPerLayer[i] == SIGMACT) {
-            printf("activationsPerLayer[%d] = SIGMOID\n", i);
-        } else if(activationsPerLayer[i] == RELUACT) {
-            printf("activationsPerLayer[%d] = RELU\n", i);
-        } else if(activationsPerLayer[i] == TANHACT) {
-            printf("activationsPerLayer[%d] = TANH\n", i);
-        } else {
-            printf("activationsPerLayer[%d] = %d\n", i, activationsPerLayer[i]);
-        }
     }
 
     printarray("biases", biases, numberOfNeuronsTotal);
@@ -170,12 +155,13 @@ void ui_train() {
                 // calculate and backpropagate error signals
                 backpropagateWithHost(outputExpected, neurons, weights, biases, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer,
                         firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
-            }
 
-            // after all samples have been processed, use error signal to update weights and biases
-            updateWeights(neurons, weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer,
-                    learningRate);
-            updateBiases(neurons, biases, neuronErrors, numberOfNeuronsTotal, learningRate);
+                // use error signal to update weights and biases
+                updateWeights(neurons, weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer,
+                        learningRate);
+                updateBiases(neurons, biases, neuronErrors, numberOfNeuronsTotal, learningRate);
+
+            }
 
             if (i % 10 == 0) {
                 printf("...%d epochs complete...", i);
@@ -303,26 +289,25 @@ void ui_train() {
 
                 // calculate and backpropagate error signals
                 backpropagateWithDevice(numBlocks, threadsPerBlock, devOutputExpected, devNeurons, devWeights, devBiases, devNeuronErrors, numberOfLayers,
-                        neuronsPerLayer, weightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
-            }
+                        numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
 
-            // after all samples have been processed, use error signal to update weights and biases
+                // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
+                int outputLayerIndex = numberOfLayers - 1;
 
-            // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
-            int outputLayerIndex = numberOfLayers - 1;
+                // for each layer l between output and input, visit in reverse order, backpropagate error values and update weights
+                for (int l = outputLayerIndex - 1; l > 0; l--) {
 
-            // for each layer l between output and input, visit in reverse order, backpropagate error values and update weights
-            for (int l = outputLayerIndex - 1; l > 0; l--) {
-
-                // for each node in layer l, use error signal (devNeuronErrors) to update the devWeights and devBiases
-                // spawn 1 block for each neuron in layer l and, in each block, spawn 1 thread for each neuron in layer l+1
-                weightUpdateKernel<<<numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l + 1]>>>(devNeurons, devWeights, devNeuronErrors,
-                        numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l + 1], numberOfWeightsPerLayer[l + 1], firstNeuronIndexPerLayer[l],
-                        firstNeuronIndexPerLayer[l + 1], learningRate);
+                    // for each node in layer l, use error signal (devNeuronErrors) to update the devWeights and devBiases
+                    // spawn 1 block for each neuron in layer l and, in each block, spawn 1 thread for each neuron in layer l+1
+                    weightUpdateKernel<<<numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l + 1]>>>(devNeurons, devWeights, devNeuronErrors,
+                            numberOfNeuronsPerLayer[l], numberOfNeuronsPerLayer[l + 1], numberOfWeightsPerLayer[l + 1], firstNeuronIndexPerLayer[l],
+                            firstNeuronIndexPerLayer[l + 1], learningRate);
+                    cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
+                }
+                biasUpdateKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, devBiases, devNeuronErrors, numberOfNeuronsTotal, learningRate);
                 cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
+
             }
-            biasUpdateKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, devBiases, devNeuronErrors, numberOfNeuronsTotal, learningRate);
-            cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
 
             if (i % 10 == 0) {
                 printf("...%d epochs complete...", i);
@@ -347,7 +332,7 @@ void ui_train() {
 
     // SAVE TRAINED WEIGHTS AND BIASES TO DISK
     saveWeightsToDisk(weights, numberOfWeightsTotal);
-    saveBiasesToDisk(biases, numberOfBiasesTotal);
+    saveBiasesToDisk(biases, numberOfNeuronsTotal);
 
     printf("Press enter to free dynamically allocated host memory.\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input

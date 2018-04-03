@@ -14,11 +14,11 @@ __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights
     int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < numberOfNeuronsInLeftLayer) {
         int neuronId = indexOfFirstNeuronInLeft + id;
-        int errortemp = 0;
+        double neuronError = 0.0;
         for (int w = 0; w < numberOfWeightsBetweenLayers; w += numberOfNeuronsInLeftLayer) {
-            errortemp = errortemp + (devWeights[indexOfFirstWeight + w] * devNeuronErrors[indexOfFirstNeuronInRight + w]);
-            devNeuronErrors[neuronId] = errortemp * sigmoidDerivative(devNeurons[neuronId] + devBiases[neuronId]);
+            neuronError = neuronError + (devWeights[indexOfFirstWeight + w] * devNeuronErrors[indexOfFirstNeuronInRight + w]);
         }
+        devNeuronErrors[neuronId] = neuronError * sigmoidDerivative(devNeurons[neuronId]);
     }
 } //end backpropagate errors kernel
 
@@ -29,7 +29,7 @@ void backpropagateWithDevice(int numBlocks, int threadsPerBlock, double* devExpe
         double* devNeuronErrors, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
     // for each node in the output layer, calculate the output error (spawn 1 thread for each neuron in the output layer)
     int outputLayerIndex = numberOfLayers - 1;
-    costFunctionKernel<<<numBlocks, threadsPerBlock>>>(devExpectedOutput, devNeurons, devNeuronErrors, firstNeuronIndexPerLayer[outputLayerIndex],
+    costDerivativeKernel<<<numBlocks, threadsPerBlock>>>(devExpectedOutput, devNeurons, devNeuronErrors, firstNeuronIndexPerLayer[outputLayerIndex],
             neuronsPerLayer[outputLayerIndex]);
     cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
 
@@ -50,25 +50,25 @@ void backpropagateWithHost(double* expectedOutput, double* neurons, double* weig
     // for each node in the output layer, calculate the output error
     int outputLayerIndex = numberOfLayers - 1;
     int neuronId = 0;
-    double errortemp = 0.0;
+    double neuronError = 0.0;
     for (int i = 0; i < neuronsPerLayer[outputLayerIndex]; i++) {
-        neuronId = firstNeuronIndexPerLayer[outputLayerIndex] + i;
-        errortemp = costFunction(&expectedOutput[i], &neurons[neuronId]); // store the cost/error/loss of expected - calculated
-        neuronErrors[neuronId] = errortemp * sigmoidDerivative(neurons[neuronId] + biases[neuronId]);
+        neuronError = 0.0; // zero out the neuron error for next neuron
+        neuronId = firstNeuronIndexPerLayer[outputLayerIndex] + i; //
+        neuronError = costDerivative(expectedOutput[i], neurons[neuronId]); // store the cost/error/loss of output layer neuron
+        neuronErrors[neuronId] = neuronError * sigmoidDerivative(neurons[neuronId]); // calculate the output layer delta and shove in neuronErrors
     }
-
-    // clear errortemp
-    errortemp = 0.0;
 
     // for each layer l between output and input, visit in reverse order and backpropagate error values
     for (int l = outputLayerIndex - 1; l > 0; l--) {
         // for each neuron in layer l
         for (int n = 0; n < neuronsPerLayer[l]; n++) {
+            neuronError = 0.0; // zero out the neuron error for next neuron
             // for each connection between layer l and l+1
             for (int w = 0; w < weightsPerLayer[l + 1]; w = w + neuronsPerLayer[l]) {
-                errortemp = errortemp + (weights[firstWeightIndexPerLayer[l + 1] + w] * neuronErrors[firstNeuronIndexPerLayer[l + 1] + w]);
+                // layer l neuron n delta
+                neuronError = neuronError + (weights[firstWeightIndexPerLayer[l + 1] + w] * neuronErrors[firstNeuronIndexPerLayer[l + 1] + w]);
             }
-            neuronErrors[firstNeuronIndexPerLayer[l] + n] = errortemp * sigmoidDerivative(neurons[firstNeuronIndexPerLayer[l] + n]);
+            neuronErrors[firstNeuronIndexPerLayer[l] + n] = neuronError * sigmoidDerivative(neurons[firstNeuronIndexPerLayer[l] + n]);
         }
     }
 } //end backpropagateWithHost method

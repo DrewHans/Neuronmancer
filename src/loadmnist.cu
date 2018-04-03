@@ -22,7 +22,7 @@ void loadMnistTestSamples(unsigned char* testData, char* testLabels, int* number
     // stretch trainingData array to be MNISTSAMPLEDATASIZE * MNISTTESTSETSIZE * sizeof(char)
     unsigned char* tempPtr = testData; // keep track of old memory
     testData = (unsigned char*) malloc(MNISTSAMPLEDATASIZE * MNISTTESTSETSIZE * sizeof(char));
-    if (trainingData == NULL) {
+    if (testData == NULL) {
         onMallocError(MNISTSAMPLEDATASIZE * MNISTTESTSETSIZE * sizeof(char));
     }
     free(tempPtr); // release old memory
@@ -59,7 +59,10 @@ void loadMnistTestSamples(unsigned char* testData, char* testLabels, int* number
         }
 
         // throw away the newline at the end of the sample entry
-        getdelim(&buffer, &lineLength, "\n", thefile);
+        readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
+        if (readStatus == -1) {
+            onFileOpenError (MNISTTESTFILELOCATION);
+        }
     }
 
 } //end loadMnistTestSamples method
@@ -118,7 +121,10 @@ void loadMnistTrainingSamples(unsigned char* trainingData, char* trainingLabels,
         }
 
         // throw away the newline at the end of the sample entry
-        getdelim(&buffer, &lineLength, "\n", thefile);
+        readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
+        if (readStatus == -1) {
+            onFileOpenError (MNISTTRAINFILELOCATION);
+        }
     }
 
 } //end loadMnistTrainingSamples method
@@ -145,7 +151,7 @@ void loadNextMnistSampleData(double* neurons, const unsigned char* mnistData, in
 __global__ void loadNextMnistSampleDataKernel(double* devNeurons, const unsigned char* devMnistData, int mnistSampleDataIndexStart) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < MNISTSAMPLEDATASIZE) {
-        devNeurons[id] = (double) mnistData[mnistSampleDataIndexStart * MNISTSAMPLEDATASIZE + id];
+        devNeurons[id] = (double) devMnistData[mnistSampleDataIndexStart * MNISTSAMPLEDATASIZE + id];
     }
 } //end loadNextMnistSampleData kernel
 

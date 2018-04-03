@@ -9,7 +9,6 @@
 void ui_create() {
     // declare variables needed to store the model information
     char inputBuffer[MAXINPUT]; // store the user's input (gets recycled a lot)
-    int tempInt; // store temp int input from user (used for determining layer activation)
     int numberOfLayers; // store the total number of layers in the network
     int numberOfNeuronsTotal; // store the total number of neurons in our neural network
     int numberOfWeightsTotal; // store the total number of weights in our neural network
@@ -17,7 +16,6 @@ void ui_create() {
     int* numberOfWeightsPerLayer; // store the total number of weights between each layer in our neural network in a 1d array of size numberOfLayers-1
     int* firstNeuronIndexPerLayer; // store the indexes of each layer's first neuron value
     int* firstWeightIndexPerLayer; // store the indexes of each layer's first weight value
-    Activation* activationsPerLayer; // store the activation of each layer
     double* weights; // store the weight values of our neural network in a 1d array of size weightSize (1d arrays are easy to work with in CUDA)
     double* biases; // store the biases values of our neural network in a 1d array of size weightSize (1d arrays are easy to work with in CUDA)
     int epochs; // store the number of epochs for training
@@ -71,66 +69,23 @@ void ui_create() {
         onMallocError(numberOfLayers * sizeof(int));
     }
 
-    activationsPerLayer = (Activation*) malloc(numberOfLayers * sizeof(Activation)); //malloc allocates a chunk of host memory
-    if (activationsPerLayer == NULL) {
-        onMallocError(numberOfLayers * sizeof(Activation));
-    }
+    printf("The input layer will have 784 neurons (one for each pixel in an MNIST sample).\n");
+    printf("The output layer will have 10 neurons (one for each MNIST sample class).\n");
 
-    // get user input for the number of neurons in the input layer
-    numberOfNeuronsPerLayer[0] = -1; // assign -1 to enter loop
-    while (numberOfNeuronsPerLayer[0] < 1) {
-        // get the number of neurons for the input layer
-        printf("How many neurons do you want the input layer to have? (note, 1 is the minimum)\n~");
-        fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-        sscanf(inputBuffer, "%d", &numberOfNeuronsPerLayer[0]); // format and dump the user's input
-        if (numberOfNeuronsPerLayer[0] < 1) {
-            onInvalidInput(myPatience);
-            myPatience--;
-        }
-    }
-    myPatience = 2; // restore my patience
+    numberOfNeuronsPerLayer[0] = 784; // set input layer size
+    numberOfNeuronsPerLayer[numberOfLayers - 1] = 10; // set output layer size
 
-    activationsPerLayer[0] = SIGMACT; // input layer has no activation (assign SIGMACT just for fun)
-
-    // get user input for the number of neurons in and activation of each hidden layer and the output layer
-    for (int i = 1; i < numberOfLayers - 1; i++) {
+    // get user input for the number of neurons in each hidden layer
+    for (int i = 1; i < numberOfLayers - 2; i++) {
         // get the number of neurons for layer i
         numberOfNeuronsPerLayer[i] = -1; // assign -1 to enter loop
         while (numberOfNeuronsPerLayer[i] < 1) {
-            if (i == (numberOfLayers - 1)) {
-                printf("How many neurons do you want the output layer to have? (note, 1 is the minimum)\n~");
-            } else {
-                printf("How many neurons do you want hidden layer %d to have? (note, 1 is the minimum)\n~", i);
-            }
+            printf("How many neurons do you want hidden layer %d to have? (note, 1 is the minimum)\n~", i);
             fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
             sscanf(inputBuffer, "%d", &numberOfNeuronsPerLayer[i]); // format and dump the user's input
             if (numberOfNeuronsPerLayer[i] < 1) {
                 onInvalidInput(myPatience);
                 myPatience--;
-            }
-        }
-        myPatience = 2; // restore my patience
-
-        // get user input for the activation for layer i
-        tempInt = 0; // assign 'd' to enter loop
-        while (tempInt != 1 || tempInt != 2 || tempInt != 3) {
-            // get the activation for layer i
-            if (i == (numberOfLayers - 1)) {
-                printf("What activation do you want the output layer to have?\nEnter 1 for sigmoid, 2 for relu, or 3 for tanh:\n~");
-            } else {
-                printf("What activation do you want hidden layer %d to have?\nEnter 1 for sigmoid, 2 for relu, or 3 for tanh:\n~", i);
-            }
-            fgets(inputBuffer, 1, stdin); // read the user's input
-            sscanf(inputBuffer, "%d", &tempInt); // format and dump the user's input
-            if (tempInt != 1 || tempInt != 2 || tempInt != 3) {
-                onInvalidInput(myPatience);
-                myPatience--;
-            } else if (tempInt == 1) {
-                activationsPerLayer[i] = SIGMACT;
-            } else if (tempInt == 2) {
-                activationsPerLayer[i] = RELUACT;
-            } else if (tempInt == 3) {
-                activationsPerLayer[i] = TANHACT;
             }
         }
         myPatience = 2; // restore my patience
@@ -170,7 +125,7 @@ void ui_create() {
     printf("...initializing biases to zero...\n");
     initArrayToZeros(biases, numberOfNeuronsTotal); // cleans up any garbage we may have picked up
 #ifdef DEBUG
-            printarray("biases", biases, numberOfNeuronsTotal);
+    printarray("biases", biases, numberOfNeuronsTotal);
 #endif
     printf("...initializing weights to random double floating-point values in range 0.0-1.0 (inclusive)...\n");
     initArrayToRandomDoubles(weights, numberOfWeightsTotal);
@@ -220,7 +175,6 @@ void ui_create() {
     free(numberOfWeightsPerLayer);
     free(firstNeuronIndexPerLayer);
     free(firstWeightIndexPerLayer);
-    free(activationsPerLayer);
     free(biases);
     free(weights);
 
