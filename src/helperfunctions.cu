@@ -161,13 +161,13 @@ void onFailToSetGPUDevice() {
  */
 void onInvalidInput(int myPatience) {
     if (myPatience == 2) {
-        printf("Looks like you entered an illegal value... you're testing my patience, try again!\n");
+        printf("Looks like you entered an illegal value... you're testing my patience, try again!\n\n");
     } else if (myPatience == 1) {
-        printf("That's the second time you've entered an illegal value... do you think this is funny? Try again!\n");
+        printf("That's the second time you've entered an illegal value... do you think this is funny? Try again!\n\n");
     } else if (myPatience == 0) {
-        printf("Sigh... you just can't do anything right, can you?\n");
+        printf("Sigh... you just can't do anything right, can you?\n\n");
     } else {
-        printf("Look dude, I've got all day. If you wanna keep wasting your time then that's fine by me. You know what you're supposed to do.\n");
+        printf("Look dude, I've got all day. If you wanna keep wasting your time then that's fine by me. You know what you're supposed to do.\n\n");
     }
 } //end onInvalidInput method
 

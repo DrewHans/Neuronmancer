@@ -23,15 +23,14 @@ void ui_create() {
 
     int myPatience = 2; // stores the amount of patience I have for the user's nonsense
 
-    printf("Before we begin, there are some things you should know. By design, all models created with Neuronmancer will have at least two layers - one input"
-            " layer at the beginning of the network and one output layer at the end of the network. These layers are not optional, they are required. You"
-            " can, however, specify the number of hidden layers and you can also determine the number of neurons in each layer of the network, including the"
-            " input and output layers.\n");
-    printf("Press enter to continue or ctrl-c to abort...\n~");
+    printf("Before we begin, there are some things you should know. By design, all models created with Neuronmancer will have at least"
+            " two layers - one input layer at the beginning of the network and one output layer at the end of the network. These layers"
+            " are not optional, they are required for this program to function correctly. You can, however, specify the number of hidden"
+            " layers and the number of neurons in each of those hidden layers... I will allow you at least that much freedom.\n");
+    printf("Press enter to continue or ctrl-c to abort...");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
 
-    printf("Lets build an artificial neural network!\n");
-    printf("For the following please enter a positive number with no spaces, commas, or decimal points.\n");
+    printf("\nFor the following please enter a positive number with no spaces, commas, or decimal points.\n");
 
     // get user input for the numberOfLayers
     numberOfLayers = -1; // assign -1 to enter loop
@@ -76,13 +75,13 @@ void ui_create() {
     numberOfNeuronsPerLayer[numberOfLayers - 1] = 10; // set output layer size
 
     // get user input for the number of neurons in each hidden layer
-    for (int i = 1; i < numberOfLayers - 2; i++) {
+    for (int i = 1; i < numberOfLayers - 1; i++) {
         // get the number of neurons for layer i
         numberOfNeuronsPerLayer[i] = -1; // assign -1 to enter loop
         while (numberOfNeuronsPerLayer[i] < 1) {
             printf("How many neurons do you want hidden layer %d to have? (note, 1 is the minimum)\n~", i);
             fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-            sscanf(inputBuffer, "%d", &numberOfNeuronsPerLayer[i]); // format and dump the user's input
+            sscanf(inputBuffer, "%d", &(numberOfNeuronsPerLayer[i])); // format and dump the user's input
             if (numberOfNeuronsPerLayer[i] < 1) {
                 onInvalidInput(myPatience);
                 myPatience--;
@@ -124,21 +123,17 @@ void ui_create() {
 
     printf("...initializing biases to zero...\n");
     initArrayToZeros(biases, numberOfNeuronsTotal); // cleans up any garbage we may have picked up
-#ifdef DEBUG
-    printarray("biases", biases, numberOfNeuronsTotal);
-#endif
+
     printf("...initializing weights to random double floating-point values in range 0.0-1.0 (inclusive)...\n");
     initArrayToRandomDoubles(weights, numberOfWeightsTotal);
-#ifdef DEBUG
-    printarray("weights", weights, numberOfWeightsTotal);
-#endif
+
     printf("...initialization successful!\n");
 
     printf("Now you need to decide the learning rate and number of epochs.\n");
 
     // get user input for the learningRate
     learningRate = -1.0; // assign -1.0 to enter loop
-    while (learningRate < 0.0) {
+    while (learningRate <= 0.0) {
         // get the learning rate
         printf("Please enter a positive floating-point number greater than 0.0 for the learning rate:\n~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
@@ -151,8 +146,8 @@ void ui_create() {
     myPatience = 2; // restore my patience
 
     // get user input for the epochs
-    epochs = 0; // assign -1.0 to enter loop
-    while (epochs < 0) {
+    epochs = -1.0; // assign -1.0 to enter loop
+    while (epochs <= 0) {
         // get the learning rate
         printf("Pleae enter a positive whole number greater than 0 for the number of epochs:\n~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
@@ -168,7 +163,7 @@ void ui_create() {
     printf("Saving model to disk...");
     saveModel(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
             firstWeightIndexPerLayer, weights, biases, learningRate, epochs);
-    printf("Model saved!");
+    printf("Model saved!\n");
 
     // free the chunks of host memory that were dynamically allocated by malloc
     free(numberOfNeuronsPerLayer);
