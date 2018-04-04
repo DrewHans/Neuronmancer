@@ -10,16 +10,16 @@
  * @params: biases - pointer to an array of double values (used to store value before return)
  * @params: numberOfBiasesTotal - equal to numberOfNeuronsTotal
  */
-void readBiasesFromDisk(double* biases, int numberOfBiasesTotal) {
+void readBiasesFromDisk(double** biases, int numberOfBiasesTotal) {
     FILE* thefile = fopen(BIASESFILELOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (BIASESFILELOCATION);
     }
 
     // stretch array to be numberOfWeightsTotal * sizeof(double)
-    double* tempPtr = biases; // keep track of old memory
-    biases = (double*) malloc(numberOfBiasesTotal * sizeof(double));
-    if (biases == NULL) {
+    double* tempPtr = (*biases); // keep track of old memory
+    (*biases) = (double*) malloc(numberOfBiasesTotal * sizeof(double));
+    if ((*biases) == NULL) {
         onMallocError(numberOfBiasesTotal * sizeof(double));
     }
     free(tempPtr); // release old memory
@@ -35,7 +35,7 @@ void readBiasesFromDisk(double* biases, int numberOfBiasesTotal) {
         if (readStatus == -1) {
             onFileOpenError (BIASESFILELOCATION);
         }
-        sscanf(buffer, "%lf", &(biases[i])); // convert buffer string to double and shove in biases[i]
+        sscanf(buffer, "%lf", &((*biases)[i])); // convert buffer string to double and shove in biases[i]
     }
 
     fclose(thefile); // close the file once we're done with it
@@ -95,16 +95,16 @@ void readLearningRateFromDisk(double* learningRate) {
  * @params: weights - pointer to an array of double values (used to store value before return)
  * @params: numberOfWeightsTotal - pointer to an int value
  */
-void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
+void readWeightsFromDisk(double** weights, int numberOfWeightsTotal) {
     FILE* thefile = fopen(WEIGHTSFILELOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (WEIGHTSFILELOCATION);
     }
 
     // stretch array to be numberOfWeightsTotal * sizeof(double)
-    double* tempPtr = weights; // keep track of old memory
-    weights = (double*) malloc(numberOfWeightsTotal * sizeof(double));
-    if (weights == NULL) {
+    double* tempPtr = (*weights); // keep track of old memory
+    (*weights) = (double*) malloc(numberOfWeightsTotal * sizeof(double));
+    if ((*weights) == NULL) {
         onMallocError(numberOfWeightsTotal * sizeof(double));
     }
     free(tempPtr); // release old memory
@@ -120,7 +120,7 @@ void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
         if (readStatus == -1) {
             onFileOpenError (WEIGHTSFILELOCATION);
         }
-        sscanf(buffer, "%lf", &(weights[i])); // convert buffer string to double and shove in weights[i]
+        sscanf(buffer, "%lf", &((*weights)[i])); // convert buffer string to double and shove in weights[i]
     }
 
     fclose(thefile); // close the file once we're done with it
@@ -136,8 +136,8 @@ void readWeightsFromDisk(double* weights, int numberOfWeightsTotal) {
  * @params: firstNeuronIndexPerLayer - pointer to an array of int values (used to store value before return)
  * @params: firstWeightIndexPerLayer - pointer to an array of int values (used to store value before return)
  */
-void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeightsTotal, int* numberOfNeuronsPerLayer,
-        int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
+void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeightsTotal, int** numberOfNeuronsPerLayer,
+        int** numberOfWeightsPerLayer, int** firstNeuronIndexPerLayer, int** firstWeightIndexPerLayer) {
     FILE* thefile = fopen(MODELVALUESLOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (MODELVALUESLOCATION);
@@ -170,30 +170,30 @@ void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int
     sscanf(buffer, "%d", numberOfWeightsTotal); // convert buffer string to int and shove in numberOfNeuronsTotal
 
     // stretch arrays to be numberOfLayers * sizeof(type)
-    int* tempPtr = numberOfNeuronsPerLayer; // keep track of old memory
-    numberOfNeuronsPerLayer = (int *) malloc((*numberOfLayers) * sizeof(int));
-    if (numberOfNeuronsPerLayer == NULL) {
+    int* tempPtr = (*numberOfNeuronsPerLayer); // keep track of old memory
+    (*numberOfNeuronsPerLayer) = (int *) malloc((*numberOfLayers) * sizeof(int));
+    if ((*numberOfNeuronsPerLayer) == NULL) {
         onMallocError((*numberOfLayers) * sizeof(int));
     }
     free(tempPtr); // release old memory
 
-    tempPtr = numberOfWeightsPerLayer; // keep track of old memory
-    numberOfWeightsPerLayer = (int *) malloc((*numberOfLayers) * sizeof(int));
-    if (numberOfWeightsPerLayer == NULL) {
+    tempPtr = (*numberOfWeightsPerLayer); // keep track of old memory
+    (*numberOfWeightsPerLayer) = (int *) malloc((*numberOfLayers) * sizeof(int));
+    if ((*numberOfWeightsPerLayer) == NULL) {
         onMallocError((*numberOfLayers) * sizeof(int));
     }
     free(tempPtr); // release old memory
 
-    tempPtr = firstNeuronIndexPerLayer; // keep track of old memory
-    firstNeuronIndexPerLayer = (int *) malloc((*numberOfLayers) * sizeof(int));
-    if (firstNeuronIndexPerLayer == NULL) {
+    tempPtr = (*firstNeuronIndexPerLayer); // keep track of old memory
+    (*firstNeuronIndexPerLayer) = (int *) malloc((*numberOfLayers) * sizeof(int));
+    if ((*firstNeuronIndexPerLayer) == NULL) {
         onMallocError((*numberOfLayers) * sizeof(int));
     }
     free(tempPtr); // release old memory
 
-    tempPtr = firstWeightIndexPerLayer; // keep track of old memory
-    firstWeightIndexPerLayer = (int *) malloc((*numberOfLayers) * sizeof(int));
-    if (firstWeightIndexPerLayer == NULL) {
+    tempPtr = (*firstWeightIndexPerLayer); // keep track of old memory
+    (*firstWeightIndexPerLayer) = (int *) malloc((*numberOfLayers) * sizeof(int));
+    if ((*firstWeightIndexPerLayer) == NULL) {
         onMallocError((*numberOfLayers) * sizeof(int));
     }
     free(tempPtr); // release old memory
@@ -205,28 +205,28 @@ void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int
         if (readStatus == -1) {
             onFileReadError (MODELVALUESLOCATION);
         }
-        sscanf(buffer, "%d", &(numberOfNeuronsPerLayer[i]));
+        sscanf(buffer, "%d", &((*numberOfNeuronsPerLayer)[i]));
 
         // get numberOfWeightsPerLayer[i] from file
         readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
         if (readStatus == -1) {
             onFileReadError (MODELVALUESLOCATION);
         }
-        sscanf(buffer, "%d", &(numberOfWeightsPerLayer[i]));
+        sscanf(buffer, "%d", &((*numberOfWeightsPerLayer)[i]));
 
         // get firstNeuronIndexPerLayer[i] from file
         readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
         if (readStatus == -1) {
             onFileReadError (MODELVALUESLOCATION);
         }
-        sscanf(buffer, "%d", &(firstNeuronIndexPerLayer[i]));
+        sscanf(buffer, "%d", &((*firstNeuronIndexPerLayer)[i]));
 
         // get firstWeightIndexPerLayer[i] from file
         readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
         if (readStatus == -1) {
             onFileReadError (MODELVALUESLOCATION);
         }
-        sscanf(buffer, "%d", &(firstWeightIndexPerLayer[i]));
+        sscanf(buffer, "%d", &((*firstWeightIndexPerLayer)[i]));
     }
 
     fclose(thefile); // close the file once we're done with it
@@ -246,8 +246,8 @@ void readModelValuesFromDisk(int* numberOfLayers, int* numberOfNeuronsTotal, int
  * @params: learningRate - pointer to a double value (used to store value before return)
  * @params: epochs - pointer to an int value (used to store value before return)
  */
-void readModel(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeightsTotal, int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer,
-        int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer, double* weights, double* biases, double* learningRate, int* epochs) {
+void readModel(int* numberOfLayers, int* numberOfNeuronsTotal, int* numberOfWeightsTotal, int** numberOfNeuronsPerLayer, int** numberOfWeightsPerLayer,
+        int** firstNeuronIndexPerLayer, int** firstWeightIndexPerLayer, double** weights, double** biases, double* learningRate, int* epochs) {
     // verify directory containing model exists
     if (stat(MODELDIRECTORY, &st) == -1) {
         onFileOpenError (MODELDIRECTORY);

@@ -55,10 +55,10 @@ void getDeviceProperties(int* multiProcessorCount, int* warpSize) {
  * @params: a - a pointer to an array of double values
  * @params: n - the size of array a
  */
-void initArrayToRandomDoubles(double* a, int n) {
+void initArrayToRandomDoubles(double** a, int n) {
     // generate random doubles in range [0, 1)
     for (int i = 0; i < n; i++) {
-        a[i] = ((double) rand()) / ((double) RAND_MAX);
+        (*a)[i] = ((double) rand()) / ((double) RAND_MAX);
     }
 } //end initArrayToRandomDoubles method
 
@@ -67,24 +67,12 @@ void initArrayToRandomDoubles(double* a, int n) {
  * @params: a - a pointer to an array of double values
  * @params: n - the size of array a
  */
-void initArrayToZeros(double* a, int n) {
+void initArrayToZeros(double** a, int n) {
     // set all neuron values to zero
     for (int i = 0; i < n; i++) {
-        a[i] = 0;
+        (*a)[i] = 0;
     }
 } //end initArrayToZeros method
-
-/*
- * loadRandomInput
- * @params: neurons - a pointer to an array of double values (the input layer)
- * @params: n - the size of the input layer
- */
-void loadRandomInput(double* neurons, int n) {
-    // generate random doubles for testing purposes
-    for (int i = 0; i < n; i++) {
-        neurons[i] = ((double) rand()) / ((double) rand());
-    }
-} //end loadRandomInput method
 
 /*
  * printarray - prints out array values to terminal

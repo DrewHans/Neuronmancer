@@ -122,10 +122,10 @@ void ui_create() {
     printf("...allocation successful!\nBeginning value initialization (this might take a while)...\n");
 
     printf("...initializing biases to zero...\n");
-    initArrayToZeros(biases, numberOfNeuronsTotal); // cleans up any garbage we may have picked up
+    initArrayToZeros(&biases, numberOfNeuronsTotal); // cleans up any garbage we may have picked up
 
     printf("...initializing weights to random double floating-point values in range 0.0-1.0 (inclusive)...\n");
-    initArrayToRandomDoubles(weights, numberOfWeightsTotal);
+    initArrayToRandomDoubles(&weights, numberOfWeightsTotal);
 
     printf("...initialization successful!\n");
 

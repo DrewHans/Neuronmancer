@@ -61,8 +61,8 @@ void ui_train() {
     printf("Lets train an artificial neural network!\n");
     printf("Searching ./nmModel for files...\n");
 
-    readModel(&numberOfLayers, &numberOfNeuronsTotal, &numberOfWeightsTotal, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
-            firstWeightIndexPerLayer, weights, biases, &learningRate, &epochs);
+    readModel(&numberOfLayers, &numberOfNeuronsTotal, &numberOfWeightsTotal, &numberOfNeuronsPerLayer, &numberOfWeightsPerLayer, &firstNeuronIndexPerLayer,
+            &firstWeightIndexPerLayer, &weights, &biases, &learningRate, &epochs);
 
     printf("...files found!\n");
 
@@ -81,21 +81,21 @@ void ui_train() {
         printf("firstWeightIndexPerLayer[%d] = %d\n", i, firstWeightIndexPerLayer[i]);
     }
 
-    printarray("biases", biases, numberOfNeuronsTotal);
-    printarray("weights", weights, numberOfWeightsTotal);
+    //printarray("biases", biases, numberOfNeuronsTotal);
+    //printarray("weights", weights, numberOfWeightsTotal);
 #endif
-
+    printf("Made it to line 87!\n");
     // malloc memory for uninitialized arrays
     neurons = (double *) malloc(numberOfNeuronsTotal * sizeof(double));
     if (neurons == NULL) {
         onMallocError(numberOfNeuronsTotal * sizeof(double));
     }
-
+    printf("Made it to line 93!\n");
     outputExpected = (double *) malloc(numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(double));
     if (outputExpected == NULL) {
         onMallocError(numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(double));
     }
-
+    printf("Made it to line 98!\n");
     neuronErrors = (double *) malloc(numberOfNeuronsTotal * sizeof(double));
     if (neuronErrors == NULL) {
         onMallocError(numberOfNeuronsTotal * sizeof(double));
