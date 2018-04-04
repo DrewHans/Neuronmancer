@@ -22,8 +22,8 @@
 #define MNISTSAMPLEDATASIZE 784
 #define MNISTTESTSETSIZE 10000
 #define MNISTTRAININGSETSIZE 60000
-#define MNISTTESTFILELOCATION "../mnist/mnist_test.csv"
-#define MNISTTRAINFILELOCATION "../mnist/mnist_train.csv"
+#define MNISTTESTFILELOCATION "./mnist/mnist_test.csv"
+#define MNISTTRAINFILELOCATION "./mnist/mnist_train.csv"
 
 // define struct for using the stat command
 struct stat st = { 0 };
@@ -77,11 +77,11 @@ void onInvalidInput(int myPatience);
 void onMallocError(int size);
 
 // define function prototypes for loadmnist.cu
-void loadMnistTestSamples(unsigned char* testData, char* testLabels, int* numberOfSamples);
-void loadMnistTrainingSamples(unsigned char* trainingData, char* trainingLabels, int* numberOfSamples);
-void loadNextMnistSampleData(double* neurons, const unsigned char* mnistData, int mnistSampleDataIndexStart);
+void loadMnistTestSamples(unsigned char** testData, char** testLabels, int* numberOfSamples);
+void loadMnistTrainingSamples(unsigned char** trainingData, char** trainingLabels, int* numberOfSamples);
+void loadNextMnistSampleData(double** neurons, const unsigned char* mnistData, int mnistSampleDataIndexStart);
 __global__ void loadNextMnistSampleDataKernel(double* devNeurons, const unsigned char* devMnistData, int mnistSampleDataIndexStart);
-void loadNextMnistSampleLabel(double* outputExpected, const char* mnistLabels, int mnistSampleLabelIndex);
+void loadNextMnistSampleLabel(double** outputExpected, const char* mnistLabels, int mnistSampleLabelIndex);
 __global__ void loadNextMnistSampleLabelKernel(double* devOutputExpected, const char* devMnistLabels, int mnistSampleLabelIndex);
 
 // define function prototypes for readmodel.cu

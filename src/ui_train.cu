@@ -84,24 +84,24 @@ void ui_train() {
     //printarray("biases", biases, numberOfNeuronsTotal);
     //printarray("weights", weights, numberOfWeightsTotal);
 #endif
-    printf("Made it to line 87!\n");
+
     // malloc memory for uninitialized arrays
     neurons = (double *) malloc(numberOfNeuronsTotal * sizeof(double));
     if (neurons == NULL) {
         onMallocError(numberOfNeuronsTotal * sizeof(double));
     }
-    printf("Made it to line 93!\n");
+
     outputExpected = (double *) malloc(numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(double));
     if (outputExpected == NULL) {
         onMallocError(numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(double));
     }
-    printf("Made it to line 98!\n");
+
     neuronErrors = (double *) malloc(numberOfNeuronsTotal * sizeof(double));
     if (neuronErrors == NULL) {
         onMallocError(numberOfNeuronsTotal * sizeof(double));
     }
 
-    printf("Loading MNIST training samples into memory (this might take awhile)...");
+    printf("Loading MNIST training samples into memory (this might take awhile)...\n");
 
     // Load MNIST training data and labels into memory
     unsigned char* trainingData;
@@ -117,8 +117,8 @@ void ui_train() {
     if (trainingLabels == NULL) {
         onMallocError(sizeof(char));
     }
-
-    loadMnistTrainingSamples(trainingData, trainingLabels, &numberOfTrainingSamples);
+    printf("Made it to line 120 in ui_train.cu!\n");
+    loadMnistTrainingSamples(&trainingData, &trainingLabels, &numberOfTrainingSamples);
 
     printf("...MNIST training samples loaded!");
 
@@ -145,8 +145,8 @@ void ui_train() {
             // for each sample: loadTrainingData, feedforward, compareOutput, backpropagate error signal
             for (int s = 0; s < numberOfTrainingSamples; s++) {
                 // load pixel data from an MNIST sample into the input layer
-                loadNextMnistSampleData(neurons, trainingData, s);
-                loadNextMnistSampleLabel(outputExpected, trainingLabels, s);
+                loadNextMnistSampleData(&neurons, trainingData, s);
+                loadNextMnistSampleLabel(&outputExpected, trainingLabels, s);
 
                 // feedforward the data in the input layer
                 feedforwardWithHost(neurons, weights, biases, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
