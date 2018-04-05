@@ -19,7 +19,7 @@ __global__ void biasUpdateKernel(double* devNeurons, double* devBiases, double* 
     if (id < numberOfNeuronsTotal) {
         devBiases[id] = devBiases[id] + (learningRate * devNeuronErrors[id] * devNeurons[id]);
     }
-} //end bias update kernel
+} //end bias update kernel function
 
 /*
  * updateBiases

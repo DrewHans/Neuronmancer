@@ -8,4 +8,4 @@
 /* ui_evaluate method - user interface for evaluating a model */
 void ui_evaluate() {
 
-} //end ui_evaluate method
+} //end ui_evaluate function

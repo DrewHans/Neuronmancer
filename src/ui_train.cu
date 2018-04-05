@@ -58,7 +58,6 @@ void ui_train() {
         onMallocError(sizeof(double));
     }
 
-    printf("Lets train an artificial neural network!\n");
     printf("Searching ./nmModel for files...\n");
 
     readModel(&numberOfLayers, &numberOfNeuronsTotal, &numberOfWeightsTotal, &numberOfNeuronsPerLayer, &numberOfWeightsPerLayer, &firstNeuronIndexPerLayer,
@@ -117,18 +116,22 @@ void ui_train() {
     if (trainingLabels == NULL) {
         onMallocError(sizeof(char));
     }
-    printf("Made it to line 120 in ui_train.cu!\n");
+
     loadMnistTrainingSamples(&trainingData, &trainingLabels, &numberOfTrainingSamples);
 
-    printf("...MNIST training samples loaded!");
+    printf("...MNIST training samples loaded!\n");
 
     // get user input for running on CPU or GPU
     tempInt = 5; // assign 5 to enter loop
-    while (tempInt != 1 || tempInt != 2) {
+
+    while (1) {
         printf("Do you want to train on the host machine or GPU device?\nEnter 1 for host or 2 for device:\n~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
         sscanf(inputBuffer, "%d", &tempInt); // format and dump the user's input
-        if (tempInt != 1 || tempInt != 2) {
+
+        if ((tempInt == 1) || (tempInt == 2)) {
+            break;
+        } else {
             onInvalidInput(myPatience);
             myPatience--;
         }
@@ -137,6 +140,10 @@ void ui_train() {
 
     if (tempInt == 1) {
         printf("Today we keep tradition, looks like we're training on the host machine!\n");
+
+        printf("Press enter to return to the main menu:\n~");
+        fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
+        printf("\n");
 
         printf("Beginning training on host now...");
 
@@ -161,10 +168,12 @@ void ui_train() {
                         learningRate);
                 updateBiases(neurons, biases, neuronErrors, numberOfNeuronsTotal, learningRate);
 
+                break;
             }
 
             if (i % 10 == 0) {
-                printf("...%d epochs complete...", i);
+                printf("...%d epochs complete...", i+1);
+                break;
             }
         }
 
@@ -352,4 +361,4 @@ void ui_train() {
     printf("Press enter to return to the main menu:\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     printf("\n");
-} //end ui_train method
+} //end ui_train function

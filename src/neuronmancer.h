@@ -76,7 +76,8 @@ void onFailToSetGPUDevice();
 void onInvalidInput(int myPatience);
 void onMallocError(int size);
 
-// define function prototypes for loadmnist.cu
+// define function prototypes for mnistfunctions.cu
+int getCalculatedMnistSampleClassification(double* neurons, int indexStart);
 void loadMnistTestSamples(unsigned char** testData, char** testLabels, int* numberOfSamples);
 void loadMnistTrainingSamples(unsigned char** trainingData, char** trainingLabels, int* numberOfSamples);
 void loadNextMnistSampleData(double** neurons, const unsigned char* mnistData, int mnistSampleDataIndexStart);

@@ -1,7 +1,7 @@
 /*******************************************************************************************
- * Filename: feedforwardfunctions.cu
+ * Filename: combinationfunctions.cu
  * Author: Drew Hans (github.com/drewhans555)
- * Description: This file contains the host and device backpropagation functions.
+ * Description: This file contains combination functions used for feeding forward input.
  *******************************************************************************************
  */
 
@@ -26,7 +26,7 @@ __global__ void combinationFunctionKernel(double* devNeurons, double* devWeights
                     + (devNeurons[prevLayerNeuronIndexStart + n] * devWeights[weightIndexStart + n]) + devBiases[neuronIndexStart + id];
         }
     }
-} //end combination function kernel
+} //end combination function kernel function
 
 /*
  * combinationFunction method - combines input from previous layer into the neuron at index neuronIndex
@@ -44,4 +44,4 @@ void combinationFunction(double* neurons, double* weights, double* biases, int n
     for (int i = 0; i < prevLayerSize; i++) {
         neurons[neuronIndex] = neurons[neuronIndex] + (neurons[prevLayerIndexStart + i] * weights[weightIndexStart + i]) + biases[neuronIndex];
     }
-}    //end combinationFunction method
+}    //end combinationFunction function

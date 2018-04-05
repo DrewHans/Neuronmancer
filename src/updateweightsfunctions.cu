@@ -25,7 +25,7 @@ __global__ void weightUpdateKernel(double* devNeurons, double* devWeights, doubl
         int neuronIndex = indexOfFirstNeuronInLeft + blockIdx.x;
         devWeights[weightIndex] = devWeights[weightIndex] + (learningRate * devNeuronErrors[neuronIndex] * devNeurons[neuronIndex]);
     }
-} //end weight update kernel
+} //end weight update kernel function
 
 /*
  * updateWeights

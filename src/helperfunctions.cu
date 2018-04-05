@@ -48,7 +48,7 @@ void getDeviceProperties(int* multiProcessorCount, int* warpSize) {
 
     *multiProcessorCount = devProp.multiProcessorCount;
     *warpSize = devProp.warpSize;
-} //end getDeviceProperties
+} //end getDeviceProperties function
 
 /*
  * initArrayToRandomDoubles
@@ -60,7 +60,7 @@ void initArrayToRandomDoubles(double** a, int n) {
     for (int i = 0; i < n; i++) {
         (*a)[i] = ((double) rand()) / ((double) RAND_MAX);
     }
-} //end initArrayToRandomDoubles method
+} //end initArrayToRandomDoubles function
 
 /*
  * initArrayToZeros
@@ -72,7 +72,7 @@ void initArrayToZeros(double** a, int n) {
     for (int i = 0; i < n; i++) {
         (*a)[i] = 0;
     }
-} //end initArrayToZeros method
+} //end initArrayToZeros function
 
 /*
  * printarray - prints out array values to terminal
@@ -85,14 +85,14 @@ void printarray(const char* name, double* a, int n) {
         printf("%s[%d]=%lf\n", name, i, a[i]);
     }
     printf("\n");
-} //end printarray method
+} //end printarray function
 
 /*
  * printFarewellMSG - prints out one final insult before we crash
  */
 void printFarewellMSG() {
     printf("Sorry, I did everything I could but it looks like I'm crashing...\n...\n...your computer sucks, good-bye.\n");
-} //end printFarewellMSG method
+} //end printFarewellMSG function
 
 /*
  * onCudaMallocError - SOS, we're going down
@@ -102,7 +102,7 @@ void onCudaMallocError(int size) {
     printf("ERROR: Failed to cudaMalloc %d of memory!\n", size);
     printFarewellMSG();
     exit(1);
-} //end onCudaMallocError method
+} //end onCudaMallocError function
 
 /*
  * onCudaMemcpyError - SOS, we're going down
@@ -112,7 +112,7 @@ void onCudaMemcpyError(const char* hostVariable) {
     printf("ERROR: Failed to cudaMemcpy %s to device!\n", hostVariable);
     printFarewellMSG();
     exit(1);
-} //end onCudaMemcpyError method
+} //end onCudaMemcpyError function
 
 /*
  * onFileOpenError - SOS, we're going down
@@ -122,7 +122,7 @@ void onFileOpenError(const char* path) {
     printf("ERROR: Failed to open %s!\n", path);
     printFarewellMSG();
     exit(1);
-} //end onFileOpenError method
+} //end onFileOpenError function
 
 /*
  * onFileReadError - SOS, we're going down
@@ -132,7 +132,7 @@ void onFileReadError(const char* path) {
     printf("ERROR: Failed to read value from file %s!\n", path);
     printFarewellMSG();
     exit(1);
-} //end onFileReadError method
+} //end onFileReadError function
 
 /*
  * onFailToSetGPUDevice - SOS, we're going down
@@ -141,7 +141,7 @@ void onFailToSetGPUDevice() {
     printf("ERROR: Failed find GPU device!\n");
     printFarewellMSG();
     exit(1);
-} //end onFailToSetGPUDevice
+} //end onFailToSetGPUDevice function
 
 /*
  * onInvalidInput - prints out insults when the user screws up (silly humans)
@@ -157,7 +157,7 @@ void onInvalidInput(int myPatience) {
     } else {
         printf("Look dude, I've got all day. If you wanna keep wasting your time then that's fine by me. You know what you're supposed to do.\n\n");
     }
-} //end onInvalidInput method
+} //end onInvalidInput function
 
 /*
  * onMallocError - SOS, we're going down
@@ -167,4 +167,4 @@ void onMallocError(int size) {
     printf("ERROR: Failed to malloc %d of memory!\n", size);
     printFarewellMSG();
     exit(1);
-} //end onMallocError method
+} //end onMallocError function

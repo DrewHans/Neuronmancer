@@ -176,4 +176,4 @@ void ui_create() {
     printf("Press enter to return to the main menu:\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     printf("\n");
-} //end ui_create method
+} //end ui_create function

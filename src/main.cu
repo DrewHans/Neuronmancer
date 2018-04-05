@@ -28,7 +28,7 @@
 #include "./readmodel.cu"
 #include "./savemodel.cu"
 
-#include "./loadmnist.cu"
+#include "./mnistfunctions.cu"
 
 #include "./activationfunctions.cu"
 #include "./combinationfunctions.cu"
@@ -43,7 +43,10 @@
 #include "./ui_train.cu"
 #include "./ui_evaluate.cu"
 
-/* main - the program starts here */
+/* main - the program starts here
+ * @params: argc - the argument count
+ * @params: argv - the string of arguments
+ */
 int main(int argc, char * argv[]) {
     printf("Starting Neuronmancer...\n");
     char inputBuffer[MAXINPUT]; // store the user's input (gets recycled a lot)
@@ -74,4 +77,4 @@ int main(int argc, char * argv[]) {
     }
 
     printf("Neuronmancer will now end.\n");
-} //end main method
+} //end main function

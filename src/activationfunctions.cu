@@ -39,7 +39,7 @@ __global__ void sigmoidKernel(double* devNeurons, int neuronIndexStart, int numb
     if (id < numberOfNeuronsInLayer) {
         devNeurons[neuronIndexStart + id] = sigmoidFunction(devNeurons[neuronIndexStart + id]);
     }
-} //end sigmoid activation kernel
+} //end sigmoid activation kernel function
 
 /*
  * tanhFunction
@@ -75,7 +75,7 @@ __global__ void tanhKernel(double* devNeurons, int neuronIndexStart, int numberO
     if (id < numberOfNeuronsInLayer) {
         devNeurons[neuronIndexStart + id] = tanhFunction(devNeurons[neuronIndexStart + id]);
     }
-} //end tanh activation kernel
+} //end tanh activation kernel function
 
 /*
  * reluFunction
@@ -119,4 +119,4 @@ __global__ void reluKernel(double* devNeurons, int neuronIndexStart, int numberO
     if (id < numberOfNeuronsInLayer) {
         devNeurons[neuronIndexStart + id] = reluFunction(devNeurons[neuronIndexStart + id]);
     }
-} //end relu activation kernel
+} //end relu activation kernel function

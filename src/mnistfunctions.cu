@@ -1,9 +1,28 @@
 /*******************************************************************************************
- * Filename: neuralnetworkcore.cu
+ * Filename: mnistfunctions.cu
  * Author: Drew Hans (github.com/drewhans555)
- * Description: This file contains the functions needed to load input into the network.
+ * Description: This file contains the functions needed to work with the MNIST data sets.
  *******************************************************************************************
  */
+
+/*
+ * getCalculatedMnistSampleClassification
+ * @params: neurons
+ * @params: indexStart
+ * @return: a number between 0 - 9 (inclusive), the network's digit prediction
+ */
+int getCalculatedMnistSampleClassification(double* neurons, int indexStart) {
+    double highestValue = 0.0;
+    int classification = 0;
+
+    for (int i = 0; i < 10; i++) {
+        if (neurons[indexStart + i] > highestValue) {
+            highestValue = neurons[indexStart + i];
+            classification = i;
+        }
+    }
+    return classification;
+} //end getCalculatedMnistSampleClassification function
 
 /*
  * loadMnistTestSamples
@@ -19,15 +38,15 @@ void loadMnistTestSamples(unsigned char** testData, char** testLabels, int* numb
 
     *numberOfSamples = MNISTTESTSETSIZE;
 
-    // stretch trainingData array to be MNISTSAMPLEDATASIZE * MNISTTESTSETSIZE * sizeof(char)
+    // stretch trainingData array to be MNISTSAMPLEDATASIZE * MNISTTRAININGSETSIZE * sizeof(char)
     unsigned char* tempPtr = (*testData); // keep track of old memory
-    (*testData) = (unsigned char*) malloc(MNISTSAMPLEDATASIZE * MNISTTESTSETSIZE * sizeof(char));
+    (*testData) = (unsigned char*) malloc(MNISTSAMPLEDATASIZE * MNISTTESTSETSIZE * sizeof(unsigned char));
     if ((*testData) == NULL) {
         onMallocError(MNISTSAMPLEDATASIZE * MNISTTESTSETSIZE * sizeof(char));
     }
     free(tempPtr); // release old memory
 
-    // stretch testLabels array to be MNISTTESTSETSIZE * sizeof(char)
+    // stretch trainingLabels array to be MNISTTRAININGSETSIZE * sizeof(char)
     char* tempPtr2 = (*testLabels); // keep track of old memory
     (*testLabels) = (char*) malloc(MNISTTESTSETSIZE * sizeof(char));
     if ((*testLabels) == NULL) {
@@ -35,39 +54,34 @@ void loadMnistTestSamples(unsigned char** testData, char** testLabels, int* numb
     }
     free(tempPtr2); // release old memory
 
-    // setup variables needed for getdelim function
-    char* buffer = NULL; // stores stuff we pull from thefile
-    size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
-    ssize_t readStatus; // used to detect read error
+    // setup variables needed for getline function
+    char* buffer;
+    size_t bufsize = 785 * 4; // for all 785 entries: 3 chars for the number, 1 char for the comma,
+    size_t characters;
 
-    // get test label and pixel data for each sample
-    for (int i = 0; i < MNISTTESTSETSIZE; i++) {
-        // get training label
-        readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
-        if (readStatus == -1) {
-            onFileOpenError (MNISTTESTFILELOCATION);
-        }
-        sscanf(buffer, "%hhu", testLabels[i]);
-
-        // get the pixel data
-        for (int j = 0; j < MNISTSAMPLEDATASIZE; j++) {
-            readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
-            if (readStatus == -1) {
-                onFileOpenError (MNISTTESTFILELOCATION);
-            }
-            sscanf(buffer, "%hhu", testData[j]);
-        }
-
-        // throw away the newline at the end of the sample entry
-        readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
-        if (readStatus == -1) {
-            onFileOpenError (MNISTTESTFILELOCATION);
-        }
-
-        printf("testLabels[%d] = %hhu\n", i, (*testLabels)[i]);
-        printf("testData[%d] = %hhu\n", i, (*testData)[i]);
+    buffer = (char*) malloc(bufsize * sizeof(char));
+    if (buffer == NULL) {
+        onMallocError(bufsize * sizeof(char));
     }
-} //end loadMnistTestSamples method
+
+    int sampleIndex = 0;
+    int dataIndex = 0;
+
+    // loop through thefile, one line (one sample) at a time
+    while ((characters = getline(&buffer, &bufsize, thefile)) != -1) {
+        char* token = strtok(buffer, ","); // grab first token from the line (the sample's label)
+        sscanf(token, "%hhu", &((*testLabels)[sampleIndex])); // store the sample's label
+        token = strtok(NULL, ","); // grab next token from line (the first pixel value)
+        while (token) {
+            sscanf(token, "%hhu", &((*testData)[dataIndex])); // store sample's data
+            token = strtok(NULL, ","); // grab next token from line
+            dataIndex++;
+        }
+        sampleIndex++; // prepare to store next sample label and data
+    }
+
+    free(buffer);
+} //end loadMnistTestSamples function
 
 /*
  * loadMnistTrainingSamples
@@ -99,78 +113,66 @@ void loadMnistTrainingSamples(unsigned char** trainingData, char** trainingLabel
     }
     free(tempPtr2); // release old memory
 
-    // setup variables needed for getdelim function
-    char* buffer = NULL; // stores stuff we pull from thefile
-    size_t lineLength; // store the number of chars shoved into buffer (not really needed, but nice to have)
-    ssize_t readStatus; // used to detect read error
+    // setup variables needed for getline function
+    char* buffer;
+    size_t bufsize = 785 * 4; // for all 785 entries: 3 chars for the number, 1 char for the comma,
+    size_t characters;
 
-    // get training label and pixel data for each sample
-    for (int i = 0; i < MNISTTRAININGSETSIZE; i++) {
-        printf("Attempting to load sample %d label & data...", i);
-        // get training label
-        readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
-        if (readStatus == -1) {
-            printf("Label = %d\n", (*trainingLabels)[i]);
-            printf("lineLength = %ld\n", lineLength);
-
-            printf("Line 113 in loadmnist.cu!");
-            onFileOpenError (MNISTTRAINFILELOCATION);
-        }
-        sscanf(buffer, "%hhu", &((*trainingLabels)[i]));
-
-        // get the pixel data
-        for (int j = 0; j < MNISTSAMPLEDATASIZE; j++) {
-            readStatus = getdelim(&buffer, &lineLength, VALUEDELIM, thefile);
-            if (readStatus == -1) {
-                printf("Line 122 in loadmnist.cu!");
-                onFileOpenError (MNISTTRAINFILELOCATION);
-            }
-            sscanf(buffer, "%hhu", &((*trainingData)[j]));
-        }
-
-        // throw away the newline at the end of the sample entry
-        readStatus = getdelim(&buffer, &lineLength, '\n', thefile);
-        if (readStatus == -1) {
-            printf("Line 131 in loadmnist.cu!");
-            onFileOpenError (MNISTTRAINFILELOCATION);
-        }
-        printf("Sample %d loaded!\n", i);
-        buffer = NULL; // reset buffer, just in case something goes horribly wrong
+    buffer = (char*) malloc(bufsize * sizeof(char));
+    if (buffer == NULL) {
+        onMallocError(bufsize * sizeof(char));
     }
 
-} //end loadMnistTrainingSamples method
+    int sampleIndex = 0;
+    int dataIndex = 0;
+
+    // loop through thefile, one line (one sample) at a time
+    while ((characters = getline(&buffer, &bufsize, thefile)) != -1) {
+        char* token = strtok(buffer, ","); // grab first token from the line (the sample's label)
+        sscanf(token, "%hhu", &((*trainingLabels)[sampleIndex])); // store the sample's label
+        token = strtok(NULL, ","); // grab next token from line (the first pixel value)
+        while (token) {
+            sscanf(token, "%hhu", &((*trainingData)[dataIndex])); // store sample's data
+            token = strtok(NULL, ","); // grab next token from line
+            dataIndex++;
+        }
+        sampleIndex++; // prepare to store next sample label and data
+    }
+
+    free(buffer);
+} //end loadMnistTrainingSamples function
 
 /*
  * loadNextMnistSampleData
  * @params: neurons - a pointer to an array of double values (the input layer)
  * @params: mnistData - a pointer to an array of unsigned chars (bytes) containing the pixel values for all mnist samples
- * @params: mnistDataIndexStart - the starting index for the next mnist sample
+ * @params: mnistSampleDataIndexStart - the starting index for the next mnist sample
  */
 void loadNextMnistSampleData(double** neurons, const unsigned char* mnistData, int mnistSampleDataIndexStart) {
     for (int i = 0; i < MNISTSAMPLEDATASIZE; i++) {
         (*neurons)[i] = (double) mnistData[mnistSampleDataIndexStart * MNISTSAMPLEDATASIZE + i];
     }
-} //end loadNextMnistSampleData
+} //end loadNextMnistSampleData function
 
 /*
  * loadNextMnistSampleDataKernel
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
- * @params: devNeurons - a pointer to an array of double values (the neuron values) in device memory
- * @params: devMnistData - a pointer to an array of unsigned chars (bytes) containing the pixel values for all mnist samples in device memory
- * @params: mnistDataIndexStart - the starting index for the next mnist sample
+ * @params: devNeurons
+ * @params: devMnistData
+ * @params: mnistSampleDataIndexStart
  */
 __global__ void loadNextMnistSampleDataKernel(double* devNeurons, const unsigned char* devMnistData, int mnistSampleDataIndexStart) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < MNISTSAMPLEDATASIZE) {
         devNeurons[id] = (double) devMnistData[mnistSampleDataIndexStart * MNISTSAMPLEDATASIZE + id];
     }
-} //end loadNextMnistSampleData kernel
+} //end loadNextMnistSampleData kernel function
 
 /*
  * loadNextMnistSampleLabel
- * @params: neurons - a pointer to an array of double values (the input layer)
- * @params: mnistData - a pointer to an array of unsigned chars (bytes) containing the labels for all mnist samples
- * @params: mnistDataIndexStart - the starting index for the next mnist sample
+ * @params: outputExpected
+ * @params: mnistLabels
+ * @params: mnistSampleLabelIndex
  */
 void loadNextMnistSampleLabel(double** outputExpected, const char* mnistLabels, int mnistSampleLabelIndex) {
     // for each neuron in the output layer
@@ -181,14 +183,14 @@ void loadNextMnistSampleLabel(double** outputExpected, const char* mnistLabels, 
             (*outputExpected)[i] = 0; // set the expected output for neuron i to 0
         }
     }
-} //end loadNextMnistSampleLabel
+} //end loadNextMnistSampleLabel function
 
 /*
  * loadNextMnistSampleLabelKernel
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
- * @params: devNeurons - a pointer to an array of double values (the neuron values) in device memory
- * @params: devMnistData - a pointer to an array of unsigned chars (bytes) containing the labels for all mnist samples in device memory
- * @params: mnistSampleLabelIndex - the starting index for the next mnist sample
+ * @params: devOutputExpected
+ * @params: devMnistLabels
+ * @params: mnistSampleLabelIndex
  */
 __global__ void loadNextMnistSampleLabelKernel(double* devOutputExpected, const char* devMnistLabels, int mnistSampleLabelIndex) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
@@ -199,5 +201,5 @@ __global__ void loadNextMnistSampleLabelKernel(double* devOutputExpected, const 
             devOutputExpected[id] = 0;
         }
     }
-} //end loadNextMnistSampleLabelKernel kernel
+} //end loadNextMnistSampleLabelKernel kernel function
 

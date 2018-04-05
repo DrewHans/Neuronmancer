@@ -1,7 +1,7 @@
 /*******************************************************************************************
- * Filename: feedforwardfunctions.cu
+ * Filename: costfunctions.cu
  * Author: Drew Hans (github.com/drewhans555)
- * Description: This file contains the host and device cost functions.
+ * Description: This file contains the host and device cost functions for the output layer.
  *******************************************************************************************
  */
 
@@ -19,7 +19,7 @@ __global__ void costDerivativeKernel(double* devExpectedOutput, double* devNeuro
     if (id < numberOfNeuronsInLayer) {
         devNeuronErrors[neuronIndexStart + id] = costDerivative(devExpectedOutput[id], devNeurons[neuronIndexStart + id]);
     }
-} //end costDerivativeKernel
+} //end costDerivativeKernel function
 
 /*
  * costDerivative method
@@ -31,4 +31,4 @@ __global__ void costDerivativeKernel(double* devExpectedOutput, double* devNeuro
  */
 __host__ __device__ double costDerivative(double expectedValue, double calculatedValue) {
     return expectedValue - calculatedValue;
-} //end costDerivative method
+} //end costDerivative function

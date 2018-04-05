@@ -7,6 +7,16 @@
 
 /*
  * feedforwardWithDevice - propagates the inputs forward to compute the outputs
+ * @params: numBlocks
+ * @params: threadsPerBlock
+ * @params: devNeurons
+ * @params: devWeights
+ * @params: devBiases
+ * @params: numberOfLayers
+ * @params: numberOfNeuronsPerLayer
+ * @params: numberOfWeightsPerLayer
+ * @params: firstNeuronIndexPerLayer
+ * @params: firstWeightIndexPerLayer
  */
 void feedforwardWithDevice(int numBlocks, int threadsPerBlock, double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers,
         int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
@@ -18,10 +28,18 @@ void feedforwardWithDevice(int numBlocks, int threadsPerBlock, double* devNeuron
         sigmoidKernel<<<numBlocks, threadsPerBlock>>>(devNeurons, firstNeuronIndexPerLayer[l], numberOfNeuronsPerLayer[l]);
         cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
     }
-} //end feedforwardWithDevice method
+} //end feedforwardWithDevice function
 
 /*
  * feedforwardWithHost - propagates the inputs forward to compute the outputs
+ * @params: neurons
+ * @params: weights
+ * @params: biases
+ * @params: numberOfLayers
+ * @params: neuronsPerLayer
+ * @params: weightsPerLayer
+ * @params: firstNeuronIndexPerLayer
+ * @params: firstWeightIndexPerLayer
  */
 void feedforwardWithHost(double* neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer,
         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
@@ -32,7 +50,7 @@ void feedforwardWithHost(double* neurons, double* weights, double* biases, int n
             combinationFunction(neurons, weights, biases, firstNeuronIndexPerLayer[i] + j, firstNeuronIndexPerLayer[i - 1], firstWeightIndexPerLayer[i] + j,
                     neuronsPerLayer[i - 1]);
             sigmoidFunction(neurons[firstNeuronIndexPerLayer[i] + j]);
-            printf("neurons[%d]=%f\n", (firstNeuronIndexPerLayer[i] + j), neurons[firstNeuronIndexPerLayer[i] + j]);
+            //printf("neurons[%d]=%f\n", (firstNeuronIndexPerLayer[i] + j), neurons[firstNeuronIndexPerLayer[i] + j]);
         }
     }
-} //end feedforwardWithHost method
+} //end feedforwardWithHost function

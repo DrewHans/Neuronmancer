@@ -8,6 +8,15 @@
 /*
  * backpropagateErrorsKernel
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * @params: devNeurons
+ * @params: devWeights
+ * @params: devBiases
+ * @params: devNeuronErrors
+ * @params: numberOfNeuronsInLeftLayer
+ * @params: numberOfWeightsBetweenLayers
+ * @params: indexOfFirstNeuronInLeft
+ * @params: indexOfFirstNeuronInRight
+ * @params: indexOfFirstWeight
  */
 __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights, double* devBiases, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
         int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstNeuronInRight, int indexOfFirstWeight) {
@@ -20,10 +29,22 @@ __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights
         }
         devNeuronErrors[neuronId] = neuronError * sigmoidDerivative(devNeurons[neuronId]);
     }
-} //end backpropagate errors kernel
+} //end backpropagate errors kernel function
 
 /*
  * backpropagateWithDevice method
+ * @params: numBlocks
+ * @params: threadsPerBlock
+ * @params: devExpectedOutput
+ * @params: devNeurons
+ * @params: devWeights
+ * @params: devBiases
+ * @params: devNeuronErrors
+ * @params: numberOfLayers
+ * @params: neuronsPerLayer
+ * @params: weightsPerLayer
+ * @params: firstNeuronIndexPerLayer
+ * @params: firstWeightIndexPerLayer
  */
 void backpropagateWithDevice(int numBlocks, int threadsPerBlock, double* devExpectedOutput, double* devNeurons, double* devWeights, double* devBiases,
         double* devNeuronErrors, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
@@ -40,10 +61,20 @@ void backpropagateWithDevice(int numBlocks, int threadsPerBlock, double* devExpe
                 weightsPerLayer[l + 1], firstNeuronIndexPerLayer[l], firstNeuronIndexPerLayer[l + 1], firstWeightIndexPerLayer[l + 1]);
         cudaDeviceSynchronize(); // tell host to wait for device to finish previous kernel
     }
-} //end backpropagateWithDevice method
+} //end backpropagateWithDevice function
 
 /*
  * backpropagateWithHost method
+ * @params: expectedOutput
+ * @params: neurons
+ * @params: weights
+ * @params: biases
+ * @params: neuronErrors
+ * @params: numberOfLayers
+ * @params: neuronsPerLayer
+ * @params: weightsPerLayer
+ * @params: firstNeuronIndexPerLayer
+ * @params: firstWeightIndexPerLayer
  */
 void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double* neuronErrors, int numberOfLayers,
         int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
@@ -71,4 +102,4 @@ void backpropagateWithHost(double* expectedOutput, double* neurons, double* weig
             neuronErrors[firstNeuronIndexPerLayer[l] + n] = neuronError * sigmoidDerivative(neurons[firstNeuronIndexPerLayer[l] + n]);
         }
     }
-} //end backpropagateWithHost method
+} //end backpropagateWithHost function
