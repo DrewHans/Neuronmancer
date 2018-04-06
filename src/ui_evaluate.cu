@@ -28,9 +28,9 @@ void ui_evaluate() {
     int myPatience = 2; // stores the amount of patience I have for the user's nonsense
 
     // declare variables used to generate the confusion matrix
-    int mnistConfusionMatrix[10][10] = { 0 }; // store the confusion matrix (rows = actual class; cols = predicted class)
-    double accuracy = 0.0; // store the accuracy of our model ( allCorrectPredictions / totalPredictions )
-    double misclassificationRate = 1.0 - accuracy; // stores the model's error rate (equal to 1 - accuracy)
+    int mnistConfusionMatrix[10][10] = { { 0 } }; // store the confusion matrix (rows = actual class; cols = predicted class)
+    double accuracy = 0.0;
+    double misclassificationRate = 0.0;
 
     // initialize pointers with malloc (will be resized in readmodel.cu later)
     numberOfNeuronsPerLayer = (int *) malloc(sizeof(int));
@@ -165,8 +165,9 @@ void ui_evaluate() {
             // get the predicted MNIST class, the actual MNIST class, and then update the appropriate confusion matrix variable
             int classPrediction = getCalculatedMnistSampleClassification(neurons, firstNeuronIndexPerLayer[numberOfLayers - 1]);
             int classActual = testLabels[s];
-            mnistConfusionMatrix[classActual][classPrediction] = mnistConfusionMatrix[classActual][classPrediction] + 1;
+            (*(&mnistConfusionMatrix))[classActual][classPrediction] = (*(&mnistConfusionMatrix))[classActual][classPrediction] + 1;
         }
+
         printf("evaluation complete!\n");
 
     } else if (tempInt == 2) {
@@ -293,7 +294,7 @@ void ui_evaluate() {
             // get the predicted MNIST class, the actual MNIST class, and then update the appropriate confusion matrix variable
             int classPrediction = getCalculatedMnistSampleClassification(neurons, firstNeuronIndexPerLayer[numberOfLayers - 1]);
             int classActual = testLabels[s];
-            mnistConfusionMatrix[classActual][classPrediction] = mnistConfusionMatrix[classActual][classPrediction] + 1;
+            (*(&mnistConfusionMatrix))[classActual][classPrediction] = (*(&mnistConfusionMatrix))[classActual][classPrediction] + 1;
         }
 
         printf("evaluation complete!\n");
@@ -313,12 +314,15 @@ void ui_evaluate() {
         printf("memory freed!\n");
     }
 
+    // print out the confusion matrix
+    int truePositives = 0;
+
+    printf("\nConfusion Matrix:\n\n");
     // get the number of correct predictions from the confusion matrix
-    int correctPredictions = 0;
     for (int i = 0; i < 10; i++) {
-        correctPredictions = mnistConfusionMatrix[i][i];
+        truePositives = mnistConfusionMatrix[i][i];
     }
-    accuracy = ((double) correctPredictions) / ((double) numberOfTestSamples);
+    accuracy = truePositives / numberOfTestSamples;
     misclassificationRate = 1.0 - accuracy;
 
     // print out the confusion matrix (try to make it easy to read)
@@ -334,7 +338,7 @@ void ui_evaluate() {
         }
         printf("\n");
     }
-    printf("Accuracy = %.4lf\nMisclassificationRate = %.4lf\n", accuracy, misclassificationRate);
+    printf("Accuracy = %.4lf\nMisclassificationRate = %.4lf\n\n", accuracy, misclassificationRate);
 
     printf("Press enter to free dynamically allocated host memory.\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input

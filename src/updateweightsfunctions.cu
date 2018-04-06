@@ -23,7 +23,7 @@ __global__ void weightUpdateKernel(double* devNeurons, double* devWeights, doubl
     if (blockIdx.x < numberOfNeuronsInLeftLayer && threadIdx.x < numberOfWeightsBetweenLayers) {
         int weightIndex = indexOfFirstWeight + numberOfNeuronsInRightLayer * blockIdx.x + threadIdx.x;
         int neuronIndex = indexOfFirstNeuronInLeft + blockIdx.x;
-        devWeights[weightIndex] = devWeights[weightIndex] + (learningRate * devNeuronErrors[neuronIndex] * devNeurons[neuronIndex]);
+        devWeights[weightIndex] = devWeights[weightIndex] - (learningRate * devNeuronErrors[neuronIndex] * devNeurons[neuronIndex]);
     }
 } //end weight update kernel function
 
@@ -38,7 +38,7 @@ __global__ void weightUpdateKernel(double* devNeurons, double* devWeights, doubl
  * @params: firstWeightIndexPerLayer - a pointer to an array of int values (the indexes of each layer's first weight)
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
-void updateWeights(double* neurons, double* weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* firstNeuronIndexPerLayer,
+void updateWeights(double* neurons, double** weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* firstNeuronIndexPerLayer,
         int* firstWeightIndexPerLayer, double learningRate) {
     // for each layer l after input layer, update the weights in the layer
     for (int l = 1; l < numberOfLayers; l++) {
@@ -47,7 +47,7 @@ void updateWeights(double* neurons, double* weights, double* neuronErrors, int n
             for (int w = 0; w < neuronsPerLayer[l - 1]; w++) {
                 int weightIndex = firstWeightIndexPerLayer[l] + neuronsPerLayer[l - 1] * n + w;
                 int neuronIndex = firstNeuronIndexPerLayer[l] + n;
-                weights[weightIndex] = weights[weightIndex] + (learningRate * neuronErrors[neuronIndex] * neurons[neuronIndex]);
+                (*weights)[weightIndex] = (*weights)[weightIndex] - (learningRate * neuronErrors[neuronIndex] * neurons[neuronIndex]);
             }
         }
     }

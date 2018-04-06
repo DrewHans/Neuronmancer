@@ -116,12 +116,12 @@ void ui_train();
 
 // define function prototypes for updatebiasesfunctions.cu
 __global__ void biasUpdateKernel(double* devNeurons, double* devBiases, double* devNeuronErrors, int numberOfNeuronsTotal, double learningRate);
-void updateBiases(double* neurons, double* biases, double* neuronErrors, int numberOfNeuronsTotal, double learningRate);
+void updateBiases(double* neurons, double** biases, double* neuronErrors, int numberOfNeuronsTotal, double learningRate);
 
 // define function prototypes for updateweightsfunctions.cu
 __global__ void weightUpdateKernel(double* devNeurons, double* devWeights, double* devNeuronErrors, int numberOfNeuronsInLeftLayer,
         int numberOfNeuronsInRightLayer, int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstWeight, double learningRate);
-void updateWeights(double* neurons, double* weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* firstNeuronIndexPerLayer,
+void updateWeights(double* neurons, double** weights, double* neuronErrors, int numberOfLayers, int* neuronsPerLayer, int* firstNeuronIndexPerLayer,
         int* firstWeightIndexPerLayer, double learningRate);
 
 #endif

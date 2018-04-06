@@ -17,7 +17,7 @@
 __global__ void biasUpdateKernel(double* devNeurons, double* devBiases, double* devNeuronErrors, int numberOfNeuronsTotal, double learningRate) {
     int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < numberOfNeuronsTotal) {
-        devBiases[id] = devBiases[id] + (learningRate * devNeuronErrors[id] * devNeurons[id]);
+        devBiases[id] = devBiases[id] - (learningRate * devNeuronErrors[id] * devNeurons[id]);
     }
 } //end bias update kernel function
 
@@ -29,8 +29,8 @@ __global__ void biasUpdateKernel(double* devNeurons, double* devBiases, double* 
  * @params: numberOfNeuronsTotal - the number of total neurons in the network
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
-void updateBiases(double* neurons, double* biases, double* neuronErrors, int numberOfNeuronsTotal, double learningRate) {
+void updateBiases(double* neurons, double** biases, double* neuronErrors, int numberOfNeuronsTotal, double learningRate) {
     for (int i = 0; i < numberOfNeuronsTotal; i++) {
-        biases[i] = biases[i] + (learningRate * neuronErrors[i] * neurons[i]);
+        (*biases)[i] = (*biases)[i] - (learningRate * neuronErrors[i] * neurons[i]);
     }
 } //end update biases function

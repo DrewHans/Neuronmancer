@@ -58,6 +58,7 @@ void getDeviceProperties(int* multiProcessorCount, int* warpSize) {
 void initArrayToRandomDoubles(double** a, int n) {
     // generate random doubles in range [0, 1)
     for (int i = 0; i < n; i++) {
+        srand(time(NULL)); // seed pseudo-random number generator with current time
         (*a)[i] = ((double) rand()) / ((double) RAND_MAX);
     }
 } //end initArrayToRandomDoubles function

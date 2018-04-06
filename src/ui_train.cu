@@ -164,11 +164,11 @@ void ui_train() {
                         firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
 
                 // use error signal to update weights and biases
-                updateWeights(neurons, weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer,
+                updateWeights(neurons, &weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer,
                         learningRate);
-                updateBiases(neurons, biases, neuronErrors, numberOfNeuronsTotal, learningRate);
-                if (s % 100 == 0) {
-                    printf("...epoch %d: %d samples seen...\n", i + 1, s + 1);
+                updateBiases(neurons, &biases, neuronErrors, numberOfNeuronsTotal, learningRate);
+                if (s % 1000 == 0) {
+                    printf("...epoch %d of %d: sample %d seen...\n", i + 1, epochs, s);
                 }
             }
         }
