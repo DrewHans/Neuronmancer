@@ -58,8 +58,8 @@ void getDeviceProperties(int* multiProcessorCount, int* warpSize) {
 void initArrayToRandomDoubles(double** a, int n) {
     // generate random doubles in range [0, 1)
     for (int i = 0; i < n; i++) {
-        srand(time(NULL)); // seed pseudo-random number generator with current time
-        (*a)[i] = ((double) rand()) / ((double) RAND_MAX);
+        srand (time(NULL)); // seed pseudo-random number generator with current time
+(        *a)[i] = ((double) rand()) / ((double) RAND_MAX);
     }
 } //end initArrayToRandomDoubles function
 
@@ -84,6 +84,19 @@ void initArrayToZeros(double** a, int n) {
 void printarray(const char* name, double* a, int n) {
     for (int i = 0; i < n; i++) {
         printf("%s[%d]=%lf\n", name, i, a[i]);
+    }
+    printf("\n");
+} //end printarray function
+
+/*
+ * printarray - prints out array values to terminal
+ * @params: name - a pointer to a char string
+ * @params: a - a pointer to an array of int values
+ * @params: n - the size of array a
+ */
+void printarray(const char* name, int* a, int n) {
+    for (int i = 0; i < n; i++) {
+        printf("%s[%d]=%d\n", name, i, a[i]);
     }
     printf("\n");
 } //end printarray function

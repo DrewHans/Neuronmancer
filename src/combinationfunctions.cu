@@ -38,10 +38,10 @@ __global__ void combinationFunctionKernel(double* devNeurons, double* devWeights
  * @params: weightIndexStart - the index of the weight associated with the first neuron in the previous layer
  * @params: prevLayerSize - the number of neurons in the previous layer
  */
-void combinationFunction(double* neurons, double* weights, double* biases, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize) {
-    neurons[neuronIndex] = 0.0; // clear out any garbage left over from previous feedforward
+void combinationFunction(double** neurons, double* weights, double* biases, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize) {
+    (*neurons)[neuronIndex] = 0.0; // clear out any garbage left over from previous feedforward
     // go neuron to neuron in the previous layer
     for (int i = 0; i < prevLayerSize; i++) {
-        neurons[neuronIndex] = neurons[neuronIndex] + (neurons[prevLayerIndexStart + i] * weights[weightIndexStart + i]) + biases[neuronIndex];
+        (*neurons)[neuronIndex] = (*neurons)[neuronIndex] + ((*neurons)[prevLayerIndexStart + i] * weights[weightIndexStart + i]) + biases[neuronIndex];
     }
 }    //end combinationFunction function

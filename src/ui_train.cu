@@ -156,11 +156,11 @@ void ui_train() {
                 loadNextMnistSampleLabel(&outputExpected, trainingLabels, s);
 
                 // feedforward the data in the input layer
-                feedforwardWithHost(neurons, weights, biases, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
+                feedforwardWithHost(&neurons, weights, biases, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
                         firstWeightIndexPerLayer);
 
                 // calculate and backpropagate error signals
-                backpropagateWithHost(outputExpected, neurons, weights, biases, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer,
+                backpropagateWithHost(outputExpected, neurons, weights, biases, &neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer,
                         firstNeuronIndexPerLayer, firstWeightIndexPerLayer);
 
                 // use error signal to update weights and biases

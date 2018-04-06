@@ -76,7 +76,7 @@ void backpropagateWithDevice(int numBlocks, int threadsPerBlock, double* devExpe
  * @params: firstNeuronIndexPerLayer
  * @params: firstWeightIndexPerLayer
  */
-void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double* neuronErrors, int numberOfLayers,
+void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double** neuronErrors, int numberOfLayers,
         int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
     // for each node in the output layer, calculate the output error
     int outputLayerIndex = numberOfLayers - 1;
@@ -86,7 +86,7 @@ void backpropagateWithHost(double* expectedOutput, double* neurons, double* weig
         neuronError = 0.0; // zero out the neuron error for next neuron
         neuronId = firstNeuronIndexPerLayer[outputLayerIndex] + i; //
         neuronError = costDerivative(expectedOutput[i], neurons[neuronId]); // store the cost/error/loss of output layer neuron
-        neuronErrors[neuronId] = neuronError * sigmoidDerivative(neurons[neuronId]); // calculate the output layer delta and shove in neuronErrors
+        (*neuronErrors)[neuronId] = neuronError * sigmoidDerivative(neurons[neuronId]); // calculate the output layer delta and shove in neuronErrors
     }
 
     // for each layer l between output and input, visit in reverse order and backpropagate error values
@@ -97,9 +97,9 @@ void backpropagateWithHost(double* expectedOutput, double* neurons, double* weig
             // for each connection between layer l and l+1
             for (int w = 0; w < weightsPerLayer[l + 1]; w = w + neuronsPerLayer[l]) {
                 // layer l neuron n delta
-                neuronError = neuronError + (weights[firstWeightIndexPerLayer[l + 1] + w] * neuronErrors[firstNeuronIndexPerLayer[l + 1] + w]);
+                neuronError = neuronError + (weights[firstWeightIndexPerLayer[l + 1] + w] * (*neuronErrors)[firstNeuronIndexPerLayer[l + 1] + w]);
             }
-            neuronErrors[firstNeuronIndexPerLayer[l] + n] = neuronError * sigmoidDerivative(neurons[firstNeuronIndexPerLayer[l] + n]);
+            (*neuronErrors)[firstNeuronIndexPerLayer[l] + n] = neuronError * sigmoidDerivative(neurons[firstNeuronIndexPerLayer[l] + n]);
         }
     }
 } //end backpropagateWithHost function

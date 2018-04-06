@@ -41,7 +41,7 @@ void feedforwardWithDevice(int numBlocks, int threadsPerBlock, double* devNeuron
  * @params: firstNeuronIndexPerLayer
  * @params: firstWeightIndexPerLayer
  */
-void feedforwardWithHost(double* neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer,
+void feedforwardWithHost(double** neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer,
         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer) {
     // go layer to layer
     for (int i = 1; i < numberOfLayers; i++) {
@@ -49,8 +49,7 @@ void feedforwardWithHost(double* neurons, double* weights, double* biases, int n
         for (int j = 0; j < neuronsPerLayer[i]; j++) {
             combinationFunction(neurons, weights, biases, firstNeuronIndexPerLayer[i] + j, firstNeuronIndexPerLayer[i - 1], firstWeightIndexPerLayer[i] + j,
                     neuronsPerLayer[i - 1]);
-            sigmoidFunction(neurons[firstNeuronIndexPerLayer[i] + j]);
-            //printf("neurons[%d]=%f\n", (firstNeuronIndexPerLayer[i] + j), neurons[firstNeuronIndexPerLayer[i] + j]);
+            (*neurons)[firstNeuronIndexPerLayer[i] + j] = sigmoidFunction((*neurons)[firstNeuronIndexPerLayer[i] + j]);
         }
     }
 } //end feedforwardWithHost function

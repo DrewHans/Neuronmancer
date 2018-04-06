@@ -28,9 +28,23 @@ void ui_evaluate() {
     int myPatience = 2; // stores the amount of patience I have for the user's nonsense
 
     // declare variables used to generate the confusion matrix
-    int mnistConfusionMatrix[10][10] = { { 0 } }; // store the confusion matrix (rows = actual class; cols = predicted class)
+    int mnistConfusionMatrix[10][10] = { 0 };
+    int* predictions = (int*) malloc(10 * sizeof(int));
+    int* actual = (int*) malloc(10 * sizeof(int));
+    double* testArray = (double*) malloc(10 * sizeof(double));
     double accuracy = 0.0;
     double misclassificationRate = 0.0;
+
+    for (int i = 0; i < 10; i++) {
+        predictions[i] = 0;
+        actual[i] = 0;
+
+        if (i == 1) {
+            testArray[i] = 0.9;
+        } else {
+            testArray[i] = 0.1;
+        }
+    }
 
     // initialize pointers with malloc (will be resized in readmodel.cu later)
     numberOfNeuronsPerLayer = (int *) malloc(sizeof(int));
@@ -159,13 +173,17 @@ void ui_evaluate() {
             loadNextMnistSampleLabel(&outputExpected, testLabels, s);
 
             // feedforward the data in the input layer
-            feedforwardWithHost(neurons, weights, biases, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
+            feedforwardWithHost(&neurons, weights, biases, numberOfLayers, numberOfNeuronsPerLayer, numberOfWeightsPerLayer, firstNeuronIndexPerLayer,
                     firstWeightIndexPerLayer);
 
             // get the predicted MNIST class, the actual MNIST class, and then update the appropriate confusion matrix variable
-            int classPrediction = getCalculatedMnistSampleClassification(neurons, firstNeuronIndexPerLayer[numberOfLayers - 1]);
-            int classActual = testLabels[s];
-            (*(&mnistConfusionMatrix))[classActual][classPrediction] = (*(&mnistConfusionMatrix))[classActual][classPrediction] + 1;
+            int classPrediction = getMnistSampleClassification(&neurons, firstNeuronIndexPerLayer[numberOfLayers - 1]);
+            //int classPrediction = getMnistSampleClassification(&testArray, 0);
+            int classActual = getMnistSampleClassification(&outputExpected, 0);
+            mnistConfusionMatrix[classActual][classPrediction] = mnistConfusionMatrix[classActual][classPrediction] + 1;
+
+            predictions[classPrediction] += 1;
+            actual[classActual] += 1;
         }
 
         printf("evaluation complete!\n");
@@ -273,6 +291,17 @@ void ui_evaluate() {
         threadsPerBlock = threadsPerBlock * scalar;
 
         printf("Beginning evaluation on GPU device now...");
+        double* tempArray = (double*) malloc(10 * sizeof(double));
+        tempArray[0] = 0.0;
+        tempArray[1] = 1.0;
+        tempArray[2] = 0.0;
+        tempArray[3] = 0.0;
+        tempArray[4] = 0.0;
+        tempArray[5] = 0.0;
+        tempArray[6] = 0.0;
+        tempArray[7] = 0.0;
+        tempArray[8] = 0.0;
+        tempArray[9] = 0.0;
 
         // for each sample in batch: loadTestData, feedforward, compareOutput, then update confusion matrix
         for (int s = 0; s < numberOfTestSamples; s++) {
@@ -291,10 +320,15 @@ void ui_evaluate() {
             if (cudaStatus != cudaSuccess) {
                 onCudaMemcpyError("devNeurons");
             }
+
             // get the predicted MNIST class, the actual MNIST class, and then update the appropriate confusion matrix variable
-            int classPrediction = getCalculatedMnistSampleClassification(neurons, firstNeuronIndexPerLayer[numberOfLayers - 1]);
-            int classActual = testLabels[s];
-            (*(&mnistConfusionMatrix))[classActual][classPrediction] = (*(&mnistConfusionMatrix))[classActual][classPrediction] + 1;
+            int classPrediction = getMnistSampleClassification(&neurons, firstNeuronIndexPerLayer[numberOfLayers - 1]);
+            //int classPrediction = getMnistSampleClassification(&testArray, 0);
+            int classActual = getMnistSampleClassification(&outputExpected, 0);
+            mnistConfusionMatrix[classActual][classPrediction] = mnistConfusionMatrix[classActual][classPrediction] + 1;
+
+            predictions[classPrediction] += 1;
+            actual[classActual] += 1;
         }
 
         printf("evaluation complete!\n");
@@ -313,6 +347,9 @@ void ui_evaluate() {
         cudaFree(devTestLabels);
         printf("memory freed!\n");
     }
+
+    printarray("Predictions", predictions, 10);
+    printarray("Actual", actual, 10);
 
     // print out the confusion matrix
     int truePositives = 0;

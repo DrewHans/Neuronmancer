@@ -6,23 +6,23 @@
  */
 
 /*
- * getCalculatedMnistSampleClassification
+ * getMnistSampleClassification
  * @params: neurons
  * @params: indexStart
  * @return: a number between 0 - 9 (inclusive), the network's digit prediction
  */
-int getCalculatedMnistSampleClassification(double* neurons, int indexStart) {
+int getMnistSampleClassification(double** output, int indexStart) {
     double highestValue = 0.0;
     int classification = 0;
 
     for (int i = 0; i < 10; i++) {
-        if (neurons[indexStart + i] > highestValue) {
-            highestValue = neurons[indexStart + i];
+        if ((*output)[indexStart + i] > highestValue) {
+            highestValue = (*output)[indexStart + i];
             classification = i;
         }
     }
     return classification;
-} //end getCalculatedMnistSampleClassification function
+} //end getMnistSampleClassification function
 
 /*
  * loadMnistTestSamples

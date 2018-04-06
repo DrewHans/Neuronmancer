@@ -44,13 +44,13 @@ __global__ void backpropagateErrorsKernel(double* devNeurons, double* devWeights
         int numberOfWeightsBetweenLayers, int indexOfFirstNeuronInLeft, int indexOfFirstNeuronInRight, int indexOfFirstWeight);
 void backpropagateWithDevice(int numBlocks, int threadsPerBlock, double* devExpectedOutput, double* devNeurons, double* devWeights, double* devBiases,
         double* devNeuronErrors, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
-void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double* neuronErrors, int numberOfLayers,
+void backpropagateWithHost(double* expectedOutput, double* neurons, double* weights, double* biases, double** neuronErrors, int numberOfLayers,
         int* neuronsPerLayer, int* weightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
 
 // define function prototypes for combinationfunctions.cu
 __global__ void combinationFunctionKernel(double* devNeurons, double* devWeights, double* devBiases, int neuronIndexStart, int prevLayerNeuronIndexStart,
         int weightIndexStart, int numberOfNeuronsInLayer, int numberOfNeuronsInPrevLayer);
-void combinationFunction(double* neurons, double* weights, double* biases, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize);
+void combinationFunction(double** neurons, double* weights, double* biases, int neuronIndex, int prevLayerIndexStart, int weightIndexStart, int prevLayerSize);
 
 // define function prototypes for costfunctions.cu
 __global__ void costDerivativeKernel(double* devExpectedOutput, double* devNeurons, double* devNeuronErrors, int neuronIndexStart, int numberOfNeuronsInLayer);
@@ -59,7 +59,7 @@ __host__ __device__ double costDerivative(double expectedValue, double calculate
 // define function prototypes for feedforwardfunctions.cu
 void feedforwardWithDevice(int numBlocks, int threadsPerBlock, double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers,
         int* numberOfNeuronsPerLayer, int* numberOfWeightsPerLayer, int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
-void feedforwardWithHost(double* neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer,
+void feedforwardWithHost(double** neurons, double* weights, double* biases, int numberOfLayers, int* neuronsPerLayer, int* weightsPerLayer,
         int* firstNeuronIndexPerLayer, int* firstWeightIndexPerLayer);
 
 // define function prototypes for helperfunctions.cu
