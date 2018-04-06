@@ -11,19 +11,19 @@
 // define delimiters and locations for readmodel.cu and savemodel.cu
 #define VALUEDELIM ','
 #define VALUEDELIMCHARSTAR ","
-#define MODELDIRECTORY "./nmModel"
-#define MODELVALUESLOCATION "./nmModel/modelvalues.csv"
-#define WEIGHTSFILELOCATION "./nmModel/weights.csv"
-#define BIASESFILELOCATION "./nmModel/biases.csv"
-#define EPOCHSFILELOCATION "./nmModel/epochs.txt"
-#define LEARNINGRATEFILELOCATION "./nmModel/learningrate.txt"
+#define MODELDIRECTORY "../nmModel"
+#define MODELVALUESLOCATION "../nmModel/modelvalues.csv"
+#define WEIGHTSFILELOCATION "../nmModel/weights.csv"
+#define BIASESFILELOCATION "../nmModel/biases.csv"
+#define EPOCHSFILELOCATION "../nmModel/epochs.txt"
+#define LEARNINGRATEFILELOCATION "../nmModel/learningrate.txt"
 
 // define single sample size, set sizes, and locations for mnist dataset
 #define MNISTSAMPLEDATASIZE 784
 #define MNISTTESTSETSIZE 10000
 #define MNISTTRAININGSETSIZE 60000
-#define MNISTTESTFILELOCATION "./mnist/mnist_test.csv"
-#define MNISTTRAINFILELOCATION "./mnist/mnist_train.csv"
+#define MNISTTESTFILELOCATION "../mnist/mnist_test.csv"
+#define MNISTTRAINFILELOCATION "../mnist/mnist_train.csv"
 
 // define struct for using the stat command
 struct stat st = { 0 };
