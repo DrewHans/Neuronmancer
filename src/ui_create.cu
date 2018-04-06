@@ -165,13 +165,18 @@ void ui_create() {
             firstWeightIndexPerLayer, weights, biases, learningRate, epochs);
     printf("Model saved!\n");
 
+    printf("Press enter to free dynamically allocated host memory.\n~");
+    fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
+
     // free the chunks of host memory that were dynamically allocated by malloc
+    printf("Freeing dynamically allocated host memory...");
     free(numberOfNeuronsPerLayer);
     free(numberOfWeightsPerLayer);
     free(firstNeuronIndexPerLayer);
     free(firstWeightIndexPerLayer);
     free(biases);
     free(weights);
+    printf("memory freed!\n");
 
     printf("Press enter to return to the main menu:\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input

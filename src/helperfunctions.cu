@@ -115,6 +115,15 @@ void onCudaMemcpyError(const char* hostVariable) {
 } //end onCudaMemcpyError function
 
 /*
+ * onFailToSetGPUDevice - SOS, we're going down
+ */
+void onFailToSetGPUDevice() {
+    printf("ERROR: Failed find GPU device!\n");
+    printFarewellMSG();
+    exit(1);
+} //end onFailToSetGPUDevice function
+
+/*
  * onFileOpenError - SOS, we're going down
  * @params: path - file that failed to open
  */
@@ -133,15 +142,6 @@ void onFileReadError(const char* path) {
     printFarewellMSG();
     exit(1);
 } //end onFileReadError function
-
-/*
- * onFailToSetGPUDevice - SOS, we're going down
- */
-void onFailToSetGPUDevice() {
-    printf("ERROR: Failed find GPU device!\n");
-    printFarewellMSG();
-    exit(1);
-} //end onFailToSetGPUDevice function
 
 /*
  * onInvalidInput - prints out insults when the user screws up (silly humans)

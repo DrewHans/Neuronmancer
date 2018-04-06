@@ -202,4 +202,3 @@ __global__ void loadNextMnistSampleLabelKernel(double* devOutputExpected, const 
         }
     }
 } //end loadNextMnistSampleLabelKernel kernel function
-

@@ -141,7 +141,7 @@ void ui_train() {
     if (tempInt == 1) {
         printf("Today we keep tradition, looks like we're training on the host machine!\n");
 
-        printf("Press enter to return to the main menu:\n~");
+        printf("Press enter to begin training:\n~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
         printf("\n");
 
@@ -167,15 +167,12 @@ void ui_train() {
                 updateWeights(neurons, weights, neuronErrors, numberOfLayers, numberOfNeuronsPerLayer, firstNeuronIndexPerLayer, firstWeightIndexPerLayer,
                         learningRate);
                 updateBiases(neurons, biases, neuronErrors, numberOfNeuronsTotal, learningRate);
-
-                break;
-            }
-
-            if (i % 10 == 0) {
-                printf("...%d epochs complete...", i+1);
-                break;
+                if (s % 100 == 0) {
+                    printf("...epoch %d: %d samples seen...\n", i + 1, s + 1);
+                }
             }
         }
+        printf("...training complete!\n");
 
     } else if (tempInt == 2) {
         printf("Today we break with tradition, looks like we're training on the GPU device!\n");
@@ -261,7 +258,6 @@ void ui_train() {
 
         printf("...copy successful!\n");
 
-        // TODO: START GPU DEVICE TRAINING
         // use getDeviceProperties helper function to determine the numBlocks and threadsPerBlock before launching CUDA Kernels
         int numBlocks = 5; // set 5 as default, should be equal to the number of SMs on the GPU device
         int threadsPerBlock = 32; // set 32 as default, should be equal to the warpsize on the GPU device
@@ -323,7 +319,21 @@ void ui_train() {
             }
         }
 
-        // TODO: COPY DEVICE VARIABLE VALUES BACK TO HOST
+        printf("...training complete!\n");
+
+        printf("Copying over GPU device values to Host...");
+
+        cudaStatus = cudaMemcpy(weights, devWeights, (numberOfWeightsTotal * sizeof(double)), cudaMemcpyDeviceToHost); //cudaMemcpy copies host values to device copies
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("devWeights");
+        }
+
+        cudaStatus = cudaMemcpy(biases, devBiases, (numberOfNeuronsTotal * sizeof(double)), cudaMemcpyDeviceToHost); //cudaMemcpy copies host values to device copies
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("devBiases");
+        }
+
+        printf("...copy successful!\n");
 
         printf("Press enter to free dynamically allocated GPU device memory.\n~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
@@ -337,18 +347,20 @@ void ui_train() {
         cudaFree(devNeuronErrors);
         cudaFree(devTrainingData);
         cudaFree(devTrainingLabels);
+        printf("memory freed!\n");
     }
 
     // SAVE TRAINED WEIGHTS AND BIASES TO DISK
+    printf("Saving trained weights and biases to disk...");
     saveWeightsToDisk(weights, numberOfWeightsTotal);
     saveBiasesToDisk(biases, numberOfNeuronsTotal);
+    printf("saving complete!\n");
 
     printf("Press enter to free dynamically allocated host memory.\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
 
-    printf("Freeing dynamically allocated host memory...");
-
     // free the chunks of host memory that were dynamically allocated by malloc
+    printf("Freeing dynamically allocated host memory...");
     free(numberOfNeuronsPerLayer);
     free(numberOfWeightsPerLayer);
     free(firstNeuronIndexPerLayer);
@@ -357,6 +369,7 @@ void ui_train() {
     free(weights);
     free(neuronErrors);
     free(outputExpected);
+    printf("memory freed!\n");
 
     printf("Press enter to return to the main menu:\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
