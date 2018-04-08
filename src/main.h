@@ -17,6 +17,10 @@
 #include <math.h>
 #include <time.h>
 
+// include the CUDA headers
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+
 // define macros for input buffers, debugging mode, etc.
 #define MAXINPUT 32
 #define DEBUG
@@ -47,13 +51,16 @@ __host__ __device__ double tanhFunction(double d);
 __host__ __device__ double tanhDerivative(double d);
 __host__ __device__ double reluFunction(double d);
 __host__ __device__ double reluDerivative(double d);
-__global__ void sigmoidKernel(double* devNeurons, int neuronIndexStart, int numberOfNeuronsInLayer);
-__global__ void reluKernel(double* devNeurons, int neuronIndexStart, int numberOfNeuronsInLayer);
-__global__ void tanhKernel(double* devNeurons, int neuronIndexStart, int numberOfNeuronsInLayer);
+__global__ void cudaKernel_ActivateLayerUsingSigmoid(double* devNeurons, int indexOfFirstNeuronInLayer, int numberOfNeuronsInLayer);
+__global__ void cudaKernel_ActivateLayerUsingTanh(double* devNeurons, int indexOfFirstNeuronInLayer, int numberOfNeuronsInLayer);
+__global__ void cudaKernel_ActivateLayerUsingRelu(double* devNeurons, int indexOfFirstNeuronInLayer, int numberOfNeuronsInLayer);
 
 // define function prototypes for backpropagation.cu
 
 // define function prototypes for feedforward.cu
+void feedforwardUsingHost(double** neurons, double* weights, double* biases, int numberOfLayers, int* numberOfNeuronsInLayer, int* numberOfWeightsInFrontOfLayer, int* indexOfFirstNeuronInLayer, int* indexOfFirstWeightInFrontOfLayer);
+void feedforwardUsingDevice(double* devNeurons, double* devWeights, double* devBiases, int numberOfLayers, int* numberOfNeuronsInLayer, int* numberOfWeightsInFrontOfLayer, int* indexOfFirstNeuronInLayer, int* indexOfFirstWeightInFrontOfLayer);
+__global__ void cudaKernel_CalculateWeightedSumPlusBias(double* devNeurons, double* devWeights, double* devBiases, int numberOfNeuronsInLeft, int numberOfNeuronsInRight, int indexOfFirstLeftNeuron, int indexOfFirstRightNeuron, int indexOfFirstWeight);
 
 // define function prototypes for functions_misc.cu
 
@@ -72,11 +79,7 @@ void ui_evaluate();
 // define function prototypes for ui_train.cu
 void ui_train();
 
-// include the CUDA headers
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-
-// include the Neuronmancer src code files
+// include the Neuronmancer src code files (after all function prototypes have been defined)
 #include "./functions_misc.cu"
 #include "./functions_mnist.cu"
 #include "./model_read.cu"
