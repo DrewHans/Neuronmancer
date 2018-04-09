@@ -116,26 +116,33 @@ void onInvalidInput(int myPatience);
 void onMallocError(unsigned int size);
 
 // define function prototypes for functions_mnist.cu ////////////////////////////
-int getCalculatedMNISTClassification(float* neurons, unsigned int indexOfFirstOutputNeuron);
-void loadMnistTestSamples(unsigned char** testData, char** testLabels, unsigned int* numberOfSamples);
-void loadMnistTrainingSamples(unsigned char** trainingData, char** trainingLabels, unsigned int* numberOfSamples);
-void loadNextMnistSampleUsingHost(const char* mnistLabels, const unsigned char* mnistData, 
-                                  unsigned int indexOfNextSampleLabel, unsigned int indexOfNextSampleFirstData, 
+int getCalculatedMNISTClassificationUsingHost(float* neurons, unsigned int indexOfFirstOutputNeuron);
+void getCalculatedMNISTClassificationUsingDevice(int* devClassification, float* devNeurons, unsigned int indexOfFirstOutputNeuron);
+void loadMnistSampleUsingHost(const char* mnistLabels, const unsigned char* mnistData, 
+                                  unsigned int indexOfSampleLabel, unsigned int indexOfSampleFirstData, 
                                   float** expected, float** neurons);
-void loadNextMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char* devMnistData, 
-                                  unsigned int indexOfNextSampleLabel, unsigned int indexOfNextSampleFirstData, 
+void loadMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char* devMnistData, 
+                                  unsigned int indexOfSampleLabel, unsigned int indexOfSampleFirstData, 
                                   float* devExpected, float* devNeurons);
-__global__ void cudaKernel_loadNextMnistSampleLabelIntoExpected(const char* devMnistLabels, int indexOfNextSampleLabel, float* devExpected);
-__global__ void cudaKernel_loadNextMnistSampleDataIntoInputLayer(const unsigned char* devMnistData, int indexOfNextSampleFirstData, float* devNeurons);
+void readMnistTestSamplesFromDisk(unsigned char** testData, char** testLabels, unsigned int* numberOfSamples);
+void readMnistTrainingSamplesFromDisk(unsigned char** trainingData, char** trainingLabels, unsigned int* numberOfSamples);
+__global__ void cudaKernel_GetCalculatedMNISTClassification(int* devClassification, float* devNeurons, unsigned int indexOfFirstOutputNeuron);
+__global__ void cudaKernel_loadMnistSampleLabelIntoExpected(const char* devMnistLabels, unsigned int indexOfNextSampleLabel, float* devExpected);
+__global__ void cudaKernel_loadMnistSampleDataIntoInputLayer(const unsigned char* devMnistData, unsigned int indexOfNextSampleFirstData, float* devNeurons);
 
 // define function prototypes for model_read.cu /////////////////////////////////
 float** readBiasesFromDisk(unsigned int numberOfBiasesTotal);
-int readEpochsFromDisk();
+unsigned int readEpochsFromDisk();
 float readLearningRateFromDisk();
 float** readWeightsFromDisk(unsigned int numberOfWeightsTotal);
 void readModelValuesFromDisk(unsigned int* p_numberOfLayers, unsigned int* p_numberOfNeuronsTotal, unsigned int* p_numberOfWeightsTotal, 
                              unsigned int** p_numberOfNeuronsInLayer, unsigned int** p_numberOfWeightsInFrontOfLayer, 
                              unsigned int** p_indexOfFirstNeuronInLayer, unsigned int** p_indexOfFirstWeightInFrontOfLayer);
+void readModel(float* p_learningRate, unsigned int* p_epochs, 
+               unsigned int* p_numberOfLayers, unsigned int* p_numberOfNeuronsTotal, unsigned int* p_numberOfWeightsTotal, 
+               unsigned int** p_numberOfNeuronsInLayer, unsigned int** p_numberOfWeightsInFrontOfLayer,
+               unsigned int** p_indexOfFirstNeuronInLayer, unsigned int** p_indexOfFirstWeightInFrontOfLayer, 
+               float** p_weights, float** p_biases);
 
 // define function prototypes for model_save.cu /////////////////////////////////
 void saveBiasesToDisk(float* biases, unsigned int numberOfBiasesTotal);

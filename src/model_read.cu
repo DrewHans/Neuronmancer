@@ -13,7 +13,7 @@
 float** readBiasesFromDisk(unsigned int numberOfBiasesTotal) {
     FILE* thefile = fopen(BIASESFILELOCATION, "r");
     if (thefile == NULL) {
-        onFileOpenError (BIASESFILELOCATION);
+        onFileOpenError(BIASESFILELOCATION);
     }
 
     // initialize an array to hold the biases
@@ -55,7 +55,7 @@ float** readBiasesFromDisk(unsigned int numberOfBiasesTotal) {
 unsigned int readEpochsFromDisk() {
     FILE* thefile = fopen(EPOCHSFILELOCATION, "r");
     if (thefile == NULL) {
-        onFileOpenError (EPOCHSFILELOCATION);
+        onFileOpenError(EPOCHSFILELOCATION);
     }
 
     // initialize variable to hold epochs
@@ -85,7 +85,7 @@ unsigned int readEpochsFromDisk() {
 float readLearningRateFromDisk() {
     FILE* thefile = fopen(LEARNINGRATEFILELOCATION, "r");
     if (thefile == NULL) {
-        onFileOpenError (LEARNINGRATEFILELOCATION);
+        onFileOpenError(LEARNINGRATEFILELOCATION);
     }
 
     // initialize variable to hold learning rate
@@ -116,7 +116,7 @@ float readLearningRateFromDisk() {
 float** readWeightsFromDisk(unsigned int numberOfWeightsTotal) {
     FILE* thefile = fopen(WEIGHTSFILELOCATION, "r");
     if (thefile == NULL) {
-        onFileOpenError (WEIGHTSFILELOCATION);
+        onFileOpenError(WEIGHTSFILELOCATION);
     }
 
     // initialize an array to hold the biases
@@ -152,7 +152,7 @@ float** readWeightsFromDisk(unsigned int numberOfWeightsTotal) {
 } //end readWeightsFromDisk function
 
 /*
- * readModelValuesFromDisk
+ * readModelValuesFromDisk - read in model's structure values from a file on disk
  * @params: p_numberOfLayers - the int pointer to the variable holding the number of layers in the model
  * @params: p_numberOfNeuronsTotal - the int pointer to the variable holding the number of neurons in the model
  * @params: p_numberOfWeightsTotal - the int pointer to the variable holding the number of weights in the model
@@ -166,7 +166,7 @@ void readModelValuesFromDisk(unsigned int* p_numberOfLayers, unsigned int* p_num
                              unsigned int** p_indexOfFirstNeuronInLayer, unsigned int** p_indexOfFirstWeightInFrontOfLayer) {
     FILE* thefile = fopen(MODELVALUESLOCATION, "r");
     if (thefile == NULL) {
-        onFileOpenError (MODELVALUESLOCATION);
+        onFileOpenError(MODELVALUESLOCATION);
     }
 
     // setup variables needed for getline function
@@ -225,15 +225,66 @@ void readModelValuesFromDisk(unsigned int* p_numberOfLayers, unsigned int* p_num
     while ((characters = getline(&buffer, &bufsize, thefile)) != -1) {
         token = strtok(buffer, VALUEDELIM); // grab first token from the line
         while (token) {
-            sscanf(token, "%d", &((*numberOfNeuronsInLayer)[layerIndex])); // store token
+            sscanf(token, "%u", &((*numberOfNeuronsInLayer)[layerIndex])); // store token
             token = strtok(NULL, VALUEDELIM); // grab next token from line
-            sscanf(token, "%d", &((*numberOfWeightsInFrontOfLayer)[layerIndex])); // store token
+            sscanf(token, "%u", &((*numberOfWeightsInFrontOfLayer)[layerIndex])); // store token
             token = strtok(NULL, VALUEDELIM); // grab next token from line
-            sscanf(token, "%d", &((*indexOfFirstNeuronInLayer)[layerIndex])); // store token
+            sscanf(token, "%u", &((*indexOfFirstNeuronInLayer)[layerIndex])); // store token
             token = strtok(NULL, VALUEDELIM); // grab next token from line
-            sscanf(token, "%d", &((*indexOfFirstWeightInFrontOfLayer)[layerIndex])); // store token
+            sscanf(token, "%u", &((*indexOfFirstWeightInFrontOfLayer)[layerIndex])); // store token
             token = strtok(NULL, VALUEDELIM); // grab next token from line
         }
     }
 } //end readModelValuesFromDisk function
+
+/*
+ * readModel
+ * @params: p_learningRate - a float pointer, should point to a variable holding the learning rate
+ * @params: p_epochs - an int pointer, should point to a variable holding the epochs value
+ * @params: p_numberOfLayers - an int pointer, should point to the variable holding the number of layers
+ * @params: p_numberOfNeuronsTotal - an int pointer, should point to the variable holding the number of neurons
+ * @params: p_numberOfWeightsTotal - an int pointer, should point to the variable holding the number of weights
+ * @params: p_numberOfNeuronsInLayer - an int pointer-pointer, will point to the array holding the number of 
+ *                                     neurons in each layer before return
+ * @params: p_numberOfWeightsInFrontOfLayer - an int pointer-pointer, will point to the array holding the number 
+ *                                            of weights in front of each layer before return
+ * @params: p_indexOfFirstNeuronInLayer - an int pointer-pointer, will point to the array holding the indexes of 
+ *                                        the first neuron in each layer before return
+ * @params: p_indexOfFirstWeightInFrontOfLayer - an int pointer-pointer, will point to the array holding the indexes
+ *                                               of the first weight in front of each layer before return
+ * @params: p_weights - a float pointer-pointer, will point to the array of weight values before return
+ * @params: p_biases - a float pointer-pointer, will point to the array of bias values before return
+ */
+void readModel(float* p_learningRate, unsigned int* p_epochs, 
+               unsigned int* p_numberOfLayers, unsigned int* p_numberOfNeuronsTotal, unsigned int* p_numberOfWeightsTotal, 
+               unsigned int** p_numberOfNeuronsInLayer, unsigned int** p_numberOfWeightsInFrontOfLayer,
+               unsigned int** p_indexOfFirstNeuronInLayer, unsigned int** p_indexOfFirstWeightInFrontOfLayer, 
+               float** p_weights, float** p_biases) {
+    // verify directory containing model exists
+    if (stat(MODELDIRECTORY, &st) == -1) {
+        onFileOpenError(MODELDIRECTORY);
+    }
+
+    // read model's learning rate from a file on disk
+    (*p_learningRate) = readLearningRateFromDisk();
+
+    // read model's epochs from a file on disk
+    (*p_epochs) = readEpochsFromDisk();
+
+    // read model's structure values from a file on disk
+    readModelValuesFromDisk(p_numberOfLayers, p_numberOfNeuronsTotal, p_numberOfWeightsTotal, 
+                            p_numberOfNeuronsInLayer, p_numberOfWeightsInFrontOfLayer,
+                            p_indexOfFirstNeuronInLayer, p_indexOfFirstWeightInFrontOfLayer);
+
+    // read model's weight values from a file on disk
+    float* tempFloatPtr = (*p_weights); // keep track of old memory
+    p_weights = readWeightsFromDisk((*p_numberOfWeightsTotal));
+    free(tempFloatPtr); // release old memory
+
+    // read model's bias values from a file on disk
+    tempFloatPtr = (*p_biases); // keep track of old memory
+    p_biases = readWeightsFromDisk((*p_numberOfNeuronsTotal));
+    free(tempFloatPtr); // release old memory
+
+} //end readModel function
 

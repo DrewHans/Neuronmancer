@@ -6,12 +6,12 @@
  */
 
 /*
- * getCalculatedMNISTClassification - returns the MNIST class predicted by the neural network
+ * getCalculatedMNISTClassificationUsingHost - returns the MNIST class predicted by the neural network
  * @params: neurons - a float pointer-pointer to the chunk of memory containing the neuron values 
- * @params: indexOfFirstOutputNeuron - 
+ * @params: indexOfFirstOutputNeuron - the int index of the first neuron in output-layer
  * @return: an int number between 0 - 9 (inclusive), the network's MNIST digit prediction
  */
-int getCalculatedMNISTClassification(float* neurons, unsigned int indexOfFirstOutputNeuron) {
+int getCalculatedMNISTClassificationUsingHost(float* neurons, unsigned int indexOfFirstOutputNeuron) {
     float highestValue = 0.0;
     int classification = 0;
 
@@ -22,15 +22,124 @@ int getCalculatedMNISTClassification(float* neurons, unsigned int indexOfFirstOu
         }
     }
     return classification;
-} //end getCalculatedMNISTClassification function
+} //end getCalculatedMNISTClassificationUsingHost function
 
 /*
- * loadMnistTestSamples
+ * getCalculatedMNISTClassificationUsingDevice - determines device-calculated classification and puts in devClassification
+ * @params: devClassification - device variable to store the classification (will get copied over to host during evaluation)
+ * @params: devNeurons - device copy of neurons
+ * @params: indexOfFirstOutputNeuron - the int index of the first neuron in output-layer
+ */
+void getCalculatedMNISTClassificationUsingDevice(int* devClassification, float* devNeurons, unsigned int indexOfFirstOutputNeuron) {
+    // determine the MNIST classification calculated by the device and put in devClassification to be extracted later
+    cudaKernel_GetCalculatedMNISTClassification<<<1, 1>>>(devClassification, devNeurons, indexOfFirstOutputNeuron);
+
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess) {
+        onCudaKernelLaunchFailure("cudaKernel_GetCalculatedMNISTClassification", cudaStatus)
+    }
+    
+    // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        onCudaDeviceSynchronizeError("cudaKernel_GetCalculatedMNISTClassification", cudaStatus);
+    }
+} //end getCalculatedMNISTClassificationUsingDevice function
+
+/*
+ * loadMnistSampleUsingHost - loads the next sample's data into the network and label into expected
+ * @params: mnistLabels - a char pointer to the array of mnist labels for all samples
+ * @params: mnistData - an unsigned char pointer to the array of mnist pixel data for all samples
+ * @params: indexOfSampleLabel - the int index of the sample label to load
+ * @params: indexOfSampleFirstData - the int index of the sample's first data value
+ * @params: expected - a float pointer-pointer to the expected output neuron values
+ * @params: neurons - a float pointer-pointer to the neuron values
+ */
+void loadMnistSampleUsingHost(const char* mnistLabels, const unsigned char* mnistData, 
+                                  unsigned int indexOfSampleLabel, unsigned int indexOfSampleFirstData, 
+                                  float** expected, float** neurons) {
+    // load the next sample's label into expected
+    for (int i = 0; i < MNISTCLASSIFICATIONS; i++) {
+        if (mnistLabels[indexOfSampleLabel] == i) {
+            (*expected)[i] = 1.0; // set the expected output for neuron i to 1
+        } else {
+            (*expected)[i] = 0.0; // set the expected output for neuron i to 0
+        }
+    }
+
+    // load the next sample's data into network's input-layer
+    for (int i = 0; i < MNISTSAMPLEDATASIZE; i++) {
+        (*neurons)[i] = (float) mnistData[indexOfSampleFirstData + i];
+    }
+} //end loadMnistSampleUsingHost function
+
+/*
+ * loadMnistSampleUsingDevice - loads the next sample's data into the network and label into devNxpected
+ * @params: devMnistLabels - device copy of const char* mnistLabels
+ * @params: devMnistData - device copy of const unsigned char* mnistData
+ * @params: indexOfSampleLabel - the int index of the sample label to load
+ * @params: indexOfSampleFirstData - the int index of the sample's first data value
+ * @params: devExpected - device copy of float** expected
+ * @params: devNeurons - device copy of float** neurons
+ */
+void loadMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char* devMnistData, 
+                                  unsigned int indexOfSampleLabel, unsigned int indexOfSampleFirstData, 
+                                  float* devExpected, float* devNeurons) {
+    // use getDeviceProperties helper function to get GPU device information
+    unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
+    unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
+    getDeviceProperties(&numberOfSMs, &warpsize); 
+
+    // set blocks and threads to a size that will fully utilize the GPU (overkill, I know, but we're going for performance here)
+    unsigned int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
+    unsigned int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
+    
+    // double or devide the number of threads until we have a number close to the number of possible MNIST classifications
+    threads = getOptimalThreadSize(blocks, threads, MNISTCLASSIFICATIONS, warpsize);
+
+    // load the next sample's label into expected (only 1 block of 32 threads should be needed for the output layer)
+    cudaKernel_loadMnistSampleLabelIntoExpected<<<1, threads>>>(devMnistLabels, indexOfSampleLabel, devExpected);
+
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess) {
+        onCudaKernelLaunchFailure("cudaKernel_loadMnistSampleLabelIntoExpected", cudaStatus)
+    }
+    
+    // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        onCudaDeviceSynchronizeError("cudaKernel_loadMnistSampleLabelIntoExpected", cudaStatus);
+    }
+
+    // double or devide the number of threads until we have a number close to the number of pixels in each MNIST sample
+    threads = getOptimalThreadSize(blocks, threads, MNISTSAMPLEDATASIZE, warpsize);
+
+
+    // load the next sample's data into network's input-layer
+    cudaKernel_loadMnistSampleDataIntoInputLayer<<<blocks, threads>>>(devMnistData, indexOfSampleFirstData, devNeurons);
+
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess) {
+        onCudaKernelLaunchFailure("cudaKernel_loadMnistSampleDataIntoInputLayer", cudaStatus)
+    }
+    
+    // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        onCudaDeviceSynchronizeError("cudaKernel_loadMnistSampleDataIntoInputLayer", cudaStatus);
+    }
+}//end loadMnistSampleUsingDevice function
+
+/*
+ * readMnistTestSamplesFromDisk
  * @params: testData - a pointer to an array of unsigned chars (bytes) containing the pixel values for all test samples
  * @params: testLabels - a pointer to an array of chars (bytes) containing the labels for all test samples
  * @params: numberOfSamples - a pointer to an int value (the number of test samples)
  */
-void loadMnistTestSamples(unsigned char** testData, char** testLabels, unsigned int* numberOfSamples) {
+void readMnistTestSamplesFromDisk(unsigned char** testData, char** testLabels, unsigned int* numberOfSamples) {
     FILE* thefile = fopen(MNISTTESTFILELOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (MNISTTESTFILELOCATION);
@@ -81,15 +190,15 @@ void loadMnistTestSamples(unsigned char** testData, char** testLabels, unsigned 
     }
 
     free(buffer);
-} //end loadMnistTestSamples function
+} //end loadMnistTestSamplesFromDisk function
 
 /*
- * loadMnistTrainingSamples
+ * readMnistTrainingSamplesFromDisk
  * @params: trainingData - a pointer to an array of unsigned chars (bytes) containing the pixel values for all training samples
  * @params: trainingLabels - a pointer to an array of chars (bytes) containing the labels for all training samples
  * @params: numberOfSamples - a pointer to an int value (the number of training samples)
  */
-void loadMnistTrainingSamples(unsigned char** trainingData, char** trainingLabels, unsigned int* numberOfSamples) {
+void readMnistTrainingSamplesFromDisk(unsigned char** trainingData, char** trainingLabels, unsigned int* numberOfSamples) {
     FILE* thefile = fopen(MNISTTRAINFILELOCATION, "r");
     if (thefile == NULL) {
         onFileOpenError (MNISTTRAINFILELOCATION);
@@ -140,102 +249,37 @@ void loadMnistTrainingSamples(unsigned char** trainingData, char** trainingLabel
     }
 
     free(buffer);
-} //end loadMnistTrainingSamples function
+} //end readMnistTrainingSamplesFromDisk function
 
 /*
- * loadNextMnistSampleUsingHost - loads the next sample's data into the network and label into expected
- * @params: mnistLabels - a char pointer to the array of mnist labels for all samples
- * @params: mnistData - an unsigned char pointer to the array of mnist pixel data for all samples
- * @params: indexOfNextSampleLabel - the int index of the next sample label to load
- * @params: indexOfNextSampleFirstData - the int index of the next sample's first data value
- * @params: expected - a float pointer-pointer to the expected output neuron values
- * @params: neurons - a float pointer-pointer to the neuron values
- */
-void loadNextMnistSampleUsingHost(const char* mnistLabels, const unsigned char* mnistData, 
-                                  unsigned int indexOfNextSampleLabel, unsigned int indexOfNextSampleFirstData, 
-                                  float** expected, float** neurons) {
-    // load the next sample's label into expected
-    for (int i = 0; i < MNISTCLASSIFICATIONS; i++) {
-        if (mnistLabels[indexOfNextSampleLabel] == i) {
-            (*expected)[i] = 1.0; // set the expected output for neuron i to 1
-        } else {
-            (*expected)[i] = 0.0; // set the expected output for neuron i to 0
-        }
-    }
-
-    // load the next sample's data into network's input-layer
-    for (int i = 0; i < MNISTSAMPLEDATASIZE; i++) {
-        (*neurons)[i] = (float) mnistData[indexOfNextSampleFirstData + i];
-    }
-} //end loadNextMnistSampleUsingHost function
-
-/*
- * loadNextMnistSampleUsingDevice - loads the next sample's data into the network and label into devNxpected
- * @params: devMnistLabels - device copy of const char* mnistLabels
+ * cudaKernel_GetCalculatedMNISTClassification - ONLY LAUNCH 1 BLOCK WITH 1 THREAD WHEN USING THIS CUDAKERNEL
+ * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
  * @params: devMnistData - device copy of const unsigned char* mnistData
- * @params: indexOfNextSampleLabel - the int index of the next sample label to load
  * @params: indexOfNextSampleFirstData - the int index of the next sample's first data value
- * @params: devExpected - device copy of float** expected
  * @params: devNeurons - device copy of float** neurons
  */
-void loadNextMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char* devMnistData, 
-                                  unsigned int indexOfNextSampleLabel, unsigned int indexOfNextSampleFirstData, 
-                                  float* devExpected, float* devNeurons) {
-    // use getDeviceProperties helper function to get GPU device information
-    unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
-    unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
-    getDeviceProperties(&numberOfSMs, &warpsize); 
-
-    // set blocks and threads to a size that will fully utilize the GPU (overkill, I know, but we're going for performance here)
-    unsigned int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
-    unsigned int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
-    
-    // double or devide the number of threads until we have a number close to the number of possible MNIST classifications
-    threads = getOptimalThreadSize(blocks, threads, MNISTCLASSIFICATIONS, warpsize);
-
-    // load the next sample's label into expected
-    cudaKernel_loadNextMnistSampleLabelIntoExpected<<<blocks, threads>>>(devMnistLabels, indexOfNextSampleLabel, devExpected);
-
-    // Check for any errors launching the kernel
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        onCudaKernelLaunchFailure("cudaKernel_loadNextMnistSampleLabelIntoExpected", cudaStatus)
+__global__ void cudaKernel_GetCalculatedMNISTClassification(int* devClassification, float* devNeurons, unsigned int indexOfFirstOutputNeuron) {
+    volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
+    if (id < 1) {
+        float highestValue = 0.0;
+        devClassification[0] = 0;
+        for (int i = 0; i < MNISTCLASSIFICATIONS; i++) {
+            if (devNeurons[indexOfFirstOutputNeuron + i] > highestValue) {
+                highestValue = devNeurons[indexOfFirstOutputNeuron + i];
+                devClassification[0] = i;
+            }
+        }
     }
-    
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        onCudaDeviceSynchronizeError("cudaKernel_loadNextMnistSampleLabelIntoExpected", cudaStatus);
-    }
-
-    // double or devide the number of threads until we have a number close to the number of pixels in each MNIST sample
-    threads = getOptimalThreadSize(blocks, threads, MNISTSAMPLEDATASIZE, warpsize);
-
-
-    // load the next sample's data into network's input-layer
-    cudaKernel_loadNextMnistSampleDataIntoInputLayer<<<blocks, threads>>>(devMnistData, indexOfNextSampleFirstData, devNeurons);
-
-    // Check for any errors launching the kernel
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        onCudaKernelLaunchFailure("cudaKernel_loadNextMnistSampleDataIntoInputLayer", cudaStatus)
-    }
-    
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        onCudaDeviceSynchronizeError("cudaKernel_loadNextMnistSampleDataIntoInputLayer", cudaStatus);
-    }
-}//end loadNextMnistSampleUsingDevice function
+} //end cudaKernel_GetCalculatedMNISTClassification function
 
 /*
- * cudaKernel_loadNextMnistSampleLabelIntoExpected
+ * cudaKernel_loadMnistSampleLabelIntoExpected
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
  * @params: devMnistLabels - device copy of const char* mnistLabels
  * @params: indexOfNextSampleLabel - the int index of the next sample label to load
  * @params: devExpected - device copy of float** expected
  */
-__global__ void cudaKernel_loadNextMnistSampleLabelIntoExpected(const char* devMnistLabels, int indexOfNextSampleLabel, float* devExpected) {
+__global__ void cudaKernel_loadMnistSampleLabelIntoExpected(const char* devMnistLabels, unsigned int indexOfNextSampleLabel, float* devExpected) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < MNISTCLASSIFICATIONS) {
         if (devMnistLabels[indexOfNextSampleLabel] == id) {
@@ -244,19 +288,19 @@ __global__ void cudaKernel_loadNextMnistSampleLabelIntoExpected(const char* devM
             devOutputExpected[id] = 0;
         }
     }
-} //end cudaKernel_loadNextMnistSampleLabelIntoExpected function
+} //end cudaKernel_loadMnistSampleLabelIntoExpected function
 
 /*
- * loadNextMnistSampleDataKernel
+ * cudaKernel_loadMnistSampleDataIntoInputLayer
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
  * @params: devMnistData - device copy of const unsigned char* mnistData
  * @params: indexOfNextSampleFirstData - the int index of the next sample's first data value
  * @params: devNeurons - device copy of float** neurons
  */
-__global__ void cudaKernel_loadNextMnistSampleDataIntoInputLayer(const unsigned char* devMnistData, int indexOfNextSampleFirstData, float* devNeurons) {
+__global__ void cudaKernel_loadMnistSampleDataIntoInputLayer(const unsigned char* devMnistData, unsigned int indexOfNextSampleFirstData, float* devNeurons) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < MNISTSAMPLEDATASIZE) {
         devNeurons[id] = (float) devMnistData[indexOfNextSampleFirstData + id];
     }
-} //end loadNextMnistSampleData kernel function
+} //end cudaKernel_loadMnistSampleDataIntoInputLayer function
 

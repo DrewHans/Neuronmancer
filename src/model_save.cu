@@ -34,7 +34,7 @@ void saveEpochsToDisk(unsigned int epochs) {
         onFileOpenError (EPOCHSFILELOCATION);
     }
 
-    fprintf(thefile, "%d\n", epochs); // write int value and newline to file
+    fprintf(thefile, "%u\n", epochs); // write int value and newline to file
 
     fclose(thefile); // close the file once we're done with it
 } //end saveEpochsToDisk function
@@ -69,7 +69,7 @@ void saveWeightsToDisk(float* weights, unsigned int numberOfWeightsTotal) {
         fprintf(thefile, "%f%s", weights[i], VALUEDELIM);  // write float value and VALUEDELIM to file
     }
 
-    fprintf(thefile, "%d\n", epochs); // write int value and newline to file
+    fprintf(thefile, "%u\n", epochs); // write int value and newline to file
 
     fclose(thefile); // close the file once we're done with it
 } //end saveWeightsToDisk function
@@ -93,11 +93,11 @@ void saveModelValuesToDisk(unsigned int numberOfLayers, unsigned int numberOfNeu
     }
 
     // write structure values for model construction to file first
-    fprintf(thefile, "%d%s%d%s%d\n", numberOfLayers, VALUEDELIM, numberOfNeuronsTotal, VALUEDELIM, numberOfWeightsTotal);
+    fprintf(thefile, "%u%s%u%s%u\n", numberOfLayers, VALUEDELIM, numberOfNeuronsTotal, VALUEDELIM, numberOfWeightsTotal);
 
     // write structure values for each layer in model to file second
     for (int i = 0; i < numberOfLayers; i++) {
-        fprintf(thefile, "%d%s%d%s%d%s%d\n", numberOfNeuronsInLayer[i], VALUEDELIM, numberOfWeightsInFrontOfLayer[i], VALUEDELIM, indexOfFirstNeuronInLayer[i], VALUEDELIM, indexOfFirstWeightInFrontOfLayer[i]);
+        fprintf(thefile, "%u%s%u%s%u%s%u\n", numberOfNeuronsInLayer[i], VALUEDELIM, numberOfWeightsInFrontOfLayer[i], VALUEDELIM, indexOfFirstNeuronInLayer[i], VALUEDELIM, indexOfFirstWeightInFrontOfLayer[i]);
     }
 
     fclose(thefile); // close the file once we're done with it

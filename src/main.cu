@@ -17,7 +17,9 @@ int main(int argc, char * argv[]) {
     int loop = -1;
 
     while (loop != 0) {
-        printf("What would you like to do?\nEnter 0 to quit, 1 to create a new model, 2 to train an existing model, or 3 to evaluate an existing model:\n~");
+        printf("What would you like to do?\n"
+               "Enter 0 to quit, 1 to create a new model, 2 to train an existing model, or 3 to evaluate an existing model:\n"
+               "~");
         fgets(buffer, MAXINPUT, stdin); // read the user's input from stdin into inputBuffer
         sscanf(buffer, "%d", &loop); // format and dump the user's input into loop
         if (loop < 0 || loop > 3) {
