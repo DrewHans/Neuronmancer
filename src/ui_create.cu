@@ -7,28 +7,59 @@
 
 /* ui_create method - user interface for creating a model */
 void ui_create() {
-    // declare variables needed to store the model information
-    char inputBuffer[MAXINPUT]; // store the user's input (gets recycled a lot)
-    unsigned int numberOfLayers; // store the total number of layers in the network
-    unsigned int numberOfNeuronsTotal; // store the total number of neurons in our neural network
-    unsigned int numberOfWeightsTotal; // store the total number of weights in our neural network
-    unsigned int* numberOfNeuronsInLayer; // store the total number of neurons in each layer in our neural network in a 1d array of size numberOfLayers
-    unsigned int* numberOfWeightsInFrontOfLayer; // store the total number of weights between each layer in our neural network in a 1d array of size numberOfLayers-1
-    unsigned int* indexOfFirstNeuronInLayer; // store the indexes of each layer's first neuron value
-    unsigned int* indexOfFirstWeightInFrontOfLayer; // store the indexes of each layer's first weight value
-    float* weights; // store the weight values of our neural network in a 1d array of size weightSize (1d arrays are easy to work with in CUDA)
-    float* biases; // store the biases values of our neural network in a 1d array of size weightSize (1d arrays are easy to work with in CUDA)
-    unsigned int epochs; // store the number of epochs for training
-    float learningRate; // store the rate that our network will learn
-
+    // declare helper variables for ui_create
+    char inputBuffer[MAXINPUT]; // stores the user's input (gets recycled a lot)
     int myPatience = 2; // stores the amount of patience I have for the user's nonsense
+
+    // declare variables needed to store the model's structure / training information
+    float learningRate; // the rate that our network will learn
+    unsigned int epochs; // the number of epochs for training (in a single epoch: see all training samples then use deltas for weight/bias update)
+    unsigned int numberOfLayers; // the total number of layers in the network
+    unsigned int numberOfNeuronsTotal; // the total number of neurons in the network
+    unsigned int numberOfWeightsTotal; // the total number of weights in the network
+    unsigned int* numberOfNeuronsInLayer; // the total number of neurons in each layer (1d array of size numberOfLayers)
+    unsigned int* numberOfWeightsInFrontOfLayer; // the number of weights between each layer (1d array of size numberOfLayers)
+    unsigned int* indexOfFirstNeuronInLayer; // the indexes of each layer's first neuron value (1d array of size numberOfLayers)
+    unsigned int* indexOfFirstWeightInFrontOfLayer; // the indexes of the first weight value in front of each layer (1d array of size numberOfLayers)
+
+    // declare variables needed to store important model values
+    float* weights; // the weight values of the neural network (1d array of size numberOfWeightsTotal) (1d arrays are easy for CUDA to work with)
+    float* biases; // the biases values of the neural network (1d array of size numberOfNeuronsTotal) (1d arrays are easy for CUDA to work with)
 
     printf("Before we begin, there are some things you should know. By design, all models created with Neuronmancer will have at least"
             " two layers - one input layer at the beginning of the network and one output layer at the end of the network. These layers"
             " are not optional, they are required for this program to function correctly. You can, however, specify the number of hidden"
-            " layers and the number of neurons in each of those hidden layers... I will allow you at least that much freedom.\n");
-    printf("Press enter to continue or ctrl-c to abort...");
+            " layers and the number of neurons in each of those hidden layers... I will allow you at least that much freedom.\n"
+            "Remember that you can press ctrl-c at anytime to abort...\nPress enter to continue...\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
+
+    // get user input for the learningRate
+    learningRate = -1.0; // assign -1.0 to enter loop
+    while (learningRate <= 0.0) {
+        // get the learningRate
+        printf("Please enter a positive floating-point number greater than 0.0 for the learning rate:\n~");
+        fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
+        sscanf(inputBuffer, "%f", &learningRate); // format and dump the user's input
+        if (learningRate < 0.0) {
+            onInvalidInput(myPatience);
+            myPatience--;
+        }
+    }
+    myPatience = 2; // restore my patience
+
+    // get user input for the epochs
+    epochs = -1; // assign -1 to enter loop
+    while (epochs <= 0) {
+        // get the epochs
+        printf("Pleae enter a positive whole number greater than 0 for the number of epochs:\n~");
+        fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
+        sscanf(inputBuffer, "%u", &epochs); // format and dump the user's input
+        if (epochs < 0) {
+            onInvalidInput(myPatience);
+            myPatience--;
+        }
+    }
+    myPatience = 2; // restore my patience
 
     printf("\nFor the following please enter a positive number with no spaces, commas, or decimal points.\n");
 
@@ -69,11 +100,11 @@ void ui_create() {
     }
 
     printf("The input layer will have 784 neurons (one for each pixel in an MNIST sample).\n");
-    printf("The output layer will have 10 neurons (one for each MNIST sample class).\n");
+    printf("The output layer will have 10 neurons (one for each possible MNIST classification).\n");
 
 
-    numberOfNeuronsInLayer[0] = 784; // set input layer size to 784 (number of pixels in each MNIST sample)
-    numberOfNeuronsInLayer[numberOfLayers - 1] = 10; // set output layer size (number of possible classifications for each MNIST sample)
+    numberOfNeuronsInLayer[0] = 784; // set input layer size (one for each pixel value in an MNIST sample)
+    numberOfNeuronsInLayer[numberOfLayers - 1] = 10; // set output layer size (one for each possible MNIST classification)
 
     // get user input for the number of neurons in each hidden layer
     for (int i = 1; i < numberOfLayers - 1; i++) {
@@ -91,7 +122,7 @@ void ui_create() {
         myPatience = 2; // restore my patience
     }
 
-    printf("Alright, sit tight while I do some calculations...\n");
+    printf("Alright, sit tight while I do some work...\n");
 
     // Calculate the number of neuron/weight values we need space for and also the first Neuron/Weight index for each layer
     indexOfFirstNeuronInLayer[0] = 0;  // input layer's first neuron starts at 0
@@ -108,7 +139,7 @@ void ui_create() {
         numberOfWeightsTotal = numberOfWeightsTotal + numberOfWeightsInFrontOfLayer[i]; // update total number of weights
     }
 
-    printf("...attempting to allocate memory for weights and biases...\n");
+    printf("- attempting to allocate memory for weights and biases...");
 
     // dynamically allocate memory to store the biases and weight values
     biases = (float*) malloc(numberOfNeuronsTotal * sizeof(float)); //malloc allocates a chunk of host memory
@@ -121,66 +152,30 @@ void ui_create() {
         onMallocError(numberOfWeightsTotal * sizeof(float));
     }
 
-    printf("...allocation successful!\nBeginning value initialization (this might take a while)...\n");
-
-    printf("...initializing biases to zero...\n");
+    printf("allocation successful!\n- initializing biases to zero (this might take a while)...");
+    
     initArrayToZeros(&biases, numberOfNeuronsTotal); // cleans up any garbage we may have picked up
 
-    printf("...initializing weights to random floating-point values in range 0.0-1.0 (inclusive)...\n");
-    initArrayToRandomFloats(&weights, numberOfWeightsTotal);
+    printf("biases initialized!\n- initializing weights to random floating-point values in range 0.0-1.0 inclusive (this also might take a while)...");
+    
+    initArrayToRandomFloats(&weights, numberOfWeightsTotal); // needs to be done, also cleans up garbage :)
 
-    printf("...initialization successful!\n");
-
-    printf("Now you need to decide the learning rate and number of epochs.\n");
-
-    // get user input for the learningRate
-    learningRate = -1.0; // assign -1.0 to enter loop
-    while (learningRate <= 0.0) {
-        // get the learning rate
-        printf("Please enter a positive floating-point number greater than 0.0 for the learning rate:\n~");
-        fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-        sscanf(inputBuffer, "%f", &learningRate); // format and dump the user's input
-        if (learningRate < 0.0) {
-            onInvalidInput(myPatience);
-            myPatience--;
-        }
-    }
-    myPatience = 2; // restore my patience
-
-    // get user input for the epochs
-    epochs = -1; // assign -1 to enter loop
-    while (epochs <= 0) {
-        // get the learning rate
-        printf("Pleae enter a positive whole number greater than 0 for the number of epochs:\n~");
-        fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-        sscanf(inputBuffer, "%u", &epochs); // format and dump the user's input
-        if (epochs < 0) {
-            onInvalidInput(myPatience);
-            myPatience--;
-        }
-    }
-    myPatience = 2; // restore my patience
+    printf("weights initialized!\n- attempting to save model to disk...");
 
     // save the model to disk
-    printf("Saving model to disk...");
     saveModel(numberOfLayers, numberOfNeuronsTotal, numberOfWeightsTotal, numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, indexOfFirstNeuronInLayer,
             indexOfFirstWeightInFrontOfLayer, weights, biases, learningRate, epochs);
-    printf("Model saved!\n");
-
-    printf("Press enter to free dynamically allocated host memory.\n~");
-    fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
+    printf("Model saved!\n- freeing dynamically allocated host memory...");
 
     // free the chunks of host memory that were dynamically allocated by malloc
-    printf("Freeing dynamically allocated host memory...");
     free(numberOfNeuronsInLayer);
     free(numberOfWeightsInFrontOfLayer);
     free(indexOfFirstNeuronInLayer);
     free(indexOfFirstWeightInFrontOfLayer);
     free(biases);
     free(weights);
-    printf("memory freed!\n");
 
-    printf("Press enter to return to the main menu:\n~");
+    printf("memory freed!\nPress enter to return to the main menu:\n~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     printf("\n");
 } //end ui_create function

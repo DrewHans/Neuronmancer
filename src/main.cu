@@ -25,18 +25,18 @@ int main(int argc, char * argv[]) {
             myPatience--;
         } else if (loop == 1) {
             printf("\nLets create an artificial neural network!\n");
-            ui_create();
+            ui_create(); // jump into user-interface for creating an ANN model
             myPatience = 2; // restore my patience
         } else if (loop == 2) {
             printf("\nLets train an artificial neural network!\n");
-            ui_train();
+            ui_train(); // jump into user-interface for training an existing ANN model
             myPatience = 2; // restore my patience
         } else if (loop == 3) {
             printf("\nLets evaluate an artificial neural network!\n");
-            ui_evaluate();
+            ui_evaluate(); // jump into user-interface for evaluating an existing ANN model
             myPatience = 2; // restore my patience
         }
-    }
+    }//end while loop
 
     printf("Neuronmancer will now end.\n");
 } //end main function
