@@ -7,11 +7,11 @@
  */
 
 /*
- * getDeviceProperties
+ * getDeviceProperties - detects and stores the number of SMs and warpsize in arguments passed in
  * @params: multiProcessorCount - a pointer an int value (stores multiProcessorCount of the device)
  * @params: warpSize - a pointer an int value (stores the warpSize of the device)
  */
-void getDeviceProperties(int* multiProcessorCount, int* warpSize) {
+void getDeviceProperties(unsigned int* multiProcessorCount, unsigned int* warpSize) {
     cudaDeviceProp devProp; //initialize cudaDeviceProp struct
     cudaGetDeviceProperties(&devProp, 0); //getDeviceProperties of device 0 and stuff them into address of devProp
 
@@ -58,7 +58,7 @@ void getDeviceProperties(int* multiProcessorCount, int* warpSize) {
  * @params: gpuWarpsize - the int warpsize of the GPU
  * @returns: the int number of "optimal" threads to launch
  */
-int getOptimalThreadSize(int blocks, int threads, int minimumThreadsNeeded, int gpuWarpsize) {
+int getOptimalThreadSize(unsigned int blocks, unsigned int threads, unsigned int minimumThreadsNeeded, unsigned int gpuWarpsize) {
     // double or devide the number of threads until we have a number close to the number of neurons in right-layer
     if ((blocks*threads) < minimumThreadsNeeded) {
         while((blocks*threads) < minimumThreadsNeeded) {
@@ -73,55 +73,57 @@ int getOptimalThreadSize(int blocks, int threads, int minimumThreadsNeeded, int 
 }//end getOptimalThreadSize function
 
 /*
- * initArrayToRandomDoubles
- * @params: a - a pointer to an array of double values
+ * initArrayToRandomFloats - initializes all array elements to a random floating-point value
+ * @params: a - a pointer to an array of float values
  * @params: n - the size of array a
  */
-void initArrayToRandomDoubles(double** a, int n) {
-    // generate random doubles in range [0, 1)
+void initArrayToRandomFloats(float** a, unsigned int n) {
+    // seed pseudo-random number generator with current time
+    srand ( time ( NULL));
+
+    // generate random floats in range [0.0, 1.0)
     for (int i = 0; i < n; i++) {
-        srand (time(NULL)); // seed pseudo-random number generator with current time
-(        *a)[i] = ((double) rand()) / ((double) RAND_MAX);
+        (*a)[i] = ((float) rand()) / ((float) RAND_MAX);
     }
-} //end initArrayToRandomDoubles function
+} //end initArrayToRandomFloats function
 
 /*
- * initArrayToZeros
- * @params: a - a pointer to an array of double values
+ * initArrayToZeros - initializes all array elements to zero
+ * @params: a - a pointer to an array of float values
  * @params: n - the size of array a
  */
-void initArrayToZeros(double** a, int n) {
+void initArrayToZeros(float** a, unsigned int n) {
     // set all neuron values to zero
     for (int i = 0; i < n; i++) {
-        (*a)[i] = 0;
+        (*a)[i] = 0.0;
     }
 } //end initArrayToZeros function
 
 /*
- * printarray_double - prints out array double values to terminal
+ * printarray_float - prints out all array elements to terminal
  * @params: name - a pointer to a char string
- * @params: a - a pointer to an array of double values
+ * @params: a - a pointer to an array of float values
  * @params: n - the size of array a
  */
-void printarray_double(const char* name, double* a, int n) {
+void printarray_float(const char* name, float* a, unsigned int n) {
     for (int i = 0; i < n; i++) {
         printf("%s[%d]=%lf\n", name, i, a[i]);
     }
     printf("\n");
-} //end printarray function
+} //end printarray_float function
 
 /*
- * printarray_int - prints out array int values to terminal
+ * printarray_int - prints out all array elements to terminal
  * @params: name - a pointer to a char string
  * @params: a - a pointer to an array of int values
  * @params: n - the size of array a
  */
-void printarray_int(const char* name, int* a, int n) {
+void printarray_int(const char* name, unsigned int* a, unsigned int n) {
     for (int i = 0; i < n; i++) {
         printf("%s[%d]=%d\n", name, i, a[i]);
     }
     printf("\n");
-} //end printarray function
+} //end printarray_int function
 
 /*
  * printFarewellMSG - prints out one final insult before we crash
@@ -130,63 +132,69 @@ void printFarewellMSG() {
     printf("Sorry, I did everything I could but it looks like I'm crashing...\n...\n...your computer sucks, good-bye.\n");
 } //end printFarewellMSG function
 
+/*
+ * onCudaKernelLaunchFailure - crashes the program when called (SOS, we're going down)
+ */
 void onCudaKernelLaunchFailure(char* kernel, cudaError_t cudaStatus) {
-    printf("%s launch failed: %s\n", kernel, cudaGetErrorString(cudaStatus));
+    fprintf(stderr, "ERROR: %s launch failed: %s\n", kernel, cudaGetErrorString(cudaStatus));
     printFarewellMSG();
     exit(1);
-}
-
-void onCudaDeviceSynchronizeError(char* kernel, cudaError_t cudaStatus) {
-    printf("cudaDeviceSynchronize returned error code %d after launching %s!\n", cudaStatus, kernel);
-    printFarewellMSG();
-    exit(1);
-}
+}//end onCudaKernelLaunchFailure function
 
 /*
- * onCudaMallocError - SOS, we're going down
+ * onCudaDeviceSynchronizeError - crashes the program when called (SOS, we're going down)
+ */
+void onCudaDeviceSynchronizeError(char* kernel, cudaError_t cudaStatus) {
+    fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching %s!\n", cudaStatus, kernel);
+    printFarewellMSG();
+    exit(1);
+}//end onCudaDeviceSynchronizeError function
+
+/*
+ * onCudaMallocError - crashes the program when called (SOS, we're going down)
  * @params: size - the size of the device memory that we couldn't allocate
  */
-void onCudaMallocError(int size) {
-    printf("ERROR: Failed to cudaMalloc %d of memory!\n", size);
+void onCudaMallocError(unsigned int size) {
+    fprintf(stderr, "ERROR: Failed to cudaMalloc %d of memory!\n", size);
     printFarewellMSG();
     exit(1);
 } //end onCudaMallocError function
 
 /*
- * onCudaMemcpyError - SOS, we're going down
+ * onCudaMemcpyError - crashes the program when called (SOS, we're going down)
  * @params: size - the name of the host variable that we couldn't copy
  */
 void onCudaMemcpyError(const char* hostVariable) {
-    printf("ERROR: Failed to cudaMemcpy %s to device!\n", hostVariable);
+    fprintf(stderr, "ERROR: Failed to cudaMemcpy %s to device!\n", hostVariable);
     printFarewellMSG();
     exit(1);
 } //end onCudaMemcpyError function
 
 /*
- * onFailToSetGPUDevice - SOS, we're going down
+ * onFailToSetGPUDevice - crashes the program when called (SOS, we're going down)
  */
 void onFailToSetGPUDevice() {
-    printf("ERROR: Failed find GPU device!\n");
+    fprintf(stderr, "ERROR: Failed to find a CUDA enabled GPU device!\n");
     printFarewellMSG();
     exit(1);
 } //end onFailToSetGPUDevice function
 
 /*
- * onFileOpenError - SOS, we're going down
+ * onFileOpenError - crashes the program when called (SOS, we're going down)
  * @params: path - file that failed to open
  */
 void onFileOpenError(const char* path) {
-    printf("ERROR: Failed to open %s!\n", path);
+    fprintf(stderr, "ERROR: Failed to open %s!\n", path);
     printFarewellMSG();
     exit(1);
 } //end onFileOpenError function
 
 /*
- * onFileReadError - SOS, we're going down
+ * onFileReadError - crashes the program when called (SOS, we're going down)
  * @params: path - file that failed to read
  */
 void onFileReadError(const char* path) {
-    printf("ERROR: Failed to read value from file %s!\n", path);
+    fprintf(stderr, "ERROR: Failed to read from file %s!\n", path);
     printFarewellMSG();
     exit(1);
 } //end onFileReadError function
@@ -208,11 +216,12 @@ void onInvalidInput(int myPatience) {
 } //end onInvalidInput function
 
 /*
- * onMallocError - SOS, we're going down
+ * onMallocError - crashes the program when called (SOS, we're going down)
  * @params: size - the size of the memory that we couldn't allocate
  */
-void onMallocError(int size) {
-    printf("ERROR: Failed to malloc %d of memory!\n", size);
+void onMallocError(unsigned int size) {
+    fprintf(stderr, "ERROR: Failed to malloc %d of memory!\n", size);
     printFarewellMSG();
     exit(1);
 } //end onMallocError function
+

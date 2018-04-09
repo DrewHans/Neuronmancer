@@ -10,21 +10,21 @@
 
 /*
  * backpropagationUsingHost - calculate then backpropagate the output-layer's delta through the network using CPU
- * @params: neuronDeltas - a double pointer-pointer to the chunk of memory containing the delta values for each neuron
- * @params: expected - a double pointer to the chunk of memory containing the expected output neuron values (from training labels)
- * @params: neurons - a double pointer to the chunk of memory containing the neuron values
- * @params: weights - a double pointer to the chunk of memory containing the weight values
- * @params: biases - a double pointer to the chunk of memory containing the biases values
+ * @params: neuronDeltas - a float pointer-pointer to the chunk of memory containing the delta values for each neuron
+ * @params: expected - a float pointer to the chunk of memory containing the expected output neuron values (from training labels)
+ * @params: neurons - a float pointer to the chunk of memory containing the neuron values
+ * @params: weights - a float pointer to the chunk of memory containing the weight values
+ * @params: biases - a float pointer to the chunk of memory containing the biases values
  * @params: numberOfLayers - the int number of layers in the network (index 0 => input, index numberOfLayers-1 => output)
  * @params: numberOfNeuronsInLayer - an int pointer to a chunk of memory containing the number of neurons in each layer
  * @params: numberOfWeightsInFrontOfLayer - an int pointer to a chunk of memory containing the number of weights in front of each layer
  * @params: indexOfFirstNeuronInLayer - an int pointer to a chunk of memory containing the indexes of the first neurons in each layer
  * @params: indexOfFirstWeightInFrontOfLayer - an int pointer to a chunk of memory containing the indexes of the first weight in front of each layer
  */
-void backpropagationUsingHost(double** neuronDeltas, double* expected, double* neurons, double* weights, double* biases, 
-                              int numberOfLayers, int* numberOfNeuronsInLayer, int* numberOfWeightsInFrontOfLayer,
-                              int* indexOfFirstNeuronInLayer, int* indexOfFirstWeightInFrontOfLayer) {
-    int indexOfFirstOutputNeuron = indexOfFirstNeuronInLayer[numberOfLayers-1]; // start at this neuron for output-layer
+void backpropagationUsingHost(float** neuronDeltas, float* expected, float* neurons, float* weights, float* biases, 
+                              unsigned int numberOfLayers, unsigned int* numberOfNeuronsInLayer, unsigned int* numberOfWeightsInFrontOfLayer,
+                              unsigned int* indexOfFirstNeuronInLayer, unsigned int* indexOfFirstWeightInFrontOfLayer) {
+    unsigned int indexOfFirstOutputNeuron = indexOfFirstNeuronInLayer[numberOfLayers-1]; // start at this neuron for output-layer
 
     // calculate the deltas for each neuron no in the output-layer
     for (int no = 0; no < numberOfNeuronsInLayer[numberOfLayers-1]; no++) {
@@ -35,18 +35,18 @@ void backpropagationUsingHost(double** neuronDeltas, double* expected, double* n
 
     // for each layer l between output and input (non-inclusive) visit in reverse order and backpropagate error values from right to left
     for (int l = numberOfLayers - 2; l > 0; l--) {
-        int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l]; // left-layer size
-        int numberOfNeuronsInRight = numberOfNeuronsInLayer[l+1]; // right-layer size
-        int numberOfWeights = numberOfWeightsInFrontOfLayer[l+1]; // the number of weights between left and right
+        unsigned int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l]; // left-layer size
+        unsigned int numberOfNeuronsInRight = numberOfNeuronsInLayer[l+1]; // right-layer size
+        unsigned int numberOfWeights = numberOfWeightsInFrontOfLayer[l+1]; // the number of weights between left and right
 
-        int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l]; // start at this neuron for left-layer
-        int indexOfFirstRightNeuron = indexOfFirstNeuronInLayer[l+1]; // start at this neuron for right-layer
-        int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l+1]; // start at this weight 
+        unsigned int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l]; // start at this neuron for left-layer
+        unsigned int indexOfFirstRightNeuron = indexOfFirstNeuronInLayer[l+1]; // start at this neuron for right-layer
+        unsigned int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l+1]; // start at this weight 
 
         // for each neuron nl in left-layer:
         // calculate the errorSum of all right-layer connections, then use the errorSum to calculate nl's delta value and add it to neuronDeltas[nl's index]
         for (int nl = 0; nl < numberOfNeuronsInLayer[l]; nl++) {
-            double errorSum = 0.0; // store neuron nl's error sum of all right-layer connections
+            float errorSum = 0.0; // store neuron nl's error sum of all right-layer connections
 
             // for each neuron nr in right-layer
             for (int nr = 0; nr < numberOfNeuronsInRight; nr++) {
@@ -63,31 +63,31 @@ void backpropagationUsingHost(double** neuronDeltas, double* expected, double* n
 
 /*
  * backpropagationUsingDevice - calculate then backpropagate the output-layer's delta through the network using GPU
- * @params: devNeuronDeltas - device copy of double* neuronDeltas
- * @params: devExpected - device copy of double* expected
- * @params: devNeurons - device copy of double* neurons
- * @params: devWeights - device copy of double* weights
- * @params: devBiases - device copy of double* biases
+ * @params: devNeuronDeltas - device copy of float* neuronDeltas
+ * @params: devExpected - device copy of float* expected
+ * @params: devNeurons - device copy of float* neurons
+ * @params: devWeights - device copy of float* weights
+ * @params: devBiases - device copy of float* biases
  * @params: numberOfLayers - the int number of layers in the network (index 0 => input, index numberOfLayers-1 => output)
  * @params: numberOfNeuronsInLayer - an int pointer to a chunk of memory containing the number of neurons in each layer
  * @params: numberOfWeightsInFrontOfLayer - an int pointer to a chunk of memory containing the number of weights in front of each layer
  * @params: indexOfFirstNeuronInLayer - an int pointer to a chunk of memory containing the indexes of the first neurons in each layer
  * @params: indexOfFirstWeightInFrontOfLayer - an int pointer to a chunk of memory containing the indexes of the first weight in front of each layer
  */
-void backpropagationUsingDevice(double* devNeuronDeltas, double* devExpected, double* devNeurons, double* devWeights, double* devBiases, 
-                              int numberOfLayers, int* numberOfNeuronsInLayer, int* numberOfWeightsInFrontOfLayer,
-                              int* indexOfFirstNeuronInLayer, int* indexOfFirstWeightInFrontOfLayer) {
-    int numberOfNeuronsInOutput = numberOfNeuronsInLayer[numberOfLayers-1];
-    int indexOfFirstOutputNeuron = indexOfFirstNeuronInLayer[numberOfLayers-1]; // start at this neuron for output-layer
+void backpropagationUsingDevice(float* devNeuronDeltas, float* devExpected, float* devNeurons, float* devWeights, float* devBiases, 
+                                unsigned int numberOfLayers, unsigned int* numberOfNeuronsInLayer, unsigned int* numberOfWeightsInFrontOfLayer,
+                                unsigned int* indexOfFirstNeuronInLayer, unsigned int* indexOfFirstWeightInFrontOfLayer) {
+    unsigned int numberOfNeuronsInOutput = numberOfNeuronsInLayer[numberOfLayers-1];
+    unsigned int indexOfFirstOutputNeuron = indexOfFirstNeuronInLayer[numberOfLayers-1]; // start at this neuron for output-layer
 
     // use getDeviceProperties helper function to get GPU device information
-    int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
-    int warpsize = 0; // the number of threads that an SM can manage at one time
+    unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
+    unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
     getDeviceProperties(&numberOfSMs, &warpsize); 
 
     // set blocks and threads to a size that will fully utilize the GPU (overkill, I know, but we're going for performance here)
-    int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
-    int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
+    unsigned int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
+    unsigned int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
     
     // double or devide the number of threads until we have a number close to the number of neurons in output-layer
     threads = getOptimalThreadSize(blocks, threads, numberOfNeuronsInOutput, warpsize);
@@ -109,13 +109,13 @@ void backpropagationUsingDevice(double* devNeuronDeltas, double* devExpected, do
 
     // for each layer l between output and input (non-inclusive) visit in reverse order and backpropagate error values from right to left
     for (int l = numberOfLayers - 2; l > 0; l--) {
-        int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l]; // left-layer size
-        int numberOfNeuronsInRight = numberOfNeuronsInLayer[l+1]; // right-layer size
-        int numberOfWeights = numberOfWeightsInFrontOfLayer[l+1]; // the number of weights between left and right
+        unsigned int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l]; // left-layer size
+        unsigned int numberOfNeuronsInRight = numberOfNeuronsInLayer[l+1]; // right-layer size
+        unsigned int numberOfWeights = numberOfWeightsInFrontOfLayer[l+1]; // the number of weights between left and right
 
-        int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l]; // start at this neuron for left-layer
-        int indexOfFirstRightNeuron = indexOfFirstNeuronInLayer[l+1]; // start at this neuron for right-layer
-        int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l+1]; // start at this weight 
+        unsigned int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l]; // start at this neuron for left-layer
+        unsigned int indexOfFirstRightNeuron = indexOfFirstNeuronInLayer[l+1]; // start at this neuron for right-layer
+        unsigned int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l+1]; // start at this weight 
 
         // double or devide the number of threads until we have a number close to the number of neurons in output-layer
         threads = getOptimalThreadSize(blocks, threads, numberOfNeuronsInLeft, warpsize);
@@ -141,24 +141,25 @@ void backpropagationUsingDevice(double* devNeuronDeltas, double* devExpected, do
 /*
  * cudaKernel_CalculateLeftLayerDeltas - calculates and stores the neuron delta for every neuron in left-layer
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
- * @params: devNeuronDeltas - device copy of double* neuronDeltas
- * @params: devExpected - device copy of double* expected
- * @params: devNeurons - device copy of double* neurons
- * @params: devWeights - device copy of double* weights
+ * @params: devNeuronDeltas - device copy of float* neuronDeltas
+ * @params: devExpected - device copy of float* expected
+ * @params: devNeurons - device copy of float* neurons
+ * @params: devWeights - device copy of float* weights
  * @params: numberOfNeuronsInLeft - the int number of neurons in left-layer
  * @params: numberOfNeuronsInRight - the int number of neurons in right-layer
  * @params: indexOfFirstLeftNeuron - the int index of the first neuron in left-layer
  * @params: indexOfFirstRightNeuron - the int index of the first neuron in right-layer
  * @params: indexOfFirstWeight - the int index of the first weight between left and right layers
  */
-__global__ static void cudaKernel_CalculateLeftLayerDeltas(double* devNeuronDeltas, double* devExpected, double* devNeurons, double* devWeights, 
-                                                    int numberOfNeuronsInLeft, int numberOfNeuronsInRight,
-                                                    int indexOfFirstLeftNeuron, int indexOfFirstRightNeuron, int indexOfFirstWeight) {
+__global__ static void cudaKernel_CalculateLeftLayerDeltas(float* devNeuronDeltas, float* devExpected, float* devNeurons, float* devWeights, 
+                                                           unsigned int numberOfNeuronsInLeft, unsigned int numberOfNeuronsInRight,
+                                                           unsigned int indexOfFirstLeftNeuron, unsigned int indexOfFirstRightNeuron, 
+                                                           unsigned int indexOfFirstWeight) {
     volatile unsigned int nl = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id (used as offset from indexOfFirstLeftNeuron)
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)
     if (nl < numberOfNeuronsInLeft) {
-        double errorSum = 0.0; // store neuron nl's error sum of all right-layer connections
+        float errorSum = 0.0; // store neuron nl's error sum of all right-layer connections
 
         // for each neuron nr in right-layer
         for (int nr = 0; nr < numberOfNeuronsInRight; nr++) {
@@ -175,13 +176,14 @@ __global__ static void cudaKernel_CalculateLeftLayerDeltas(double* devNeuronDelt
 /*
  * cudaKernel_CalculateOutputLayerDeltas - calculates and stores the neuron delta for every neuron in output-layer
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
- * @params: devNeuronDeltas - device copy of double* neuronDeltas
- * @params: devExpected - device copy of double* expected
- * @params: devNeurons - device copy of double* neurons
+ * @params: devNeuronDeltas - device copy of float* neuronDeltas
+ * @params: devExpected - device copy of float* expected
+ * @params: devNeurons - device copy of float* neurons
  * @params: numberOfNeuronsInOutput - the int number of neurons in output-layer
  * @params: indexOfFirstOutputNeuron - the int index of the first neuron in output-layer
  */
-__global__ static void cudaKernel_CalculateOutputLayerDeltas(double* devNeuronDeltas, double* devExpected, double* devNeurons, int numberOfNeuronsInOutput, int indexOfFirstOutputNeuron) {
+__global__ static void cudaKernel_CalculateOutputLayerDeltas(float* devNeuronDeltas, float* devExpected, float* devNeurons, 
+                                                             unsigned int numberOfNeuronsInOutput, unsigned int indexOfFirstOutputNeuron) {
     volatile unsigned int no = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id (used as offset from indexOfFirstOutputNeuron)
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)
@@ -195,13 +197,14 @@ __global__ static void cudaKernel_CalculateOutputLayerDeltas(double* devNeuronDe
 /*
  * cudaKernel_updateBiases - uses neuronDeltas to update every bias in the network to reduce the error rate 
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
- * @params: devNeuronDeltas - device copy of double* neuronDeltas
- * @params: devNeurons - device copy of double* neurons
- * @params: devBiases - device copy of double* biases
+ * @params: devNeuronDeltas - device copy of float* neuronDeltas
+ * @params: devNeurons - device copy of float* neurons
+ * @params: devBiases - device copy of float* biases
  * @params: numberOfNeuronsTotal - the int number of neurons total in the network
- * @params: learningRate - the double rate at which we want our network to make adjustments
+ * @params: learningRate - the float rate at which we want our network to make adjustments
  */
-__global__ static void cudaKernel_updateBiases(double* devNeuronDeltas, double* devNeurons, double* devBiases, int numberOfNeuronsTotal, double learningRate) {
+__global__ static void cudaKernel_updateBiases(float* devNeuronDeltas, float* devNeurons, float* devBiases, 
+                                               unsigned int numberOfNeuronsTotal, float learningRate) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < numberOfNeuronsTotal) {
         devBiases[id] = devBiases[id] - (learningRate * devNeuronDeltas[id] * devNeurons[id]);
@@ -211,9 +214,9 @@ __global__ static void cudaKernel_updateBiases(double* devNeuronDeltas, double* 
 /*
  * cudaKernel_updateWeightsBetweenLayers - uses neuronDeltas to update the weights between two layers
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
- * @params: devNeuronDeltas - a double pointer-pointer to the chunk of memory containing the delta values for each neuron
- * @params: devNeurons - a double pointer to the chunk of memory containing the neuron values
- * @params: devWeights - a double pointer-pointer to the chunk of memory containing the weight values
+ * @params: devNeuronDeltas - a float pointer-pointer to the chunk of memory containing the delta values for each neuron
+ * @params: devNeurons - a float pointer to the chunk of memory containing the neuron values
+ * @params: devWeights - a float pointer-pointer to the chunk of memory containing the weight values
  * @params: numberOfNeuronsInLeft - the int number of neurons in left-layer
  * @params: numberOfNeuronsInRight - the int number of neurons in right-layer
  * @params: numberOfWeightsBetweenLayers - the int number of weights between left and right layers
@@ -221,11 +224,13 @@ __global__ static void cudaKernel_updateBiases(double* devNeuronDeltas, double* 
  * @params: indexOfFirstWeight - the int index of the first weight in between left and right layers
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
-__global__ static void cudaKernel_updateWeightsBetweenLayers(double* devNeuronDeltas, double* devNeurons, double* devWeights, int numberOfNeuronsInLeft,
-        int numberOfNeuronsInRight, int numberOfWeightsBetweenLayers, int indexOfFirstLeftNeuron, int indexOfFirstWeight, double learningRate) {
+__global__ static void cudaKernel_updateWeightsBetweenLayers(float* devNeuronDeltas, float* devNeurons, float* devWeights, 
+                                                             unsigned int numberOfNeuronsInLeft, unsigned int numberOfNeuronsInRight, 
+                                                             unsigned int numberOfWeightsBetweenLayers, unsigned int indexOfFirstLeftNeuron, 
+                                                             unsigned int indexOfFirstWeight, float learningRate) {
     if ((blockIdx.x < numberOfNeuronsInLeft) && (threadIdx.x < numberOfWeightsBetweenLayers)) {
-        int weightIndex = indexOfFirstWeight + numberOfNeuronsInRight * blockIdx.x + threadIdx.x;
-        int neuronIndex = numberOfNeuronsInLeft + blockIdx.x;
+        unsigned int weightIndex = indexOfFirstWeight + numberOfNeuronsInRight * blockIdx.x + threadIdx.x;
+        unsigned int neuronIndex = numberOfNeuronsInLeft + blockIdx.x;
         devWeights[weightIndex] = devWeights[weightIndex] - (learningRate * devNeuronDeltas[neuronIndex] * devNeurons[neuronIndex]);
     }
 } //end cudaKernel_updateWeights function
@@ -234,31 +239,31 @@ __global__ static void cudaKernel_updateWeightsBetweenLayers(double* devNeuronDe
  * quadraticCostDerivative - a Quadratic Cost derivative function
  * __host__ decoration tells NVCC this function should run on CPU, and be callable from the CPU host
  * __device__ decoration tells NVCC this function should run on GPU, and be callable from the GPU device
- * @params: expectedValue - a pointer to a double value
- * @params: calculatedValue - a pointer to a double value
+ * @params: expectedValue - a pointer to a float value
+ * @params: calculatedValue - a pointer to a float value
  * @returns: the difference between outputExpected and calculated values
  */
-__host__ __device__ double quadraticCostDerivative(double expectedValue, double calculatedValue) {
+__host__ __device__ float quadraticCostDerivative(float expectedValue, float calculatedValue) {
     return expectedValue - calculatedValue;
 } //end quadraticCostDerivative function
 
 /*
  * updateBiasesUsingDevice - uses devNeuronDeltas to update the devBiases to reduce the error rate using GPU
- * @params: devNeuronDeltas - device copy of double* neuronDeltas
- * @params: devNeurons - device copy of double* neurons
- * @params: devBiases - device copy of double* biases
+ * @params: devNeuronDeltas - device copy of float* neuronDeltas
+ * @params: devNeurons - device copy of float* neurons
+ * @params: devBiases - device copy of float* biases
  * @params: numberOfNeuronsTotal - the int number of neurons total in the network
- * @params: learningRate - the double rate at which we want our network to make adjustments
+ * @params: learningRate - the float rate at which we want our network to make adjustments
  */
-void updateBiasesUsingDevice(double* devNeuronDeltas, double* devNeurons, double* devBiases, int numberOfNeuronsTotal, double learningRate) {
+void updateBiasesUsingDevice(float* devNeuronDeltas, float* devNeurons, float* devBiases, unsigned int numberOfNeuronsTotal, float learningRate) {
     // use getDeviceProperties helper function to get GPU device information
-    int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
-    int warpsize = 0; // the number of threads that an SM can manage at one time
+    unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
+    unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
     getDeviceProperties(&numberOfSMs, &warpsize); 
 
     // set blocks and threads to a size that will fully utilize the GPU (overkill, I know, but we're going for performance here)
-    int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
-    int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
+    unsigned int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
+    unsigned int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
     
     // double or devide the number of threads until we have a number close to the number of neurons in output-layer
     threads = getOptimalThreadSize(blocks, threads, numberOfNeuronsTotal, warpsize);
@@ -281,13 +286,13 @@ void updateBiasesUsingDevice(double* devNeuronDeltas, double* devNeurons, double
 
 /*
  * updateBiasesUsingHost - uses neuronDeltas to update the biases to reduce the error rate using CPU
- * @params: neuronDeltas - a double pointer-pointer to the chunk of memory containing the delta values for each neuron
- * @params: neurons - a double pointer to the chunk of memory containing the neuron values
- * @params: biases - a double pointer-pointer to the chunk of memory containing the bias values
+ * @params: neuronDeltas - a float pointer-pointer to the chunk of memory containing the delta values for each neuron
+ * @params: neurons - a float pointer to the chunk of memory containing the neuron values
+ * @params: biases - a float pointer-pointer to the chunk of memory containing the bias values
  * @params: numberOfNeuronsTotal - the number of total neurons in the network
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
-void updateBiasesUsingHost(double* neuronDeltas, double* neurons, double** biases, int numberOfNeuronsTotal, double learningRate) {
+void updateBiasesUsingHost(float* neuronDeltas, float* neurons, float** biases, unsigned int numberOfNeuronsTotal, float learningRate) {
     for (int i = 0; i < numberOfNeuronsTotal; i++) {
         (*biases)[i] = (*biases)[i] - (learningRate * neuronDeltas[i] * neurons[i]);
     }
@@ -295,9 +300,9 @@ void updateBiasesUsingHost(double* neuronDeltas, double* neurons, double** biase
 
 /*
  * updateWeightsUsingDevice - uses devNeuronDeltas to update the devWeights to reduce the error rate using GPU
- * @params: devNeuronDeltas - a double pointer-pointer to the chunk of memory containing the delta values for each neuron
- * @params: devNeurons - a double pointer to the chunk of memory containing the neuron values
- * @params: devWeights - a double pointer-pointer to the chunk of memory containing the weight values
+ * @params: devNeuronDeltas - a float pointer-pointer to the chunk of memory containing the delta values for each neuron
+ * @params: devNeurons - a float pointer to the chunk of memory containing the neuron values
+ * @params: devWeights - a float pointer-pointer to the chunk of memory containing the weight values
  * @params: numberOfLayers - the int number of layers in the network (index 0 => input, index numberOfLayers-1 => output)
  * @params: numberOfNeuronsInLayer - an int pointer to a chunk of memory containing the number of neurons in each layer
  * @params: numberOfWeightsInFrontOfLayer - an int pointer to a chunk of memory containing the number of weights in front of each layer
@@ -305,23 +310,25 @@ void updateBiasesUsingHost(double* neuronDeltas, double* neurons, double** biase
  * @params: indexOfFirstWeightInFrontOfLayer - an int pointer to a chunk of memory containing the indexes of the first weight in front of each layer
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
-void updateWeightsUsingDevice(double* devNeuronDeltas, double* devNeurons, double* devWeights, int numberOfLayers, int* numberOfNeuronsInLayer, int* numberOfWeightsInFrontOfLayer, int* indexOfFirstNeuronInLayer, int* indexOfFirstWeightInFrontOfLayer, double learningRate) {
+void updateWeightsUsingDevice(float* devNeuronDeltas, float* devNeurons, float* devWeights, unsigned int numberOfLayers, 
+                              unsigned int* numberOfNeuronsInLayer, unsigned int* numberOfWeightsInFrontOfLayer, 
+                              unsigned int* indexOfFirstNeuronInLayer, unsigned int* indexOfFirstWeightInFrontOfLayer, float learningRate) {
     // use getDeviceProperties helper function to get GPU device information
-    int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
-    int warpsize = 0; // the number of threads that an SM can manage at one time
+    unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
+    unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
     getDeviceProperties(&numberOfSMs, &warpsize); 
 
     // set blocks and threads to a size that will fully utilize the GPU (overkill, I know, but we're going for performance here)
-    int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
-    int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
+    unsigned int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
+    unsigned int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
     
     for (int l = 1; l < numberOfLayers; l++) {
-        int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l-1]; // left-layer size
-        int numberOfNeuronsInRight = numberOfNeuronsInLayer[l]; // right-layer size
-        int numberOfWeightsBetween = numberOfWeightsInFrontOfLayer[l]; // number of weights between left and right layers
+        unsigned int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l-1]; // left-layer size
+        unsigned int numberOfNeuronsInRight = numberOfNeuronsInLayer[l]; // right-layer size
+        unsigned int numberOfWeightsBetween = numberOfWeightsInFrontOfLayer[l]; // number of weights between left and right layers
 
-        int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l-1]; // start at this neuron for left-layer
-        int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l]; // start at this weight 
+        unsigned int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l-1]; // start at this neuron for left-layer
+        unsigned int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l]; // start at this weight 
 
         // double or devide the number of threads until we have a number close to the number of weights between layers
         threads = getOptimalThreadSize(blocks, threads, numberOfWeightsBetween, warpsize);
@@ -344,9 +351,9 @@ void updateWeightsUsingDevice(double* devNeuronDeltas, double* devNeurons, doubl
 
 /*
  * updateWeightsUsingHost - uses neuronDeltas to update the weights to reduce the error rate using CPU
- * @params: neuronDeltas - a double pointer-pointer to the chunk of memory containing the delta values for each neuron
- * @params: neurons - a double pointer to the chunk of memory containing the neuron values
- * @params: weights - a double pointer-pointer to the chunk of memory containing the weight values
+ * @params: neuronDeltas - a float pointer-pointer to the chunk of memory containing the delta values for each neuron
+ * @params: neurons - a float pointer to the chunk of memory containing the neuron values
+ * @params: weights - a float pointer-pointer to the chunk of memory containing the weight values
  * @params: numberOfLayers - the int number of layers in the network (index 0 => input, index numberOfLayers-1 => output)
  * @params: numberOfNeuronsInLayer - an int pointer to a chunk of memory containing the number of neurons in each layer
  * @params: numberOfWeightsInFrontOfLayer - an int pointer to a chunk of memory containing the number of weights in front of each layer
@@ -354,19 +361,21 @@ void updateWeightsUsingDevice(double* devNeuronDeltas, double* devNeurons, doubl
  * @params: indexOfFirstWeightInFrontOfLayer - an int pointer to a chunk of memory containing the indexes of the first weight in front of each layer
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
-void updateWeightsUsingHost(double* neuronDeltas, double* neurons, double** weights, int numberOfLayers, int* numberOfNeuronsInLayer, int* numberOfWeightsInFrontOfLayer, int* indexOfFirstNeuronInLayer, int* indexOfFirstWeightInFrontOfLayer, double learningRate) {
+void updateWeightsUsingHost(float* neuronDeltas, float* neurons, float** weights, 
+                            unsigned int numberOfLayers, unsigned int* numberOfNeuronsInLayer, unsigned int* numberOfWeightsInFrontOfLayer, 
+                            unsigned int* indexOfFirstNeuronInLayer, unsigned int* indexOfFirstWeightInFrontOfLayer, float learningRate) {
     // for each layer l after input layer, update the weights in the layer
     for (int l = 1; l < numberOfLayers; l++) {
-        int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l-1]; // left-layer size
-        int numberOfNeuronsInRight = numberOfNeuronsInLayer[l]; // right-layer size
+        unsigned int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l-1]; // left-layer size
+        unsigned int numberOfNeuronsInRight = numberOfNeuronsInLayer[l]; // right-layer size
 
-        int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l-1]; // start at this neuron for left-layer
-        int indexOfFirstRightNeuron = indexOfFirstNeuronInLayer[l]; // start at this neuron for right-layer
-        int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l]; // start at this weight 
+        unsigned int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l-1]; // start at this neuron for left-layer
+        unsigned int indexOfFirstRightNeuron = indexOfFirstNeuronInLayer[l]; // start at this neuron for right-layer
+        unsigned int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l]; // start at this weight 
 
         // for each neuron n in right-layer
         for (int n = 0; n < numberOfNeuronsInRight; n++) {
-            int neuronIndex = indexOfFirstRightNeuron + n; 
+            unsigned int neuronIndex = indexOfFirstRightNeuron + n; 
             for (int w = 0; w < numberOfNeuronsInLeft; w++) {
                 int weightIndex = indexOfFirstWeight + numberOfNeuronsInLeft * n + w;
                 (*weights)[weightIndex] = (*weights)[weightIndex] - (learningRate * neuronDeltas[neuronIndex] * neurons[neuronIndex]);
