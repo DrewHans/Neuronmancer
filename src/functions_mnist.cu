@@ -11,7 +11,7 @@
  * @params: indexOfFirstOutputNeuron - the int index of the first neuron in output-layer
  * @return: an int number between 0 - 9 (inclusive), the network's MNIST digit prediction
  */
-int getCalculatedMNISTClassificationUsingHost(float* neurons, unsigned int indexOfFirstOutputNeuron) {
+int getCalculatedMNISTClassificationUsingHost(const float* neurons, const unsigned int indexOfFirstOutputNeuron) {
     float highestValue = 0.0;
     int classification = 0;
 
@@ -30,7 +30,7 @@ int getCalculatedMNISTClassificationUsingHost(float* neurons, unsigned int index
  * @params: devNeurons - device copy of neurons
  * @params: indexOfFirstOutputNeuron - the int index of the first neuron in output-layer
  */
-void getCalculatedMNISTClassificationUsingDevice(int* devClassification, float* devNeurons, unsigned int indexOfFirstOutputNeuron) {
+void getCalculatedMNISTClassificationUsingDevice(int* devClassification, const float* devNeurons, const unsigned int indexOfFirstOutputNeuron) {
     // determine the MNIST classification calculated by the device and put in devClassification to be extracted later
     cudaKernel_GetCalculatedMNISTClassification<<<1, 1>>>(devClassification, devNeurons, indexOfFirstOutputNeuron);
 
@@ -57,8 +57,8 @@ void getCalculatedMNISTClassificationUsingDevice(int* devClassification, float* 
  * @params: neurons - a float pointer-pointer to the neuron values
  */
 void loadMnistSampleUsingHost(const char* mnistLabels, const unsigned char* mnistData, 
-                                  unsigned int indexOfSampleLabel, unsigned int indexOfSampleFirstData, 
-                                  float** expected, float** neurons) {
+                              const unsigned int indexOfSampleLabel, const unsigned int indexOfSampleFirstData, 
+                              float** expected, float** neurons) {
     // load the next sample's label into expected
     for (int i = 0; i < MNISTCLASSIFICATIONS; i++) {
         if (mnistLabels[indexOfSampleLabel] == i) {
@@ -84,7 +84,7 @@ void loadMnistSampleUsingHost(const char* mnistLabels, const unsigned char* mnis
  * @params: devNeurons - device copy of float** neurons
  */
 void loadMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char* devMnistData, 
-                                  unsigned int indexOfSampleLabel, unsigned int indexOfSampleFirstData, 
+                                  const unsigned int indexOfSampleLabel, const unsigned int indexOfSampleFirstData, 
                                   float* devExpected, float* devNeurons) {
     // use getDeviceProperties helper function to get GPU device information
     unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
@@ -254,15 +254,18 @@ void readMnistTrainingSamplesFromDisk(unsigned char** trainingData, char** train
 /*
  * cudaKernel_GetCalculatedMNISTClassification - ONLY LAUNCH 1 BLOCK WITH 1 THREAD WHEN USING THIS CUDAKERNEL
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * __restrict__ decoration tells NVCC this pointer will only be used to refer to the underlying data (read only)
  * @params: devMnistData - device copy of const unsigned char* mnistData
  * @params: indexOfNextSampleFirstData - the int index of the next sample's first data value
  * @params: devNeurons - device copy of float** neurons
  */
-__global__ void cudaKernel_GetCalculatedMNISTClassification(int* devClassification, float* devNeurons, unsigned int indexOfFirstOutputNeuron) {
+__global__ void cudaKernel_GetCalculatedMNISTClassification(int* devClassification, 
+                                                            __restrict__ const float* devNeurons, 
+                                                            const unsigned int indexOfFirstOutputNeuron) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < 1) {
         float highestValue = 0.0;
-        devClassification[0] = 0;
+        devClassification[0] = 0; // clean up any garbage remaining from last sample
         for (int i = 0; i < MNISTCLASSIFICATIONS; i++) {
             if (devNeurons[indexOfFirstOutputNeuron + i] > highestValue) {
                 highestValue = devNeurons[indexOfFirstOutputNeuron + i];
@@ -275,17 +278,20 @@ __global__ void cudaKernel_GetCalculatedMNISTClassification(int* devClassificati
 /*
  * cudaKernel_loadMnistSampleLabelIntoExpected
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * __restrict__ decoration tells NVCC this pointer will only be used to refer to the underlying data (read only)
  * @params: devMnistLabels - device copy of const char* mnistLabels
  * @params: indexOfNextSampleLabel - the int index of the next sample label to load
  * @params: devExpected - device copy of float** expected
  */
-__global__ void cudaKernel_loadMnistSampleLabelIntoExpected(const char* devMnistLabels, unsigned int indexOfNextSampleLabel, float* devExpected) {
+__global__ void cudaKernel_loadMnistSampleLabelIntoExpected(__restrict__ const char* devMnistLabels, 
+                                                            const unsigned int indexOfNextSampleLabel, 
+                                                            float* devExpected) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < MNISTCLASSIFICATIONS) {
         if (devMnistLabels[indexOfNextSampleLabel] == id) {
-            devOutputExpected[id] = 1;
+            devExpected[id] = 1;
         } else {
-            devOutputExpected[id] = 0;
+            devExpected[id] = 0;
         }
     }
 } //end cudaKernel_loadMnistSampleLabelIntoExpected function
@@ -293,11 +299,14 @@ __global__ void cudaKernel_loadMnistSampleLabelIntoExpected(const char* devMnist
 /*
  * cudaKernel_loadMnistSampleDataIntoInputLayer
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * __restrict__ decoration tells NVCC this pointer will only be used to refer to the underlying data (read only)
  * @params: devMnistData - device copy of const unsigned char* mnistData
  * @params: indexOfNextSampleFirstData - the int index of the next sample's first data value
  * @params: devNeurons - device copy of float** neurons
  */
-__global__ void cudaKernel_loadMnistSampleDataIntoInputLayer(const unsigned char* devMnistData, unsigned int indexOfNextSampleFirstData, float* devNeurons) {
+__global__ void cudaKernel_loadMnistSampleDataIntoInputLayer(__restrict__ const unsigned char* devMnistData, 
+                                                             const unsigned int indexOfNextSampleFirstData, 
+                                                             float* devNeurons) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < MNISTSAMPLEDATASIZE) {
         devNeurons[id] = (float) devMnistData[indexOfNextSampleFirstData + id];

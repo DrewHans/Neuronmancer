@@ -58,7 +58,7 @@ void getDeviceProperties(unsigned int* multiProcessorCount, unsigned int* warpSi
  * @params: gpuWarpsize - the int warpsize of the GPU
  * @returns: the int number of "optimal" threads to launch
  */
-int getOptimalThreadSize(unsigned int blocks, unsigned int threads, unsigned int minimumThreadsNeeded, unsigned int gpuWarpsize) {
+int getOptimalThreadSize(const unsigned int blocks, unsigned int threads, const unsigned int minimumThreadsNeeded, const unsigned int gpuWarpsize) {
     // double or devide the number of threads until we have a number close to the number of neurons in right-layer
     if ((blocks*threads) < minimumThreadsNeeded) {
         while((blocks*threads) < minimumThreadsNeeded) {
@@ -77,7 +77,7 @@ int getOptimalThreadSize(unsigned int blocks, unsigned int threads, unsigned int
  * @params: a - a pointer to an array of float values
  * @params: n - the size of array a
  */
-void initArrayToRandomFloats(float** a, unsigned int n) {
+void initArrayToRandomFloats(float** a, const unsigned int n) {
     // seed pseudo-random number generator with current time
     srand ( time ( NULL));
 
@@ -92,7 +92,7 @@ void initArrayToRandomFloats(float** a, unsigned int n) {
  * @params: a - a pointer to an array of float values
  * @params: n - the size of array a
  */
-void initArrayToZeros(float** a, unsigned int n) {
+void initArrayToZeros(float** a, const unsigned int n) {
     // set all neuron values to zero
     for (int i = 0; i < n; i++) {
         (*a)[i] = 0.0;
@@ -100,12 +100,59 @@ void initArrayToZeros(float** a, unsigned int n) {
 } //end initArrayToZeros function
 
 /*
+ * initDeviceArrayToZeros - initializes all device-array elements to zero
+ * @params: devA - device copy of a float array
+ * @params: n - the size of devA
+ */
+void initDeviceArrayToZeros(float* devA, const unsigned int n) {
+    // use getDeviceProperties helper function to get GPU device information
+    unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
+    unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
+    getDeviceProperties(&numberOfSMs, &warpsize); 
+
+    // set blocks and threads to a size that will fully utilize the GPU (overkill, I know, but we're going for performance here)
+    unsigned int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
+    unsigned int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
+    
+    // double or devide the number of threads until we have a number close to the size of the array
+    threads = getOptimalThreadSize(blocks, threads, n, warpsize);
+
+    // calculate the deltas for each neuron no in the output-layer
+    cudaKernel_initArrayToZeros<<<blocks, threads>>>(devA, n);
+
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess) {
+        onCudaKernelLaunchFailure("cudaKernel_initArrayToZeros", cudaStatus)
+    }
+    
+    // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        onCudaDeviceSynchronizeError("cudaKernel_initArrayToZeros", cudaStatus);
+    }
+} //end initArrayToZeros function
+
+/*
+ * cudaKernel_initArrayToZeros - initializes all device-array elemtns to zero
+ * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * @params: devA - device copy of a float array
+ * @params: n - the size of devA
+ */
+__global__ static void cudaKernel_initArrayToZeros(float* devA, const unsigned int n) {
+    volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
+    if (id < n) {
+        devA[id] = 0.0;
+    }
+}//end cudaKernel_initArrayToZeros function
+
+/*
  * printarray_float - prints out all array elements to terminal
  * @params: name - a pointer to a char string
  * @params: a - a pointer to an array of float values
  * @params: n - the size of array a
  */
-void printarray_float(const char* name, float* a, unsigned int n) {
+void printarray_float(const char* name, const float* a, const unsigned int n) {
     for (int i = 0; i < n; i++) {
         printf("%s[%d]=%lf\n", name, i, a[i]);
     }
@@ -118,7 +165,7 @@ void printarray_float(const char* name, float* a, unsigned int n) {
  * @params: a - a pointer to an array of int values
  * @params: n - the size of array a
  */
-void printarray_int(const char* name, unsigned int* a, unsigned int n) {
+void printarray_int(const char* name, const unsigned int* a, const unsigned int n) {
     for (int i = 0; i < n; i++) {
         printf("%s[%d]=%d\n", name, i, a[i]);
     }
@@ -135,7 +182,7 @@ void printFarewellMSG() {
 /*
  * onCudaKernelLaunchFailure - crashes the program when called (SOS, we're going down)
  */
-void onCudaKernelLaunchFailure(char* kernel, cudaError_t cudaStatus) {
+void onCudaKernelLaunchFailure(const char* kernel, const cudaError_t cudaStatus) {
     fprintf(stderr, "ERROR: %s launch failed: %s\n", kernel, cudaGetErrorString(cudaStatus));
     printFarewellMSG();
     exit(1);
@@ -144,7 +191,7 @@ void onCudaKernelLaunchFailure(char* kernel, cudaError_t cudaStatus) {
 /*
  * onCudaDeviceSynchronizeError - crashes the program when called (SOS, we're going down)
  */
-void onCudaDeviceSynchronizeError(char* kernel, cudaError_t cudaStatus) {
+void onCudaDeviceSynchronizeError(const char* kernel, const cudaError_t cudaStatus) {
     fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching %s!\n", cudaStatus, kernel);
     printFarewellMSG();
     exit(1);
@@ -154,7 +201,7 @@ void onCudaDeviceSynchronizeError(char* kernel, cudaError_t cudaStatus) {
  * onCudaMallocError - crashes the program when called (SOS, we're going down)
  * @params: size - the size of the device memory that we couldn't allocate
  */
-void onCudaMallocError(unsigned int size) {
+void onCudaMallocError(const unsigned int size) {
     fprintf(stderr, "ERROR: Failed to cudaMalloc %d of memory!\n", size);
     printFarewellMSG();
     exit(1);
@@ -203,7 +250,7 @@ void onFileReadError(const char* path) {
  * onInvalidInput - prints out insults when the user screws up (silly humans)
  * @params: myPatience - the current state of my patience, represented as an int
  */
-void onInvalidInput(int myPatience) {
+void onInvalidInput(const int myPatience) {
     if (myPatience == 2) {
         printf("Looks like you entered an illegal value... you're testing my patience, try again!\n\n");
     } else if (myPatience == 1) {
@@ -219,7 +266,7 @@ void onInvalidInput(int myPatience) {
  * onMallocError - crashes the program when called (SOS, we're going down)
  * @params: size - the size of the memory that we couldn't allocate
  */
-void onMallocError(unsigned int size) {
+void onMallocError(const unsigned int size) {
     fprintf(stderr, "ERROR: Failed to malloc %d of memory!\n", size);
     printFarewellMSG();
     exit(1);

@@ -41,6 +41,7 @@ void ui_train() {
     float* devExpected; // device copy of expected
     char* devTrainingLabels; // device copy of trainingLabels
     unsigned char* devTrainingData; // device copy of trainingData
+    int* devClassification; // device variable needed to hold the calculated classification during training
 
     // initialize model structure pointers to memory with malloc (will be resized and filled with values read from disk in model_read.cu)
     numberOfNeuronsInLayer = (unsigned int *) malloc(1 * sizeof(int));
@@ -188,7 +189,7 @@ void ui_train() {
                "Press enter to begin training on host machine (ctrl-c to abort):\n"
                "~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-        printf("\nBeginning training on host now...");
+        printf("\nBeginning training on host now...\n");
 
         // for each epoch: 
         // do (A) zero out neuronDeltas, do (B) complete "for each sample" loop, then do (C) update values
@@ -196,7 +197,6 @@ void ui_train() {
 
             // (A) zero out neuronDeltas (start fresh)
             initArrayToZeros(&neuronDeltas, numberOfNeuronsTotal); // cleans previous epochs error values
-
 
             // (B) for each sample loop:
             // do (B1) loadMnistSampleUsingHost, do (B2) feedforwardUsingHost, 
@@ -242,25 +242,200 @@ void ui_train() {
     } else if (tempInt == 2) {
         // GPU DEVICE TRAINING LOGIC BELOW
 
-/////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
-////////////////// everything below is especially under co. /////////////////
-//                                                                         //
         printf("Looks like you want to train using the GPU!\n"
+               "Alright, sit tight while I prep the device for training...\n"
+               "- searching for cuda-enabled GPU device...");
+
+        // declare cudaStatus variable to check for success of cuda operations
+        cudaError_t cudaStatus;
+
+        // run on GPU 0, this will need to be changed on a multi-GPU system
+        cudaStatus = cudaSetDevice(0);
+        if (cudaStatus != cudaSuccess) {
+            onFailToSetGPUDevice();
+        }
+
+        printf("cuda-enabled GPU detected!\n"
+               "- attempting to allocate device memory for devNeuronDeltas, devNeurons, devWeights, devBiases, devExpected, and devClassification...");
+
+        // allocate device memory for devNeuronDeltas
+        cudaStatus = cudaMalloc((void **) &devNeuronDeltas, (numberOfNeuronsTotal * sizeof(float)));
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfNeuronsTotal * sizeof(float));
+        }
+
+        // allocate device memory for devNeurons
+        cudaStatus = cudaMalloc((void **) &devNeurons, (numberOfNeuronsTotal * sizeof(float)));
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfNeuronsTotal * sizeof(float));
+        }
+
+        // allocate device memory for devWeights
+        cudaStatus = cudaMalloc((void **) &devWeights, (numberOfWeightsTotal * sizeof(float)));
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfWeightsTotal * sizeof(float));
+        }
+
+        // allocate device memory for devBiases
+        cudaStatus = cudaMalloc((void **) &devBiases, (numberOfNeuronsTotal * sizeof(float)));
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfNeuronsTotal * sizeof(float));
+        }
+
+        // allocate device memory for devExpected
+        cudaStatus = cudaMalloc((void **) &devExpected, (numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(float)));
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(float));
+        }
+
+        // allocate device memory for devClassification
+        cudaStatus = cudaMalloc((void **) &devClassification, (1 * sizeof(int)));
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(1 * sizeof(int));
+        }
+
+        printf("allocation successful!\n"
+               "- attempting to allocate device memory for MNIST training set...");
+
+        // allocate device memory for devTrainingLabels
+        cudaStatus = cudaMalloc((void **) &devTrainingLabels, (MNISTTRAININGSETSIZE * sizeof(char)));
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(MNISTTRAININGSETSIZE * sizeof(char));
+        }
+
+        // allocate device memory for devTrainingData
+        cudaStatus = cudaMalloc((void **) &devTrainingData, (MNISTSAMPLEDATASIZE * MNISTTRAININGSETSIZE * sizeof(char)));
+        if (cudaStatus != cudaSuccess) {
+            onCudaMallocError(MNISTSAMPLEDATASIZE * MNISTTRAININGSETSIZE * sizeof(char));
+        }
+
+        printf("allocation successful!\n"
+               "- copying neuronDeltas, neurons, weights, biases, and expected values from host memory to device memory (this might take a while)...");
+
+        // copy neuronDeltas to device
+        cudaStatus = cudaMemcpy(devNeuronDeltas, neuronDeltas, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyHostToDevice);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("neuronDeltas");
+        }
+
+        // copy neurons to device
+        cudaStatus = cudaMemcpy(devNeurons, neuron, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyHostToDevice);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("neuron");
+        }
+
+        // copy weights to device
+        cudaStatus = cudaMemcpy(devWeights, weights, (numberOfWeightsTotal * sizeof(float)), cudaMemcpyHostToDevice);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("weights");
+        }
+
+        // copy biases to device
+        cudaStatus = cudaMemcpy(devBiases, biases, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyHostToDevice);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("biases");
+        }
+
+        // copy expected to device
+        cudaStatus = cudaMemcpy(devExpected, expected, (numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(float)), cudaMemcpyHostToDevice);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("expected");
+        }
+
+        printf("copy successful!\n"
+               "- copying MNIST training samples from host memory to device memory (this might take a while)...");
+
+        // copy MNIST training labels to device
+        cudaStatus = cudaMemcpy(devTrainingLabels, trainingLabels, (MNISTTRAININGSETSIZE * sizeof(char)), cudaMemcpyHostToDevice);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("trainingLabels");
+        }
+
+        // copy MNIST training data to device
+        cudaStatus = cudaMemcpy(devTrainingData, trainingData, (MNISTTRAININGSETSIZE * MNISTSAMPLEDATASIZE * sizeof(char)), cudaMemcpyHostToDevice);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("trainingData");
+        }
+
+        printf("copy successful!\n"
+               "... device prep work complete!\n"
                "Press enter to begin training on GPU device (ctrl-c to abort):\n"
                "~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
-        printf("\nBeginning training on GPU now...");
+        printf("\nBeginning training on GPU now...\n");
 
+        // for each epoch: 
+        // do (A) zero out neuronDeltas, do (B) complete "for each sample" loop, then do (C) update values
+        for (unsigned int i = 0; i < epochs; i++) {
 
+            // (A) zero out neuronDeltas (start fresh)
+            void initDeviceArrayToZeros(devNeuronDeltas, numberOfNeuronsTotal); // cleans previous epochs error values
 
+            // (B) for each sample loop:
+            // do (B1) loadMnistSampleUsingHost, do (B2) feedforwardUsingHost, 
+            // do (B3) getCalculatedMNISTClassificationUsingHost, then do (B4) backpropagationUsingHost
+            for (unsigned int s = 0; s < numberOfTrainingSamples; s++) {
 
+                // (B1) load sample s's mnistData into input-layer neurons and s's mnistlabel into expected
+                loadMnistSampleUsingDevice(devTrainingLabels, devTrainingData, s, (s * MNISTSAMPLEDATASIZE), devExpected, devNeurons);
 
+                // (B2) feedforward sample s's mnistData through the network (left to right)
+                void feedforwardUsingDevice(devNeurons, devWeights, devBiases, numberOfLayers, 
+                                            numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
+                                            indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
 
-//                                                                         //
-////////////////// everything above is especially under co. /////////////////
-/////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
+                // (B3) get the network's calculated classification
+                void getCalculatedMNISTClassificationUsingDevice(devClassification, devNeurons, indexOfFirstNeuronInLayer[numberOfLayers-1]);
+
+                // (B4) backpropagate error signals and add this sample's deltas to neuronDeltas for this epoch
+                backpropagationUsingDevice(devNeuronDeltas, devExpected, devNeurons, devWeights, devBiases, 
+                                           numberOfLayers, numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
+                                           indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
+
+            }//end for each sample loop
+
+            // (C) update values:
+            // (C1) updateBiasesUsingHost
+            updateBiasesUsingDevice(devNeuronDeltas, devNeurons, devBiases, numberOfNeuronsTotal, learningRate);
+
+            // (C2) updateWeightsUsingHost
+            void updateWeightsUsingDevice(devNeuronDeltas, devNeurons, devWeights, numberOfLayers, 
+                                          numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
+                                          indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer, learningRate);
+
+            if (s % 3000 == 0) {
+                printf("--- epoch %d of %d complete ---\n", i, epochs);
+            }
+
+        }//end for each epoch loop
+
+        printf("Training on GPU device is now complete!\n"
+               "- copying weights and biases from device memory to host memory (this might take a while)...");
+
+        // copy devWeights to host 
+        cudaStatus = cudaMemcpy(weights, devWeights, (numberOfWeightsTotal * sizeof(float)), cudaMemcpyDeviceToHost);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("devWeights");
+        }
+
+        // copy devBiases to host 
+        cudaStatus = cudaMemcpy(biases, devBiases, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyDeviceToHost);
+        if (cudaStatus != cudaSuccess) {
+            onCudaMemcpyError("devBiases");
+        }
+
+        printf("copy successful!\n");
+
+        // free the chunks of device memory that were dynamically allocated by cudaMalloc 
+        // (do while in scope, then again before return to main just to be absolutely sure we didn't leak memory)
+        cudaFree(devNeuronDeltas);
+        cudaFree(devNeurons);
+        cudaFree(devWeights);
+        cudaFree(devBiases);
+        cudaFree(devExpected);
+        cudaFree(devTrainingLabels);
+        cudaFree(devTrainingData);
+        cudaFree(devClassification);
 
         // GPU DEVICE TRAINING LOGIC ABOVE
     } else {
@@ -269,11 +444,6 @@ void ui_train() {
                "...as revenge I'm shutting you down. Don't mess with my program logic!");
         exit(1);
     }
-
-///                                                                                                                                 ///
-////////////////////////////////////////////////ABOVE IS UNDER CONSTRUCTION////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     printf("Alright, sit tight while I do some work...\n");
 

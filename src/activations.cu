@@ -13,7 +13,7 @@
  * @params: d - a float value
  * @returns: the Sigmoid of d
  */
-__host__ __device__ float sigmoidFunction(float d) {
+__host__ __device__ float sigmoidFunction(const float d) {
     return 1.0 / (1.0 + exp(-1.0 * d));
 } //end sigmoid activation function
 
@@ -24,7 +24,7 @@ __host__ __device__ float sigmoidFunction(float d) {
  * @params: d - a float value
  * @returns: the Sigmoid derivative of d
  */
-__host__ __device__ float sigmoidDerivative(float d) {
+__host__ __device__ float sigmoidDerivative(const float d) {
     return sigmoidFunction(d) * (1.0 - sigmoidFunction(d));
 } //end sigmoid derivative function
 
@@ -35,7 +35,7 @@ __host__ __device__ float sigmoidDerivative(float d) {
  * @params: d - a float value
  * @returns: the TanH of d
  */
-__host__ __device__ float tanhFunction(float d) {
+__host__ __device__ float tanhFunction(const float d) {
     return (2.0 / (1.0 + exp(-2.0 * d))) - 1.0;
 } //end tanh activation function
 
@@ -46,7 +46,7 @@ __host__ __device__ float tanhFunction(float d) {
  * @params: d - a float value
  * @returns: the TanH derivative of d
  */
-__host__ __device__ float tanhDerivative(float d) {
+__host__ __device__ float tanhDerivative(const float d) {
     return 1.0 - pow(tanhFunction(d), 2.0);
 } //end tanh derivative function
 
@@ -57,7 +57,7 @@ __host__ __device__ float tanhDerivative(float d) {
  * @params: d - a float value
  * @returns: the ReLU of d
  */
-__host__ __device__ float reluFunction(float d) {
+__host__ __device__ float reluFunction(const float d) {
     if (d < 0) {
         return 0.0;
     } else {
@@ -72,7 +72,7 @@ __host__ __device__ float reluFunction(float d) {
  * @params: d - a float value
  * @returns: the ReLU derivative of d
  */
-__host__ __device__ float reluDerivative(float d) {
+__host__ __device__ float reluDerivative(const float d) {
     if (d < 0) {
         return 0.0;
     } else {
@@ -87,7 +87,7 @@ __host__ __device__ float reluDerivative(float d) {
  * @params: indexOfFirstNeuronInLayer - the index of the first neuron in the layer
  * @params: numberOfNeuronsInLayer - the total number of neurons in the layer
  */
-__global__ void cudaKernel_ActivateLayerUsingSigmoid(float* devNeurons, unsigned int indexOfFirstNeuronInLayer, unsigned int numberOfNeuronsInLayer) {
+__global__ void cudaKernel_ActivateLayerUsingSigmoid(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)
@@ -103,7 +103,7 @@ __global__ void cudaKernel_ActivateLayerUsingSigmoid(float* devNeurons, unsigned
  * @params: indexOfFirstNeuronInLayer - the index of the first neuron in the layer
  * @params: numberOfNeuronsInLayer - the total number of neurons in the layer
  */
-__global__ void cudaKernel_ActivateLayerUsingTanh(float* devNeurons, unsigned int indexOfFirstNeuronInLayer, unsigned int numberOfNeuronsInLayer) {
+__global__ void cudaKernel_ActivateLayerUsingTanh(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)
@@ -119,7 +119,7 @@ __global__ void cudaKernel_ActivateLayerUsingTanh(float* devNeurons, unsigned in
  * @params: indexOfFirstNeuronInLayer - the index of the first neuron in the layer
  * @params: numberOfNeuronsInLayer - the total number of neurons in the layer
  */
-__global__ void cudaKernel_ActivateLayerUsingRelu(float* devNeurons, unsigned int indexOfFirstNeuronInLayer, unsigned int numberOfNeuronsInLayer) {
+__global__ void cudaKernel_ActivateLayerUsingRelu(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)

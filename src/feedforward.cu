@@ -17,9 +17,9 @@
  * @params: indexOfFirstNeuronInLayer - an int pointer to a chunk of memory containing the indexes of the first neurons in each layer
  * @params: indexOfFirstWeightInFrontOfLayer - an int pointer to a chunk of memory containing the indexes of the first weight in front of each layer
  */
-void feedforwardUsingHost(float** neurons, float* weights, float* biases, 
-                          unsigned int numberOfLayers, unsigned int* numberOfNeuronsInLayer, unsigned int* numberOfWeightsInFrontOfLayer,
-                          unsigned int* indexOfFirstNeuronInLayer, unsigned int* indexOfFirstWeightInFrontOfLayer) {
+void feedforwardUsingHost(float** neurons, const float* weights, const float* biases, 
+                          const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
+                          const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer) {
     // for each layer i in network (starting at the first non-input-layer): 
     // propagate the left-layer output's to the right-layer, activate the right-layer, then repeat until output-layer is activated
     for (int l = 1; l < numberOfLayers; l++) {
@@ -62,8 +62,8 @@ void feedforwardUsingHost(float** neurons, float* weights, float* biases,
  * @params: indexOfFirstWeightInFrontOfLayer - an int pointer to a chunk of memory containing the indexes of the first weight in front of each layer
  */
 void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBiases, 
-                            unsigned int numberOfLayers, unsigned int* numberOfNeuronsInLayer, unsigned int* numberOfWeightsInFrontOfLayer,
-                            unsigned int* indexOfFirstNeuronInLayer, unsigned int* indexOfFirstWeightInFrontOfLayer) {
+                            const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
+                            const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer) {
     // use getDeviceProperties helper function to get GPU device information
     unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
     unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
@@ -128,6 +128,7 @@ void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBias
 /*
  * cudaKernel_CalculateWeightedSumPlusBias - calculates and stores the weighted sum plus bias for every neuron in a layer
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * __restrict__ decoration tells NVCC this pointer will only be used to refer to the underlying data (read only)
  * @params: devNeurons - device copy of float* neurons
  * @params: devWeights - device copy of float* weights
  * @params: devBiases - device copy of float* biases
@@ -137,10 +138,10 @@ void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBias
  * @params: indexOfFirstRightNeuron - the int index of the first neuron in right-layer
  * @params: indexOfFirstWeight - the int index of the first weight between the two layers
  */
-__global__ void static cudaKernel_CalculateWeightedSumPlusBias(float* devNeurons, float* devWeights, float* devBiases, 
-                                                               unsigned int numberOfNeuronsInLeft, unsigned int numberOfNeuronsInRight, 
-                                                               unsigned int indexOfFirstLeftNeuron, unsigned int indexOfFirstRightNeuron, 
-                                                               unsigned int indexOfFirstWeight) {
+__global__ void static cudaKernel_CalculateWeightedSumPlusBias(float* devNeurons, __restrict__ const float* devWeights, __restrict__ const float* devBiases, 
+                                                               const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight, 
+                                                               const unsigned int indexOfFirstLeftNeuron, const unsigned int indexOfFirstRightNeuron, 
+                                                               const unsigned int indexOfFirstWeight) {
     volatile unsigned int nr = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id (used as offset from indexOfFirstRight)
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)

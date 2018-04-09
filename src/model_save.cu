@@ -10,7 +10,7 @@
  * @params: biases - pointer to an array of float values
  * @params: numberOfBiasesTotal - int equal to numberOfNeuronsTotal
  */
-void saveBiasesToDisk(float* biases, unsigned int numberOfBiasesTotal) {
+void saveBiasesToDisk(const float* biases, const unsigned int numberOfBiasesTotal) {
     FILE* thefile = fopen(BIASESFILELOCATION, "w");
     if (thefile == NULL) {
         onFileOpenError (BIASESFILELOCATION);
@@ -28,7 +28,7 @@ void saveBiasesToDisk(float* biases, unsigned int numberOfBiasesTotal) {
  * saveEpochsToDisk - writes model's epoch value to a file on disk
  * @params: epochs - the int number of training cycles (in one cycle every sample in the data set is fed in and then errors "backpropagate")
  */
-void saveEpochsToDisk(unsigned int epochs) {
+void saveEpochsToDisk(const unsigned int epochs) {
     FILE* thefile = fopen(EPOCHSFILELOCATION, "w");
     if (thefile == NULL) {
         onFileOpenError (EPOCHSFILELOCATION);
@@ -43,7 +43,7 @@ void saveEpochsToDisk(unsigned int epochs) {
  * saveLearningRateToDisk - writes model's learning rate value to a file on disk
  * @params: learningRate - the float rate at which we want our network to make adjustments to the weights
  */
-void saveLearningRateToDisk(float learningRate) {
+void saveLearningRateToDisk(const float learningRate) {
     FILE* thefile = fopen(LEARNINGRATEFILELOCATION, "w");
     if (thefile == NULL) {
         onFileOpenError (LEARNINGRATEFILELOCATION);
@@ -59,7 +59,7 @@ void saveLearningRateToDisk(float learningRate) {
  * @params: weights - pointer to an array of float values
  * @params: numberOfWeightsTotal - the int total number of weights in the model
  */
-void saveWeightsToDisk(float* weights, unsigned int numberOfWeightsTotal) {
+void saveWeightsToDisk(const float* weights, const unsigned int numberOfWeightsTotal) {
     FILE* thefile = fopen(WEIGHTSFILELOCATION, "w");
     if (thefile == NULL) {
         onFileOpenError (WEIGHTSFILELOCATION);
@@ -84,9 +84,9 @@ void saveWeightsToDisk(float* weights, unsigned int numberOfWeightsTotal) {
  * @params: indexOfFirstNeuronInLayer - pointer to an array of int values (the indexes of the first neuron in each layer)
  * @params: indexOfFirstWeightInFrontOfLayer - pointer to an array of int values (the indexes of the first weight in front of each layer)
  */
-void saveModelValuesToDisk(unsigned int numberOfLayers, unsigned int numberOfNeuronsTotal, unsigned int numberOfWeightsTotal, 
-                           unsigned int* numberOfNeuronsInLayer, unsigned int* numberOfWeightsInFrontOfLayer,
-                           unsigned int* indexOfFirstNeuronInLayer, unsigned int* indexOfFirstWeightInFrontOfLayer) {
+void saveModelValuesToDisk(const unsigned int numberOfLayers, const unsigned int numberOfNeuronsTotal, const unsigned int numberOfWeightsTotal, 
+                           const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
+                           const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer) {
     FILE* thefile = fopen(MODELVALUESLOCATION, "w");
     if (thefile == NULL) {
         onFileOpenError (MODELVALUESLOCATION);
@@ -117,10 +117,10 @@ void saveModelValuesToDisk(unsigned int numberOfLayers, unsigned int numberOfNeu
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  * @params: epochs - the number of training cycles (in one cycle every sample in the data set is fed in and then errors "backpropagate")
  */
-void saveModel(unsigned int numberOfLayers, unsigned int numberOfNeuronsTotal, unsigned int numberOfWeightsTotal, 
-               unsigned int* numberOfNeuronsInLayer, unsigned int* numberOfWeightsInFrontOfLayer,
-               unsigned int* indexOfFirstNeuronInLayer, unsigned int* indexOfFirstWeightInFrontOfLayer, 
-               float* weights, float* biases, float learningRate, unsigned int epochs) {
+void saveModel(const unsigned int numberOfLayers, const unsigned int numberOfNeuronsTotal, const unsigned int numberOfWeightsTotal, 
+               const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
+               const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer, 
+               const float* weights, const float* biases, const float learningRate, const unsigned int epochs) {
     // if directory doesn't exist, make directory to store the model
     if (stat(MODELDIRECTORY, &st) == -1) {
         mkdir(MODELDIRECTORY, 0700);
