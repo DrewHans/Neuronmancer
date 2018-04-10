@@ -173,6 +173,37 @@ void printarray_int(const char* name, const unsigned int* a, const unsigned int 
 } //end printarray_int function
 
 /*
+ * printConfusionMatrix - prints out the confusion matrix, accuracy, and misclassification rate
+ * @params: cm - the int pointer to the array of confusion matrix values
+ * @params: n - the int size of confusion matrix rows and cols (should be equal to the number of MNIST classifications)
+ */
+void printConfusionMatrix(const int* cm, const unsigned int n) {
+    // print out a "pretty" confusion matrix table
+    printf("            +-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+\n"
+           "            |     0     |     1     |     2     |     3     |     4     |     5     |     6     |     7     |     8     |     9     |\n"
+           "+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+\n");
+    for (int i = 0; i < n; i++) {
+        printf("| ACTUAL %d  ", i);
+        for (int j = 0; j < n; j++) {
+            printf("|   %5d   ", cm[n*i + j]);
+        }
+        printf("|\n+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+\n");
+    }
+
+    // get the number of correct predictions from the confusion matrix
+    int truePositives = 0;
+    for (int i = 0; i < MNISTCLASSIFICATIONS; i++) {
+        truePositives += confusionMatrix[i * MNISTCLASSIFICATIONS + i];
+    }
+    float accuracy = (float) truePositives / numberOfTestSamples;
+    float misclassificationRate = 1.0 - accuracy;
+
+    // print out the accuracy and misclassification rate
+    printf("Accuracy = %3.2f%%\nMisclassificationRate = %3.2f%%\n\n", accuracy*100, misclassificationRate*100);
+
+}//end printConfusionMatrix function
+
+/*
  * printFarewellMSG - prints out one final insult before we crash
  */
 void printFarewellMSG() {

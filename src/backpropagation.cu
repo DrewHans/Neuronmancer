@@ -204,16 +204,15 @@ __global__ static void cudaKernel_CalculateOutputLayerDeltas(float* devNeuronDel
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
  * __restrict__ decoration tells NVCC this pointer will only be used to refer to the underlying data (read only)
  * @params: devNeuronDeltas - device copy of float* neuronDeltas
- * @params: devNeurons - device copy of float* neurons
  * @params: devBiases - device copy of float* biases
  * @params: numberOfNeuronsTotal - the int number of neurons total in the network
  * @params: learningRate - the float rate at which we want our network to make adjustments
  */
-__global__ static void cudaKernel_updateBiases(__restrict__ const float* devNeuronDeltas, __restrict__ const float* devNeurons, float* devBiases, 
+__global__ static void cudaKernel_updateBiases(__restrict__ const float* devNeuronDeltas, float* devBiases, 
                                                const unsigned int numberOfNeuronsTotal, const float learningRate) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < numberOfNeuronsTotal) {
-        devBiases[id] = devBiases[id] - (learningRate * devNeuronDeltas[id] * devNeurons[id]);
+        devBiases[id] = devBiases[id] + (learningRate * devNeuronDeltas[id]);
     }
 } //end cudaKernel_updateBiases function
 
@@ -257,12 +256,11 @@ __host__ __device__ float quadraticCostDerivative(const float expectedValue, con
 /*
  * updateBiasesUsingDevice - uses devNeuronDeltas to update the devBiases to reduce the error rate using GPU
  * @params: devNeuronDeltas - device copy of float* neuronDeltas
- * @params: devNeurons - device copy of float* neurons
  * @params: devBiases - device copy of float* biases
  * @params: numberOfNeuronsTotal - the int number of neurons total in the network
  * @params: learningRate - the float rate at which we want our network to make adjustments
  */
-void updateBiasesUsingDevice(float* devNeuronDeltas, float* devNeurons, float* devBiases, 
+void updateBiasesUsingDevice(float* devNeuronDeltas, float* devBiases, 
                              const unsigned int numberOfNeuronsTotal, const float learningRate) {
     // use getDeviceProperties helper function to get GPU device information
     unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
@@ -277,7 +275,7 @@ void updateBiasesUsingDevice(float* devNeuronDeltas, float* devNeurons, float* d
     threads = getOptimalThreadSize(blocks, threads, numberOfNeuronsTotal, warpsize);
 
     // use the devNeuronDeltas to update every bias in the network
-    cudaKernel_updateBiases<<<blocks, threads>>>(devNeuronDeltas, devNeurons, devBiases, numberOfNeuronsTotal, learningRate);
+    cudaKernel_updateBiases<<<blocks, threads>>>(devNeuronDeltas, devBiases, numberOfNeuronsTotal, learningRate);
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
@@ -295,15 +293,14 @@ void updateBiasesUsingDevice(float* devNeuronDeltas, float* devNeurons, float* d
 /*
  * updateBiasesUsingHost - uses neuronDeltas to update the biases to reduce the error rate using CPU
  * @params: neuronDeltas - a float pointer-pointer to the chunk of memory containing the delta values for each neuron
- * @params: neurons - a float pointer to the chunk of memory containing the neuron values
  * @params: biases - a float pointer-pointer to the chunk of memory containing the bias values
  * @params: numberOfNeuronsTotal - the number of total neurons in the network
  * @params: learningRate - the rate at which we want our network to make adjustments to the weights
  */
-void updateBiasesUsingHost(const float* neuronDeltas, const float* neurons, float** biases, 
+void updateBiasesUsingHost(const float* neuronDeltas, float** biases, 
                            const unsigned int numberOfNeuronsTotal, const float learningRate) {
     for (int i = 0; i < numberOfNeuronsTotal; i++) {
-        (*biases)[i] = (*biases)[i] - (learningRate * neuronDeltas[i] * neurons[i]);
+        (*biases)[i] = (*biases)[i] + (learningRate * neuronDeltas[i]);
     }
 } //end updateBiasesUsingHost function
 
@@ -389,7 +386,7 @@ void updateWeightsUsingHost(const float* neuronDeltas, const float* neurons, flo
             unsigned int neuronIndex = indexOfFirstRightNeuron + n; 
             for (int w = 0; w < numberOfNeuronsInLeft; w++) {
                 int weightIndex = indexOfFirstWeight + numberOfNeuronsInLeft * n + w;
-                (*weights)[weightIndex] = (*weights)[weightIndex] - (learningRate * neuronDeltas[neuronIndex] * neurons[neuronIndex]);
+                (*weights)[weightIndex] = (*weights)[weightIndex] + (learningRate * neuronDeltas[neuronIndex] * neurons[neuronIndex]);
             }
         }
     }

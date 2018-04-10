@@ -81,17 +81,15 @@ __global__ static void cudaKernel_CalculateOutputLayerDeltas(float* devNeuronDel
                                                              __restrict__ const float* devNeurons, 
                                                              const unsigned int numberOfNeuronsInOutput, 
                                                              const unsigned int indexOfFirstOutputNeuron);
-__global__ static void cudaKernel_updateBiases(__restrict__ const float* devNeuronDeltas, __restrict__ const float* devNeurons, float* devBiases, 
+__global__ static void cudaKernel_updateBiases(__restrict__ const float* devNeuronDeltas, float* devBiases, 
                                                const unsigned int numberOfNeuronsTotal, const float learningRate);
 __global__ static void cudaKernel_updateWeightsBetweenLayers(__restrict__ const float* devNeuronDeltas, __restrict__ const float* devNeurons, float* devWeights, 
                                                              const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight, 
                                                              const unsigned int numberOfWeightsBetweenLayers, const unsigned int indexOfFirstLeftNeuron, 
                                                              const unsigned int indexOfFirstWeight, const float learningRate);
 __host__ __device__ float quadraticCostDerivative(const float expectedValue, const float calculatedValue);
-void updateBiasesUsingDevice(float* devNeuronDeltas, float* devNeurons, float* devBiases, 
-                             const unsigned int numberOfNeuronsTotal, const float learningRate);
-void updateBiasesUsingHost(const float* neuronDeltas, const float* neurons, float** biases, 
-                           const unsigned int numberOfNeuronsTotal, const float learningRate);
+void updateBiasesUsingDevice(float* devNeuronDeltas, float* devBiases, const unsigned int numberOfNeuronsTotal, const float learningRate);
+void updateBiasesUsingHost(const float* neuronDeltas, float** biases, const unsigned int numberOfNeuronsTotal, const float learningRate);
 void updateWeightsUsingDevice(float* devNeuronDeltas, float* devNeurons, float* devWeights, const unsigned int numberOfLayers, 
                               const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, 
                               const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer, 
@@ -123,6 +121,7 @@ void initDeviceArrayToZeros(float* devA, const unsigned int n);
 __global__ static void cudaKernel_initArrayToZeros(float* devA, const unsigned int n);
 void printarray_float(const char* name, const float* a, const unsigned int n);
 void printarray_int(const char* name, const unsigned int* a, const unsigned int n);
+void printConfusionMatrix(const int* cm, const unsigned int n);
 void printFarewellMSG();
 void onCudaKernelLaunchFailure(const char* kernel, const cudaError_t cudaStatus);
 void onCudaDeviceSynchronizeError(const char* kernel, const cudaError_t cudaStatus);

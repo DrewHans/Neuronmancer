@@ -7,7 +7,7 @@
 
 /* ui_train method - user interface for training a model */
 void ui_train() {
-    // declare helper variables for ui_create
+    // declare helper variables for ui_train
     char inputBuffer[MAXINPUT]; // stores the user's input (gets recycled a lot)
     int tempInt -1; // stores int input from user (used for determining whether to run on host or GPU device)
     int myPatience = 2; // stores the amount of patience I have for the user's nonsense
@@ -41,7 +41,6 @@ void ui_train() {
     float* devExpected; // device copy of expected
     char* devTrainingLabels; // device copy of trainingLabels
     unsigned char* devTrainingData; // device copy of trainingData
-    int* devClassification; // device variable needed to hold the calculated classification during training
 
     // initialize model structure pointers to memory with malloc (will be resized and filled with values read from disk in model_read.cu)
     numberOfNeuronsInLayer = (unsigned int *) malloc(1 * sizeof(int));
@@ -152,8 +151,8 @@ void ui_train() {
         onMallocError(1 * sizeof(char));
     }
 
-    // Load MNIST training data and labels into memory
-    loadMnistTrainingSamples(&trainingData, &trainingLabels, &numberOfTrainingSamples);
+    // read MNIST training data and labels from disk and load into memory
+    readMnistTrainingSamplesFromDisk(&trainingData, &trainingLabels, &numberOfTrainingSamples);
 
     printf("...samples loaded!\n"
            "Alright, we're just about ready to start training!\n");
@@ -194,8 +193,7 @@ void ui_train() {
             initArrayToZeros(&neuronDeltas, numberOfNeuronsTotal); // cleans previous epochs error values
 
             // (B) for each sample loop:
-            // do (B1) loadMnistSampleUsingHost, do (B2) feedforwardUsingHost, 
-            // do (B3) getCalculatedMNISTClassificationUsingHost, then do (B4) backpropagationUsingHost
+            // do (B1) loadMnistSampleUsingHost, do (B2) feedforwardUsingHost, then do (B3) backpropagationUsingHost
             for (unsigned int s = 0; s < numberOfTrainingSamples; s++) {
 
                 // (B1) load sample s's mnistData into input-layer neurons and s's mnistlabel into expected
@@ -206,10 +204,7 @@ void ui_train() {
                                      numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
                                      indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
 
-                // (B3) get the network's calculated classification
-                getCalculatedMNISTClassificationUsingHost(neurons, indexOfFirstNeuronInLayer[numberOfLayers-1]);
-
-                // (B4) backpropagate error signals and add this sample's deltas to neuronDeltas for this epoch
+                // (B3) backpropagate error signals and add this sample's deltas to neuronDeltas for this epoch
                 backpropagationUsingHost(&neuronDeltas, expected, neurons, weights, biases, numberOfLayers, 
                                          numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
                                          indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
@@ -218,7 +213,7 @@ void ui_train() {
 
             // (C) update values:
             // (C1) updateBiasesUsingHost
-            updateBiasesUsingHost(neuronDeltas, neurons, &biases, numberOfNeuronsTotal, learningRate);
+            updateBiasesUsingHost(neuronDeltas, &biases, numberOfNeuronsTotal, learningRate);
 
             // (C2) updateWeightsUsingHost
             updateWeightsUsingHost(neuronDeltas, neurons, &weights, numberOfLayers, 
@@ -238,7 +233,7 @@ void ui_train() {
         // GPU DEVICE TRAINING LOGIC BELOW
 
         printf("Looks like you want to train using the GPU!\n"
-               "Alright, sit tight while I prep the device for training...\n"
+               "Alright, sit tight while I prep the device...\n"
                "- searching for cuda-enabled GPU device...");
 
         // declare cudaStatus variable to check for success of cuda operations
@@ -251,7 +246,7 @@ void ui_train() {
         }
 
         printf("cuda-enabled GPU detected!\n"
-               "- attempting to allocate device memory for devNeuronDeltas, devNeurons, devWeights, devBiases, devExpected, and devClassification...");
+               "- attempting to allocate device memory for devNeuronDeltas, devNeurons, devWeights, devBiases, and devExpected...");
 
         // allocate device memory for devNeuronDeltas
         cudaStatus = cudaMalloc((void **) &devNeuronDeltas, (numberOfNeuronsTotal * sizeof(float)));
@@ -281,12 +276,6 @@ void ui_train() {
         cudaStatus = cudaMalloc((void **) &devExpected, (numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(float)));
         if (cudaStatus != cudaSuccess) {
             onCudaMallocError(numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(float));
-        }
-
-        // allocate device memory for devClassification
-        cudaStatus = cudaMalloc((void **) &devClassification, (1 * sizeof(int)));
-        if (cudaStatus != cudaSuccess) {
-            onCudaMallocError(1 * sizeof(int));
         }
 
         printf("allocation successful!\n"
@@ -364,25 +353,21 @@ void ui_train() {
         for (unsigned int i = 0; i < epochs; i++) {
 
             // (A) zero out neuronDeltas (start fresh)
-            void initDeviceArrayToZeros(devNeuronDeltas, numberOfNeuronsTotal); // cleans previous epochs error values
+            initDeviceArrayToZeros(devNeuronDeltas, numberOfNeuronsTotal); // cleans previous epochs error values
 
             // (B) for each sample loop:
-            // do (B1) loadMnistSampleUsingHost, do (B2) feedforwardUsingHost, 
-            // do (B3) getCalculatedMNISTClassificationUsingHost, then do (B4) backpropagationUsingHost
+            // do (B1) loadMnistSampleUsingDevice, do (B2) feedforwardUsingDevice, then do (B3) backpropagationUsingDevice
             for (unsigned int s = 0; s < numberOfTrainingSamples; s++) {
 
                 // (B1) load sample s's mnistData into input-layer neurons and s's mnistlabel into expected
                 loadMnistSampleUsingDevice(devTrainingLabels, devTrainingData, s, (s * MNISTSAMPLEDATASIZE), devExpected, devNeurons);
 
                 // (B2) feedforward sample s's mnistData through the network (left to right)
-                void feedforwardUsingDevice(devNeurons, devWeights, devBiases, numberOfLayers, 
-                                            numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
-                                            indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
+                feedforwardUsingDevice(devNeurons, devWeights, devBiases, numberOfLayers, 
+                                       numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
+                                       indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
 
-                // (B3) get the network's calculated classification
-                void getCalculatedMNISTClassificationUsingDevice(devClassification, devNeurons, indexOfFirstNeuronInLayer[numberOfLayers-1]);
-
-                // (B4) backpropagate error signals and add this sample's deltas to neuronDeltas for this epoch
+                // (B3) backpropagate error signals and add this sample's deltas to neuronDeltas for this epoch
                 backpropagationUsingDevice(devNeuronDeltas, devExpected, devNeurons, devWeights, devBiases, 
                                            numberOfLayers, numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
                                            indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
@@ -390,13 +375,13 @@ void ui_train() {
             }//end for each sample loop
 
             // (C) update values:
-            // (C1) updateBiasesUsingHost
-            updateBiasesUsingDevice(devNeuronDeltas, devNeurons, devBiases, numberOfNeuronsTotal, learningRate);
+            // (C1) updateBiasesUsingDevice
+            updateBiasesUsingDevice(devNeuronDeltas, devBiases, numberOfNeuronsTotal, learningRate);
 
-            // (C2) updateWeightsUsingHost
-            void updateWeightsUsingDevice(devNeuronDeltas, devNeurons, devWeights, numberOfLayers, 
-                                          numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
-                                          indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer, learningRate);
+            // (C2) updateWeightsUsingDevice
+            updateWeightsUsingDevice(devNeuronDeltas, devNeurons, devWeights, numberOfLayers, 
+                                     numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
+                                     indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer, learningRate);
 
             if (s % 3000 == 0) {
                 printf("--- epoch %d of %d complete ---\n", i, epochs);
@@ -430,7 +415,6 @@ void ui_train() {
         cudaFree(devExpected);
         cudaFree(devTrainingLabels);
         cudaFree(devTrainingData);
-        cudaFree(devClassification);
 
         // GPU DEVICE TRAINING LOGIC ABOVE
     } else {
@@ -450,7 +434,7 @@ void ui_train() {
     printf("weights and biases saved!\n"
            "- freeing dynamically allocated device memory...");
 
-    // free the chunks of device memory that were dynamically allocated by cudaMalloc
+    // free the chunks of device memory that were dynamically allocated by cudaMalloc (if not already free)
     cudaFree(devNeuronDeltas);
     cudaFree(devNeurons);
     cudaFree(devWeights);
