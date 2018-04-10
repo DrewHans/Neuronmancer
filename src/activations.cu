@@ -127,4 +127,3 @@ __global__ void cudaKernel_ActivateLayerUsingRelu(float* devNeurons, const unsig
         devNeurons[indexOfFirstNeuronInLayer + id] = reluFunction(devNeurons[indexOfFirstNeuronInLayer + id]);
     }
 } //end cudaKernel_ActivateLayerUsingRelu function
-

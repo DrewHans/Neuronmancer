@@ -98,7 +98,7 @@ void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBias
             // Check for any errors launching the kernel
             cudaStatus = cudaGetLastError();
             if (cudaStatus != cudaSuccess) {
-                onCudaKernelLaunchFailure("cudaKernel_CalculateWeightedSumPlusBias", cudaStatus)
+                onCudaKernelLaunchFailure("cudaKernel_CalculateWeightedSumPlusBias", cudaStatus);
             }
     
             // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -113,7 +113,7 @@ void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBias
             // Check for any errors launching the kernel
             cudaStatus = cudaGetLastError();
             if (cudaStatus != cudaSuccess) {
-                onCudaKernelLaunchFailure("cudaKernel_ActivateLayerUsingSigmoid", cudaStatus)
+                onCudaKernelLaunchFailure("cudaKernel_ActivateLayerUsingSigmoid", cudaStatus);
             }
     
             // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -160,4 +160,3 @@ __global__ void static cudaKernel_CalculateWeightedSumPlusBias(float* devNeurons
         // return after storing weighted sum plus bias, don't forget to activate this layer using cudaKernel_ActivateLayerUsingSigmoid after returning
     }
 } //end cudaKernel_CalculateWeightedSumPlusBias function
-

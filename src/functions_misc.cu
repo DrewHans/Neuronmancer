@@ -123,7 +123,7 @@ void initDeviceArrayToZeros(float* devA, const unsigned int n) {
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        onCudaKernelLaunchFailure("cudaKernel_initArrayToZeros", cudaStatus)
+        onCudaKernelLaunchFailure("cudaKernel_initArrayToZeros", cudaStatus);
     }
     
     // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -139,7 +139,7 @@ void initDeviceArrayToZeros(float* devA, const unsigned int n) {
  * @params: devA - device copy of a float array
  * @params: n - the size of devA
  */
-__global__ static void cudaKernel_initArrayToZeros(float* devA, const unsigned int n) {
+__global__ void cudaKernel_initArrayToZeros(float* devA, const unsigned int n) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < n) {
         devA[id] = 0.0;
@@ -302,4 +302,3 @@ void onMallocError(const unsigned int size) {
     printFarewellMSG();
     exit(1);
 } //end onMallocError function
-

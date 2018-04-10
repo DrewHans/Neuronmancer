@@ -9,7 +9,7 @@
 void ui_train() {
     // declare helper variables for ui_train
     char inputBuffer[MAXINPUT]; // stores the user's input (gets recycled a lot)
-    int tempInt -1; // stores int input from user (used for determining whether to run on host or GPU device)
+    int tempInt = -1; // stores int input from user (used for determining whether to run on host or GPU device)
     int myPatience = 2; // stores the amount of patience I have for the user's nonsense
 
     // declare variables needed to store the model's structure / training information
@@ -465,4 +465,3 @@ void ui_train() {
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     printf("\n");
 }//end ui_train function
-

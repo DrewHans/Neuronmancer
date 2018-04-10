@@ -37,7 +37,7 @@ void getCalculatedMNISTClassificationUsingDevice(int* devClassification, const f
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        onCudaKernelLaunchFailure("cudaKernel_GetCalculatedMNISTClassification", cudaStatus)
+        onCudaKernelLaunchFailure("cudaKernel_GetCalculatedMNISTClassification", cudaStatus);
     }
     
     // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -104,7 +104,7 @@ void loadMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char*
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        onCudaKernelLaunchFailure("cudaKernel_loadMnistSampleLabelIntoExpected", cudaStatus)
+        onCudaKernelLaunchFailure("cudaKernel_loadMnistSampleLabelIntoExpected", cudaStatus);
     }
     
     // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -123,7 +123,7 @@ void loadMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char*
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        onCudaKernelLaunchFailure("cudaKernel_loadMnistSampleDataIntoInputLayer", cudaStatus)
+        onCudaKernelLaunchFailure("cudaKernel_loadMnistSampleDataIntoInputLayer", cudaStatus);
     }
     
     // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -312,4 +312,3 @@ __global__ void cudaKernel_loadMnistSampleDataIntoInputLayer(__restrict__ const 
         devNeurons[id] = (float) devMnistData[indexOfNextSampleFirstData + id];
     }
 } //end cudaKernel_loadMnistSampleDataIntoInputLayer function
-

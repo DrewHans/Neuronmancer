@@ -98,7 +98,7 @@ void backpropagationUsingDevice(float* devNeuronDeltas, float* devExpected, floa
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        onCudaKernelLaunchFailure("cudaKernel_CalculateOutputLayerDeltas", cudaStatus)
+        onCudaKernelLaunchFailure("cudaKernel_CalculateOutputLayerDeltas", cudaStatus);
     }
     
     // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -127,7 +127,7 @@ void backpropagationUsingDevice(float* devNeuronDeltas, float* devExpected, floa
         // Check for any errors launching the kernel
         cudaStatus = cudaGetLastError();
         if (cudaStatus != cudaSuccess) {
-            onCudaKernelLaunchFailure("cudaKernel_CalculateLeftLayerDeltas", cudaStatus)
+            onCudaKernelLaunchFailure("cudaKernel_CalculateLeftLayerDeltas", cudaStatus);
         }
     
         // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -280,7 +280,7 @@ void updateBiasesUsingDevice(float* devNeuronDeltas, float* devBiases,
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        onCudaKernelLaunchFailure("cudaKernel_updateBiases", cudaStatus)
+        onCudaKernelLaunchFailure("cudaKernel_updateBiases", cudaStatus);
     }
     
     // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -346,7 +346,7 @@ void updateWeightsUsingDevice(float* devNeuronDeltas, float* devNeurons, float* 
         // Check for any errors launching the kernel
         cudaStatus = cudaGetLastError();
         if (cudaStatus != cudaSuccess) {
-            onCudaKernelLaunchFailure("cudaKernel_updateWeightsBetweenLayers", cudaStatus)
+            onCudaKernelLaunchFailure("cudaKernel_updateWeightsBetweenLayers", cudaStatus);
         }
     
         // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
@@ -354,6 +354,7 @@ void updateWeightsUsingDevice(float* devNeuronDeltas, float* devNeurons, float* 
         if (cudaStatus != cudaSuccess) {
             onCudaDeviceSynchronizeError("cudaKernel_updateWeightsBetweenLayers", cudaStatus);
         }
+    }
 }//end updateWeightsUsingDevice function
 
 /*
@@ -391,4 +392,3 @@ void updateWeightsUsingHost(const float* neuronDeltas, const float* neurons, flo
         }
     }
 } //end updateWeightsUsingHost function
-

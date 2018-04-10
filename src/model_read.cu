@@ -287,4 +287,3 @@ void readModel(float* p_learningRate, unsigned int* p_epochs,
     free(tempFloatPtr); // release old memory
 
 } //end readModel function
-

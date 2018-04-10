@@ -135,4 +135,3 @@ void saveModel(const unsigned int numberOfLayers, const unsigned int numberOfNeu
     saveEpochsToDisk(epochs);
     saveLearningRateToDisk(learningRate);
 } //end saveModel function
-

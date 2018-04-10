@@ -210,4 +210,3 @@ void ui_train();
 #include "./ui_train.cu"
 
 #endif /* MAIN_H */
-

@@ -191,4 +191,3 @@ void ui_create() {
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     printf("\n");
 } //end ui_create function
-

@@ -42,4 +42,3 @@ int main(int argc, char * argv[]) {
 
     printf("Neuronmancer will now end.\n");
 } //end main function
-
