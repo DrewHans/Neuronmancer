@@ -17,16 +17,16 @@
  * @params: indexOfFirstNeuronInLayer - an int pointer to a chunk of memory containing the indexes of the first neurons in each layer
  * @params: indexOfFirstWeightInFrontOfLayer - an int pointer to a chunk of memory containing the indexes of the first weight in front of each layer
  */
-void feedforwardUsingHost(float** neurons, const float* weights, const float* biases, 
-                          const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
-                          const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer) {
+void feedforwardUsingHost(float** neurons, const float* weights, const float* biases, const unsigned int numberOfLayers,
+        const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, const unsigned int* indexOfFirstNeuronInLayer,
+        const unsigned int* indexOfFirstWeightInFrontOfLayer) {
     // for each layer i in network (starting at the first non-input-layer): 
     // propagate the left-layer output's to the right-layer, activate the right-layer, then repeat until output-layer is activated
     for (int l = 1; l < numberOfLayers; l++) {
-        unsigned int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l-1]; // left-layer size
+        unsigned int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l - 1]; // left-layer size
         unsigned int numberOfNeuronsInRight = numberOfNeuronsInLayer[l]; // right-layer size
 
-        unsigned int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l-1]; // start at this neuron for left-layer
+        unsigned int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l - 1]; // start at this neuron for left-layer
         unsigned int indexOfFirstRightNeuron = indexOfFirstNeuronInLayer[l]; // start at this neuron for right-layer
         unsigned int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l]; // start at this weight 
 
@@ -61,26 +61,25 @@ void feedforwardUsingHost(float** neurons, const float* weights, const float* bi
  * @params: indexOfFirstNeuronInLayer - an int pointer to a chunk of memory containing the indexes of the first neurons in each layer
  * @params: indexOfFirstWeightInFrontOfLayer - an int pointer to a chunk of memory containing the indexes of the first weight in front of each layer
  */
-void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBiases, 
-                            const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
-                            const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer) {
+void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBiases, const unsigned int numberOfLayers,
+        const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, const unsigned int* indexOfFirstNeuronInLayer,
+        const unsigned int* indexOfFirstWeightInFrontOfLayer) {
     // use getDeviceProperties helper function to get GPU device information
     unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
     unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
-    getDeviceProperties(&numberOfSMs, &warpsize); 
+    getDeviceProperties(&numberOfSMs, &warpsize);
 
     // set blocks and threads to a size that will fully utilize the GPU (overkill, I know, but we're going for performance here)
     unsigned int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
     unsigned int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
-    
 
     // for each layer l in network (starting at the first non-input-layer): 
     // propagate the left-layer output's to the right-layer, activate the right-layer, then repeat until output-layer is activated
     for (int l = 1; l < numberOfLayers; l++) {
-        unsigned int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l-1]; // left-layer size
+        unsigned int numberOfNeuronsInLeft = numberOfNeuronsInLayer[l - 1]; // left-layer size
         unsigned int numberOfNeuronsInRight = numberOfNeuronsInLayer[l]; // right-layer size
 
-        unsigned int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l-1]; // start at this neuron for left-layer
+        unsigned int indexOfFirstLeftNeuron = indexOfFirstNeuronInLayer[l - 1]; // start at this neuron for left-layer
         unsigned int indexOfFirstRightNeuron = indexOfFirstNeuronInLayer[l]; // start at this neuron for right-layer
         unsigned int indexOfFirstWeight = indexOfFirstWeightInFrontOfLayer[l]; // start at this weight 
 
@@ -91,16 +90,15 @@ void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBias
             threads = getOptimalThreadSize(blocks, threads, numberOfNeuronsInRight, warpsize);
 
             // using a cudaKernel: calculate the weighted sum plus bias for each neuron nr in right-layer and store result back in neuron nr
-            cudaKernel_CalculateWeightedSumPlusBias<<<blocks, threads>>>(devNeurons, devWeights, devBiases, 
-                                                                         numberOfNeuronsInLeft, numberOfNeuronsInRight, 
-                                                                         indexOfFirstLeftNeuron, indexOfFirstRightNeuron, indexOfFirstWeight);
+            cudaKernel_CalculateWeightedSumPlusBias<<<blocks, threads>>>(devNeurons, devWeights, devBiases, numberOfNeuronsInLeft, numberOfNeuronsInRight,
+                    indexOfFirstLeftNeuron, indexOfFirstRightNeuron, indexOfFirstWeight);
 
             // Check for any errors launching the kernel
-            cudaStatus = cudaGetLastError();
+            cudaError_t cudaStatus = cudaGetLastError();
             if (cudaStatus != cudaSuccess) {
                 onCudaKernelLaunchFailure("cudaKernel_CalculateWeightedSumPlusBias", cudaStatus);
             }
-    
+
             // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
             cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
@@ -115,7 +113,7 @@ void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBias
             if (cudaStatus != cudaSuccess) {
                 onCudaKernelLaunchFailure("cudaKernel_ActivateLayerUsingSigmoid", cudaStatus);
             }
-    
+
             // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
             cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
@@ -138,10 +136,9 @@ void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBias
  * @params: indexOfFirstRightNeuron - the int index of the first neuron in right-layer
  * @params: indexOfFirstWeight - the int index of the first weight between the two layers
  */
-__global__ void static cudaKernel_CalculateWeightedSumPlusBias(float* devNeurons, __restrict__ const float* devWeights, __restrict__ const float* devBiases, 
-                                                               const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight, 
-                                                               const unsigned int indexOfFirstLeftNeuron, const unsigned int indexOfFirstRightNeuron, 
-                                                               const unsigned int indexOfFirstWeight) {
+__global__ void static cudaKernel_CalculateWeightedSumPlusBias(float* __restrict__ devNeurons, const float* __restrict__ devWeights,
+        const float* __restrict__ devBiases, const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight,
+        const unsigned int indexOfFirstLeftNeuron, const unsigned int indexOfFirstRightNeuron, const unsigned int indexOfFirstWeight) {
     volatile unsigned int nr = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id (used as offset from indexOfFirstRight)
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)

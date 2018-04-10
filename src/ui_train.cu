@@ -48,17 +48,17 @@ void ui_train() {
         onMallocError(1 * sizeof(int));
     }
 
-    numberOfWeightsInFrontOfLayer = (int *) malloc(1 * sizeof(int));
+    numberOfWeightsInFrontOfLayer = (unsigned int *) malloc(1 * sizeof(int));
     if (numberOfWeightsInFrontOfLayer == NULL) {
         onMallocError(1 * sizeof(int));
     }
 
-    indexOfFirstNeuronInLayer = (int *) malloc(1 * sizeof(int));
+    indexOfFirstNeuronInLayer = (unsigned int *) malloc(1 * sizeof(int));
     if (indexOfFirstNeuronInLayer == NULL) {
         onMallocError(1 * sizeof(int));
     }
 
-    indexOfFirstWeightInFrontOfLayer = (int *) malloc(1 * sizeof(int));
+    indexOfFirstWeightInFrontOfLayer = (unsigned int *) malloc(1 * sizeof(int));
     if (indexOfFirstWeightInFrontOfLayer == NULL) {
         onMallocError(1 * sizeof(int));
     }
@@ -76,11 +76,11 @@ void ui_train() {
     printf("Searching %s for files...", MODELDIRECTORY);
 
     // attempt to read in model from disk
-    readModel(&learningRate, &epochs, &numberOfLayers, &numberOfNeuronsTotal, &numberOfWeightsTotal, &numberOfNeuronsInLayer, 
-              &numberOfWeightsInFrontOfLayer, &indexOfFirstNeuronInLayer, &indexOfFirstWeightInFrontOfLayer, &weights, &biases);
+    readModel(&learningRate, &epochs, &numberOfLayers, &numberOfNeuronsTotal, &numberOfWeightsTotal, &numberOfNeuronsInLayer, &numberOfWeightsInFrontOfLayer,
+            &indexOfFirstNeuronInLayer, &indexOfFirstWeightInFrontOfLayer, &weights, &biases);
 
     printf("...files found!\n"
-           "Model structure read from disk:\n");
+            "Model structure read from disk:\n");
 
     // print out information read from disk
     printf("- epochs =================> %u\n", epochs);
@@ -89,7 +89,7 @@ void ui_train() {
     printf("- numberOfNeuronsTotal ===> %u\n", numberOfNeuronsTotal); // remember, numberOfNeuronsTotal equals numberOfBiasesTotal
     printf("- numberOfWeightsTotal ===> %u\n", numberOfWeightsTotal);
 
-    for(int i = 0; i < numberOfLayers; i++) {
+    for (int i = 0; i < numberOfLayers; i++) {
         printf("--- numberOfNeuronsInLayer[%d] =============> %u\n", i, numberOfNeuronsInLayer[i]);
         printf("--- numberOfWeightsInFrontOfLayer[%d] ======> %u\n", i, numberOfWeightsInFrontOfLayer[i]);
         printf("--- indexOfFirstNeuronInLayer[%d] ==========> %u\n", i, indexOfFirstNeuronInLayer[i]);
@@ -99,12 +99,11 @@ void ui_train() {
     //printarray("biases", biases, numberOfNeuronsTotal);
     //printarray("weights", weights, numberOfWeightsTotal);
     printf("Press enter if this looks like your model structure (ctrl-c to abort):\n"
-           "~");
+            "~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
 
     printf("Alright, sit tight while I do some work...\n"
-           "- attempting to allocate memory for neuronDeltas, neurons, and expected...");
-
+            "- attempting to allocate memory for neuronDeltas, neurons, and expected...");
 
     // malloc memory for uninitialized arrays using values we read from disk
     neuronDeltas = (float *) malloc(numberOfNeuronsTotal * sizeof(float));
@@ -112,7 +111,7 @@ void ui_train() {
         onMallocError(numberOfNeuronsTotal * sizeof(float));
     }
 
-    neurons = (float* ) malloc(numberOfNeuronsTotal * sizeof(float));
+    neurons = (float*) malloc(numberOfNeuronsTotal * sizeof(float));
     if (neurons == NULL) {
         onMallocError(numberOfNeuronsTotal * sizeof(float));
     }
@@ -123,22 +122,22 @@ void ui_train() {
     }
 
     printf("allocation successful!\n"
-           "- initializing neurons to zero (this might take a while)...");
+            "- initializing neurons to zero (this might take a while)...");
 
     initArrayToZeros(&neurons, numberOfNeuronsTotal); // cleans up any garbage we may have picked up
 
     printf("neurons initialized!\n"
-           "- initializing expected to zero (this might take a while)...");
+            "- initializing expected to zero (this might take a while)...");
 
     initArrayToZeros(&expected, numberOfNeuronsInLayer[numberOfLayers - 1]); // cleans up any garbage we may have picked up
 
     printf("expected initialized!\n"
-           "- initializing neuronDeltas to zero (this might take a while)...");
+            "- initializing neuronDeltas to zero (this might take a while)...");
 
     initArrayToZeros(&neuronDeltas, numberOfNeuronsTotal); // cleans up any garbage we may have picked up
 
     printf("neuronDeltas initialized!\n"
-           "- loading MNIST training samples into memory (this might take a while)...");
+            "- loading MNIST training samples into memory (this might take a while)...");
 
     // initialize MNIST training samples pointers to memory with malloc (will be resized and filled with values read from disk in functions_mnist.cu)
     trainingLabels = (char *) malloc(1 * sizeof(char));
@@ -155,15 +154,15 @@ void ui_train() {
     readMnistTrainingSamplesFromDisk(&trainingData, &trainingLabels, &numberOfTrainingSamples);
 
     printf("...samples loaded!\n"
-           "Alright, we're just about ready to start training!\n");
+            "Alright, we're just about ready to start training!\n");
 
     // get user input for running on CPU or GPU
     tempInt = 5; // assign 5 to enter loop
 
     while (1) {
         printf("Do you want to train on the host machine or GPU device?\n"
-               "Enter 1 for host or 2 for device:\n"
-               "~");
+                "Enter 1 for host or 2 for device:\n"
+                "~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
         sscanf(inputBuffer, "%d", &tempInt); // format and dump the user's input
 
@@ -180,8 +179,8 @@ void ui_train() {
         // HOST TRAINING LOGIC BELOW
 
         printf("Looks like you want to train using the host machine!\n"
-               "Press enter to begin training on host machine (ctrl-c to abort):\n"
-               "~");
+                "Press enter to begin training on host machine (ctrl-c to abort):\n"
+                "~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
         printf("\nBeginning training on host now...\n");
 
@@ -200,31 +199,28 @@ void ui_train() {
                 loadMnistSampleUsingHost(trainingLabels, trainingData, s, (s * MNISTSAMPLEDATASIZE), &expected, &neurons);
 
                 // (B2) feedforward sample s's mnistData through the network (left to right)
-                feedforwardUsingHost(&neurons, weights, biases, numberOfLayers, 
-                                     numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
-                                     indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
+                feedforwardUsingHost(&neurons, weights, biases, numberOfLayers, numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
+                        indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
 
                 // (B3) backpropagate error signals and add this sample's deltas to neuronDeltas for this epoch
-                backpropagationUsingHost(&neuronDeltas, expected, neurons, weights, biases, numberOfLayers, 
-                                         numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
-                                         indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
+                backpropagationUsingHost(&neuronDeltas, expected, neurons, weights, biases, numberOfLayers, numberOfNeuronsInLayer,
+                        numberOfWeightsInFrontOfLayer, indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
 
-            }//end for each sample loop
+            }            //end for each sample loop
 
             // (C) update values:
             // (C1) updateBiasesUsingHost
             updateBiasesUsingHost(neuronDeltas, &biases, numberOfNeuronsTotal, learningRate);
 
             // (C2) updateWeightsUsingHost
-            updateWeightsUsingHost(neuronDeltas, neurons, &weights, numberOfLayers, 
-                                   numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
-                                   indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer, learningRate);
+            updateWeightsUsingHost(neuronDeltas, neurons, &weights, numberOfLayers, numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
+                    indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer, learningRate);
 
-            if (s % 3000 == 0) {
+            if (i % 3000 == 0) {
                 printf("--- epoch %d of %d complete ---\n", i, epochs);
             }
 
-        }//end for each epoch loop
+        }            //end for each epoch loop
 
         printf("Training on host is now complete!\n");
 
@@ -233,8 +229,8 @@ void ui_train() {
         // GPU DEVICE TRAINING LOGIC BELOW
 
         printf("Looks like you want to train using the GPU!\n"
-               "Alright, sit tight while I prep the device...\n"
-               "- searching for cuda-enabled GPU device...");
+                "Alright, sit tight while I prep the device...\n"
+                "- searching for cuda-enabled GPU device...");
 
         // declare cudaStatus variable to check for success of cuda operations
         cudaError_t cudaStatus;
@@ -246,7 +242,7 @@ void ui_train() {
         }
 
         printf("cuda-enabled GPU detected!\n"
-               "- attempting to allocate device memory for devNeuronDeltas, devNeurons, devWeights, devBiases, and devExpected...");
+                "- attempting to allocate device memory for devNeuronDeltas, devNeurons, devWeights, devBiases, and devExpected...");
 
         // allocate device memory for devNeuronDeltas
         cudaStatus = cudaMalloc((void **) &devNeuronDeltas, (numberOfNeuronsTotal * sizeof(float)));
@@ -273,13 +269,13 @@ void ui_train() {
         }
 
         // allocate device memory for devExpected
-        cudaStatus = cudaMalloc((void **) &devExpected, (numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(float)));
+        cudaStatus = cudaMalloc((void **) &devExpected, (numberOfNeuronsInLayer[numberOfLayers - 1] * sizeof(float)));
         if (cudaStatus != cudaSuccess) {
-            onCudaMallocError(numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(float));
+            onCudaMallocError(numberOfNeuronsInLayer[numberOfLayers - 1] * sizeof(float));
         }
 
         printf("allocation successful!\n"
-               "- attempting to allocate device memory for MNIST training set...");
+                "- attempting to allocate device memory for MNIST training set...");
 
         // allocate device memory for devTrainingLabels
         cudaStatus = cudaMalloc((void **) &devTrainingLabels, (MNISTTRAININGSETSIZE * sizeof(char)));
@@ -294,7 +290,7 @@ void ui_train() {
         }
 
         printf("allocation successful!\n"
-               "- copying neuronDeltas, neurons, weights, biases, and expected values from host memory to device memory (this might take a while)...");
+                "- copying neuronDeltas, neurons, weights, biases, and expected values from host memory to device memory (this might take a while)...");
 
         // copy neuronDeltas to device
         cudaStatus = cudaMemcpy(devNeuronDeltas, neuronDeltas, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyHostToDevice);
@@ -303,7 +299,7 @@ void ui_train() {
         }
 
         // copy neurons to device
-        cudaStatus = cudaMemcpy(devNeurons, neuron, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyHostToDevice);
+        cudaStatus = cudaMemcpy(devNeurons, neurons, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyHostToDevice);
         if (cudaStatus != cudaSuccess) {
             onCudaMemcpyError("neuron");
         }
@@ -321,13 +317,13 @@ void ui_train() {
         }
 
         // copy expected to device
-        cudaStatus = cudaMemcpy(devExpected, expected, (numberOfNeuronsPerLayer[numberOfLayers - 1] * sizeof(float)), cudaMemcpyHostToDevice);
+        cudaStatus = cudaMemcpy(devExpected, expected, (numberOfNeuronsInLayer[numberOfLayers - 1] * sizeof(float)), cudaMemcpyHostToDevice);
         if (cudaStatus != cudaSuccess) {
             onCudaMemcpyError("expected");
         }
 
         printf("copy successful!\n"
-               "- copying MNIST training samples from host memory to device memory (this might take a while)...");
+                "- copying MNIST training samples from host memory to device memory (this might take a while)...");
 
         // copy MNIST training labels to device
         cudaStatus = cudaMemcpy(devTrainingLabels, trainingLabels, (MNISTTRAININGSETSIZE * sizeof(char)), cudaMemcpyHostToDevice);
@@ -342,9 +338,9 @@ void ui_train() {
         }
 
         printf("copy successful!\n"
-               "... device prep work complete!\n"
-               "Press enter to begin training on GPU device (ctrl-c to abort):\n"
-               "~");
+                "... device prep work complete!\n"
+                "Press enter to begin training on GPU device (ctrl-c to abort):\n"
+                "~");
         fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
         printf("\nBeginning training on GPU now...\n");
 
@@ -363,43 +359,40 @@ void ui_train() {
                 loadMnistSampleUsingDevice(devTrainingLabels, devTrainingData, s, (s * MNISTSAMPLEDATASIZE), devExpected, devNeurons);
 
                 // (B2) feedforward sample s's mnistData through the network (left to right)
-                feedforwardUsingDevice(devNeurons, devWeights, devBiases, numberOfLayers, 
-                                       numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
-                                       indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
+                feedforwardUsingDevice(devNeurons, devWeights, devBiases, numberOfLayers, numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
+                        indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
 
                 // (B3) backpropagate error signals and add this sample's deltas to neuronDeltas for this epoch
-                backpropagationUsingDevice(devNeuronDeltas, devExpected, devNeurons, devWeights, devBiases, 
-                                           numberOfLayers, numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
-                                           indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
+                backpropagationUsingDevice(devNeuronDeltas, devExpected, devNeurons, devWeights, devBiases, numberOfLayers, numberOfNeuronsInLayer,
+                        numberOfWeightsInFrontOfLayer, indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer);
 
-            }//end for each sample loop
+            }            //end for each sample loop
 
             // (C) update values:
             // (C1) updateBiasesUsingDevice
             updateBiasesUsingDevice(devNeuronDeltas, devBiases, numberOfNeuronsTotal, learningRate);
 
             // (C2) updateWeightsUsingDevice
-            updateWeightsUsingDevice(devNeuronDeltas, devNeurons, devWeights, numberOfLayers, 
-                                     numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer, 
-                                     indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer, learningRate);
+            updateWeightsUsingDevice(devNeuronDeltas, devNeurons, devWeights, numberOfLayers, numberOfNeuronsInLayer, numberOfWeightsInFrontOfLayer,
+                    indexOfFirstNeuronInLayer, indexOfFirstWeightInFrontOfLayer, learningRate);
 
-            if (s % 3000 == 0) {
+            if (i % 3000 == 0) {
                 printf("--- epoch %d of %d complete ---\n", i, epochs);
             }
 
-        }//end for each epoch loop
+        }            //end for each epoch loop
 
         printf("Training on GPU device is now complete!\n"
-               "- copying weights and biases from device memory to host memory (this might take a while)...");
+                "- copying weights and biases from device memory to host memory (this might take a while)...");
 
         // copy devWeights to host 
-        cudaStatus = cudaMemcpy(weights, devWeights, (numberOfWeightsTotal * sizeof(float)), cudaMemcpyDeviceToHost);
+        cudaStatus = cudaMemcpy(&weights, devWeights, (numberOfWeightsTotal * sizeof(float)), cudaMemcpyDeviceToHost);
         if (cudaStatus != cudaSuccess) {
             onCudaMemcpyError("devWeights");
         }
 
         // copy devBiases to host 
-        cudaStatus = cudaMemcpy(biases, devBiases, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyDeviceToHost);
+        cudaStatus = cudaMemcpy(&biases, devBiases, (numberOfNeuronsTotal * sizeof(float)), cudaMemcpyDeviceToHost);
         if (cudaStatus != cudaSuccess) {
             onCudaMemcpyError("devBiases");
         }
@@ -420,19 +413,18 @@ void ui_train() {
     } else {
         // this should only execute if something goes horribly wrong with tempInt
         printf("I don't know how you did it, but you somehow broke out of my while-loop with something besides a 1 or 2...\n"
-               "...as revenge I'm shutting you down. Don't mess with my program logic!");
+                "...as revenge I'm shutting you down. Don't mess with my program logic!");
         exit(1);
     }
 
     printf("Alright, sit tight while I do some work...\n");
-
 
     // save the weights and biases to disk after training (they should be different)
     printf("- attempting to save trained weights and biases to disk...");
     saveBiasesToDisk(biases, numberOfNeuronsTotal);
     saveWeightsToDisk(weights, numberOfWeightsTotal);
     printf("weights and biases saved!\n"
-           "- freeing dynamically allocated device memory...");
+            "- freeing dynamically allocated device memory...");
 
     // free the chunks of device memory that were dynamically allocated by cudaMalloc (if not already free)
     cudaFree(devNeuronDeltas);
@@ -444,7 +436,7 @@ void ui_train() {
     cudaFree(devTrainingData);
 
     printf("memory freed!\n"
-           "- freeing dynamically allocated host memory...");
+            "- freeing dynamically allocated host memory...");
 
     // free the chunks of host memory that were dynamically allocated by malloc
     free(numberOfNeuronsInLayer);
@@ -460,8 +452,8 @@ void ui_train() {
     free(trainingData);
 
     printf("memory freed!\n"
-           "Press enter to return to the main menu:\n"
-           "~");
+            "Press enter to return to the main menu:\n"
+            "~");
     fgets(inputBuffer, MAXINPUT, stdin); // read the user's input
     printf("\n");
-}//end ui_train function
+} //end ui_train function

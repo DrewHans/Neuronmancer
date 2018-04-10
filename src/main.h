@@ -59,58 +59,55 @@ __host__ __device__ float tanhFunction(const float d);
 __host__ __device__ float tanhDerivative(const float d);
 __host__ __device__ float reluFunction(const float d);
 __host__ __device__ float reluDerivative(const float d);
-__global__ void cudaKernel_ActivateLayerUsingSigmoid(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer);
-__global__ void cudaKernel_ActivateLayerUsingTanh(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer);
-__global__ void cudaKernel_ActivateLayerUsingRelu(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer);
+__global__ void cudaKernel_ActivateLayerUsingSigmoid(float* __restrict__ devNeurons, const unsigned int indexOfFirstNeuronInLayer,
+        const unsigned int numberOfNeuronsInLayer);
+__global__ void cudaKernel_ActivateLayerUsingTanh(float* __restrict__ devNeurons, const unsigned int indexOfFirstNeuronInLayer,
+        const unsigned int numberOfNeuronsInLayer);
+__global__ void cudaKernel_ActivateLayerUsingRelu(float* __restrict__ devNeurons, const unsigned int indexOfFirstNeuronInLayer,
+        const unsigned int numberOfNeuronsInLayer);
 
 /////////////////////////////////////////////////////////////////////////////////
 // define function prototypes for backpropagation.cu ////////////////////////////
-void backpropagationUsingHost(float** neuronDeltas, const float* expected, const float* neurons, const float* weights, const float* biases, 
-                              const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
-                              const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer);
+void backpropagationUsingHost(float** neuronDeltas, const float* expected, const float* neurons, const float* weights, const float* biases,
+        const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
+        const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer);
 
-void backpropagationUsingDevice(float* devNeuronDeltas, float* devExpected, float* devNeurons, float* devWeights, float* devBiases, 
-                                const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
-                                const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer);
-__global__ static void cudaKernel_CalculateLeftLayerDeltas(float* devNeuronDeltas, __restrict__ const float* devExpected, 
-                                                           __restrict__ const float* devNeurons, __restrict__ const float* devWeights, 
-                                                           const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight,
-                                                           const unsigned int indexOfFirstLeftNeuron, const unsigned int indexOfFirstRightNeuron, 
-                                                           const unsigned int indexOfFirstWeight);
-__global__ static void cudaKernel_CalculateOutputLayerDeltas(float* devNeuronDeltas, __restrict__ const float* devExpected, 
-                                                             __restrict__ const float* devNeurons, 
-                                                             const unsigned int numberOfNeuronsInOutput, 
-                                                             const unsigned int indexOfFirstOutputNeuron);
-__global__ static void cudaKernel_updateBiases(__restrict__ const float* devNeuronDeltas, float* devBiases, 
-                                               const unsigned int numberOfNeuronsTotal, const float learningRate);
-__global__ static void cudaKernel_updateWeightsBetweenLayers(__restrict__ const float* devNeuronDeltas, __restrict__ const float* devNeurons, float* devWeights, 
-                                                             const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight, 
-                                                             const unsigned int numberOfWeightsBetweenLayers, const unsigned int indexOfFirstLeftNeuron, 
-                                                             const unsigned int indexOfFirstWeight, const float learningRate);
+void backpropagationUsingDevice(float* devNeuronDeltas, float* devExpected, float* devNeurons, float* devWeights, float* devBiases,
+        const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
+        const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer);
+__global__ static void cudaKernel_CalculateLeftLayerDeltas(float* __restrict__ devNeuronDeltas, const float* __restrict__ devExpected,
+        const float* __restrict__ devNeurons, const float* __restrict__ devWeights, const unsigned int numberOfNeuronsInLeft,
+        const unsigned int numberOfNeuronsInRight, const unsigned int indexOfFirstLeftNeuron, const unsigned int indexOfFirstRightNeuron,
+        const unsigned int indexOfFirstWeight);
+__global__ static void cudaKernel_CalculateOutputLayerDeltas(float* __restrict__ devNeuronDeltas, const float* __restrict__ devExpected,
+        const float* __restrict__ devNeurons, const unsigned int numberOfNeuronsInOutput, const unsigned int indexOfFirstOutputNeuron);
+__global__ static void cudaKernel_updateBiases(const float* __restrict__ devNeuronDeltas, float* __restrict__ devBiases,
+        const unsigned int numberOfNeuronsTotal, const float learningRate);
+__global__ static void cudaKernel_updateWeightsBetweenLayers(const float* __restrict__ devNeuronDeltas, const float* __restrict__ devNeurons,
+        float* __restrict__ devWeights, const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight,
+        const unsigned int numberOfWeightsBetweenLayers, const unsigned int indexOfFirstLeftNeuron, const unsigned int indexOfFirstWeight,
+        const float learningRate);
 __host__ __device__ float quadraticCostDerivative(const float expectedValue, const float calculatedValue);
 void updateBiasesUsingDevice(float* devNeuronDeltas, float* devBiases, const unsigned int numberOfNeuronsTotal, const float learningRate);
 void updateBiasesUsingHost(const float* neuronDeltas, float** biases, const unsigned int numberOfNeuronsTotal, const float learningRate);
-void updateWeightsUsingDevice(float* devNeuronDeltas, float* devNeurons, float* devWeights, const unsigned int numberOfLayers, 
-                              const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, 
-                              const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer, 
-                              const float learningRate);
-void updateWeightsUsingHost(const float* neuronDeltas, const float* neurons, float** weights, const unsigned int numberOfLayers, 
-                            const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, 
-                            const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer, 
-                            const float learningRate);
+void updateWeightsUsingDevice(float* devNeuronDeltas, float* devNeurons, float* devWeights, const unsigned int numberOfLayers,
+        const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, const unsigned int* indexOfFirstNeuronInLayer,
+        const unsigned int* indexOfFirstWeightInFrontOfLayer, const float learningRate);
+void updateWeightsUsingHost(const float* neuronDeltas, const float* neurons, float** weights, const unsigned int numberOfLayers,
+        const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, const unsigned int* indexOfFirstNeuronInLayer,
+        const unsigned int* indexOfFirstWeightInFrontOfLayer, const float learningRate);
 
 /////////////////////////////////////////////////////////////////////////////////
 // define function prototypes for feedforward.cu ////////////////////////////////
-void feedforwardUsingHost(float** neurons, const float* weights, const float* biases, 
-                          const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
-                          const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer);
-void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBiases, 
-                            const unsigned int numberOfLayers, const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
-                            const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer);
-__global__ void static cudaKernel_CalculateWeightedSumPlusBias(float* devNeurons, __restrict__ const float* devWeights, __restrict__ const float* devBiases, 
-                                                               const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight, 
-                                                               const unsigned int indexOfFirstLeftNeuron, const unsigned int indexOfFirstRightNeuron, 
-                                                               const unsigned int indexOfFirstWeight);
+void feedforwardUsingHost(float** neurons, const float* weights, const float* biases, const unsigned int numberOfLayers,
+        const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, const unsigned int* indexOfFirstNeuronInLayer,
+        const unsigned int* indexOfFirstWeightInFrontOfLayer);
+void feedforwardUsingDevice(float* devNeurons, float* devWeights, float* devBiases, const unsigned int numberOfLayers,
+        const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, const unsigned int* indexOfFirstNeuronInLayer,
+        const unsigned int* indexOfFirstWeightInFrontOfLayer);
+__global__ void static cudaKernel_CalculateWeightedSumPlusBias(float* __restrict__ devNeurons, const float* __restrict__ devWeights,
+        const float* __restrict__ devBiases, const unsigned int numberOfNeuronsInLeft, const unsigned int numberOfNeuronsInRight,
+        const unsigned int indexOfFirstLeftNeuron, const unsigned int indexOfFirstRightNeuron, const unsigned int indexOfFirstWeight);
 
 /////////////////////////////////////////////////////////////////////////////////
 // define function prototypes for functions_misc.cu /////////////////////////////
@@ -118,7 +115,7 @@ void getDeviceProperties(unsigned int* multiProcessorCount, unsigned int* warpSi
 int getOptimalThreadSize(const unsigned int blocks, unsigned int threads, const unsigned int minimumThreadsNeeded, const unsigned int gpuWarpsize);
 void initArrayToRandomFloats(float** a, const unsigned int n);
 void initDeviceArrayToZeros(float* devA, const unsigned int n);
-__global__ static void cudaKernel_initArrayToZeros(float* devA, const unsigned int n);
+__global__ static void cudaKernel_initArrayToZeros(float* __restrict__ devA, const unsigned int n);
 void printarray_float(const char* name, const float* a, const unsigned int n);
 void printarray_int(const char* name, const unsigned int* a, const unsigned int n);
 void printConfusionMatrix(const int* cm, const unsigned int n);
@@ -137,38 +134,31 @@ void onMallocError(const unsigned int size);
 // define function prototypes for functions_mnist.cu ////////////////////////////
 int getCalculatedMNISTClassificationUsingHost(const float* neurons, const unsigned int indexOfFirstOutputNeuron);
 void getCalculatedMNISTClassificationUsingDevice(int* devClassification, const float* devNeurons, const unsigned int indexOfFirstOutputNeuron);
-void loadMnistSampleUsingHost(const char* mnistLabels, const unsigned char* mnistData, 
-                              const unsigned int indexOfSampleLabel, const unsigned int indexOfSampleFirstData, 
-                              float** expected, float** neurons);
-void loadMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char* devMnistData, 
-                                  const unsigned int indexOfSampleLabel, const unsigned int indexOfSampleFirstData, 
-                                  float* devExpected, float* devNeurons);
+void loadMnistSampleUsingHost(const char* mnistLabels, const unsigned char* mnistData, const unsigned int indexOfSampleLabel,
+        const unsigned int indexOfSampleFirstData, float** expected, float** neurons);
+void loadMnistSampleUsingDevice(const char* devMnistLabels, const unsigned char* devMnistData, const unsigned int indexOfSampleLabel,
+        const unsigned int indexOfSampleFirstData, float* devExpected, float* devNeurons);
 void readMnistTestSamplesFromDisk(unsigned char** testData, char** testLabels, unsigned int* numberOfSamples);
 void readMnistTrainingSamplesFromDisk(unsigned char** trainingData, char** trainingLabels, unsigned int* numberOfSamples);
-__global__ void cudaKernel_GetCalculatedMNISTClassification(int* devClassification, 
-                                                            __restrict__ const float* devNeurons, 
-                                                            const unsigned int indexOfFirstOutputNeuron);
-__global__ void cudaKernel_loadMnistSampleLabelIntoExpected(__restrict__ const char* devMnistLabels, 
-                                                            const unsigned int indexOfNextSampleLabel, 
-                                                            float* devExpected);
-__global__ void cudaKernel_loadMnistSampleDataIntoInputLayer(__restrict__ const unsigned char* devMnistData, 
-                                                             const unsigned int indexOfNextSampleFirstData, 
-                                                             float* devNeurons);
+__global__ void cudaKernel_GetCalculatedMNISTClassification(int* __restrict__ devClassification, const float* __restrict__ devNeurons,
+        const unsigned int indexOfFirstOutputNeuron);
+__global__ void cudaKernel_loadMnistSampleLabelIntoExpected(const char* __restrict__ devMnistLabels, const unsigned int indexOfNextSampleLabel,
+        float* __restrict__ devExpected);
+__global__ void cudaKernel_loadMnistSampleDataIntoInputLayer(const unsigned char* __restrict__ devMnistData, const unsigned int indexOfNextSampleFirstData,
+        float* __restrict__ devNeurons);
 
 /////////////////////////////////////////////////////////////////////////////////
 // define function prototypes for model_read.cu /////////////////////////////////
-float** readBiasesFromDisk(unsigned int numberOfBiasesTotal);
+float* readBiasesFromDisk(unsigned int numberOfBiasesTotal);
 unsigned int readEpochsFromDisk();
 float readLearningRateFromDisk();
-float** readWeightsFromDisk(unsigned int numberOfWeightsTotal);
-void readModelValuesFromDisk(unsigned int* p_numberOfLayers, unsigned int* p_numberOfNeuronsTotal, unsigned int* p_numberOfWeightsTotal, 
-                             unsigned int** p_numberOfNeuronsInLayer, unsigned int** p_numberOfWeightsInFrontOfLayer, 
-                             unsigned int** p_indexOfFirstNeuronInLayer, unsigned int** p_indexOfFirstWeightInFrontOfLayer);
-void readModel(float* p_learningRate, unsigned int* p_epochs, 
-               unsigned int* p_numberOfLayers, unsigned int* p_numberOfNeuronsTotal, unsigned int* p_numberOfWeightsTotal, 
-               unsigned int** p_numberOfNeuronsInLayer, unsigned int** p_numberOfWeightsInFrontOfLayer,
-               unsigned int** p_indexOfFirstNeuronInLayer, unsigned int** p_indexOfFirstWeightInFrontOfLayer, 
-               float** p_weights, float** p_biases);
+float* readWeightsFromDisk(unsigned int numberOfWeightsTotal);
+void readModelValuesFromDisk(unsigned int* p_numberOfLayers, unsigned int* p_numberOfNeuronsTotal, unsigned int* p_numberOfWeightsTotal,
+        unsigned int** p_numberOfNeuronsInLayer, unsigned int** p_numberOfWeightsInFrontOfLayer, unsigned int** p_indexOfFirstNeuronInLayer,
+        unsigned int** p_indexOfFirstWeightInFrontOfLayer);
+void readModel(float* p_learningRate, unsigned int* p_epochs, unsigned int* p_numberOfLayers, unsigned int* p_numberOfNeuronsTotal,
+        unsigned int* p_numberOfWeightsTotal, unsigned int** p_numberOfNeuronsInLayer, unsigned int** p_numberOfWeightsInFrontOfLayer,
+        unsigned int** p_indexOfFirstNeuronInLayer, unsigned int** p_indexOfFirstWeightInFrontOfLayer, float** p_weights, float** p_biases);
 
 /////////////////////////////////////////////////////////////////////////////////
 // define function prototypes for model_save.cu /////////////////////////////////
@@ -176,13 +166,12 @@ void saveBiasesToDisk(const float* biases, const unsigned int numberOfBiasesTota
 void saveEpochsToDisk(const unsigned int epochs);
 void saveLearningRateToDisk(const float learningRate);
 void saveWeightsToDisk(const float* weights, const unsigned int numberOfWeightsTotal);
-void saveModelValuesToDisk(const unsigned int numberOfLayers, const unsigned int numberOfNeuronsTotal, const unsigned int numberOfWeightsTotal, 
-                           const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
-                           const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer);
-void saveModel(const unsigned int numberOfLayers, const unsigned int numberOfNeuronsTotal, const unsigned int numberOfWeightsTotal, 
-               const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer,
-               const unsigned int* indexOfFirstNeuronInLayer, const unsigned int* indexOfFirstWeightInFrontOfLayer, 
-               const float* weights, const float* biases, const float learningRate, const unsigned int epochs);
+void saveModelValuesToDisk(const unsigned int numberOfLayers, const unsigned int numberOfNeuronsTotal, const unsigned int numberOfWeightsTotal,
+        const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, const unsigned int* indexOfFirstNeuronInLayer,
+        const unsigned int* indexOfFirstWeightInFrontOfLayer);
+void saveModel(const unsigned int numberOfLayers, const unsigned int numberOfNeuronsTotal, const unsigned int numberOfWeightsTotal,
+        const unsigned int* numberOfNeuronsInLayer, const unsigned int* numberOfWeightsInFrontOfLayer, const unsigned int* indexOfFirstNeuronInLayer,
+        const unsigned int* indexOfFirstWeightInFrontOfLayer, const float* weights, const float* biases, const float learningRate, const unsigned int epochs);
 
 /////////////////////////////////////////////////////////////////////////////////
 // define function prototypes for ui_create.cu //////////////////////////////////

@@ -60,17 +60,17 @@ void getDeviceProperties(unsigned int* multiProcessorCount, unsigned int* warpSi
  */
 int getOptimalThreadSize(const unsigned int blocks, unsigned int threads, const unsigned int minimumThreadsNeeded, const unsigned int gpuWarpsize) {
     // double or devide the number of threads until we have a number close to the number of neurons in right-layer
-    if ((blocks*threads) < minimumThreadsNeeded) {
-        while((blocks*threads) < minimumThreadsNeeded) {
+    if ((blocks * threads) < minimumThreadsNeeded) {
+        while ((blocks * threads) < minimumThreadsNeeded) {
             threads = threads * 2;
         }
-    } else if ((threads > gpuWarpsize) && ((blocks*(threads/2)) > minimumThreadsNeeded)) {
-        while((threads > gpuWarpsize) && ((blocks*(threads/2)) > minimumThreadsNeeded)) {
+    } else if ((threads > gpuWarpsize) && ((blocks * (threads / 2)) > minimumThreadsNeeded)) {
+        while ((threads > gpuWarpsize) && ((blocks * (threads / 2)) > minimumThreadsNeeded)) {
             threads = threads / 2;
         }
     }
     return threads;
-}//end getOptimalThreadSize function
+} //end getOptimalThreadSize function
 
 /*
  * initArrayToRandomFloats - initializes all array elements to a random floating-point value
@@ -79,10 +79,10 @@ int getOptimalThreadSize(const unsigned int blocks, unsigned int threads, const 
  */
 void initArrayToRandomFloats(float** a, const unsigned int n) {
     // seed pseudo-random number generator with current time
-    srand ( time ( NULL));
+    srand (time(NULL));
 
     // generate random floats in range [0.0, 1.0)
-    for (int i = 0; i < n; i++) {
+for    (int i = 0; i < n; i++) {
         (*a)[i] = ((float) rand()) / ((float) RAND_MAX);
     }
 } //end initArrayToRandomFloats function
@@ -108,12 +108,12 @@ void initDeviceArrayToZeros(float* devA, const unsigned int n) {
     // use getDeviceProperties helper function to get GPU device information
     unsigned int numberOfSMs = 0; // the number of SMs on the device (1 SM can process 1 block at a time)
     unsigned int warpsize = 0; // the number of threads that an SM can manage at one time
-    getDeviceProperties(&numberOfSMs, &warpsize); 
+    getDeviceProperties(&numberOfSMs, &warpsize);
 
     // set blocks and threads to a size that will fully utilize the GPU (overkill, I know, but we're going for performance here)
     unsigned int blocks = numberOfSMs; // should be equal to the number of SMs on the GPU device after getDeviceProperties
     unsigned int threads = warpsize; // should be equal to the warpsize on the GPU device after getDeviceProperties
-    
+
     // double or devide the number of threads until we have a number close to the size of the array
     threads = getOptimalThreadSize(blocks, threads, n, warpsize);
 
@@ -121,11 +121,11 @@ void initDeviceArrayToZeros(float* devA, const unsigned int n) {
     cudaKernel_initArrayToZeros<<<blocks, threads>>>(devA, n);
 
     // Check for any errors launching the kernel
-    cudaStatus = cudaGetLastError();
+    cudaError_t cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
         onCudaKernelLaunchFailure("cudaKernel_initArrayToZeros", cudaStatus);
     }
-    
+
     // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
@@ -135,16 +135,16 @@ void initDeviceArrayToZeros(float* devA, const unsigned int n) {
 
 /*
  * cudaKernel_initArrayToZeros - initializes all device-array elemtns to zero
- * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * __restrict__ decoration tells NVCC this function's pointer-parameters are not aliased
  * @params: devA - device copy of a float array
  * @params: n - the size of devA
  */
-__global__ void cudaKernel_initArrayToZeros(float* devA, const unsigned int n) {
+__global__ void cudaKernel_initArrayToZeros(float* __restrict__ devA, const unsigned int n) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     if (id < n) {
         devA[id] = 0.0;
     }
-}//end cudaKernel_initArrayToZeros function
+} //end cudaKernel_initArrayToZeros function
 
 /*
  * printarray_float - prints out all array elements to terminal
@@ -180,28 +180,16 @@ void printarray_int(const char* name, const unsigned int* a, const unsigned int 
 void printConfusionMatrix(const int* cm, const unsigned int n) {
     // print out a "pretty" confusion matrix table
     printf("            +-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+-PREDICTED-+\n"
-           "            |     0     |     1     |     2     |     3     |     4     |     5     |     6     |     7     |     8     |     9     |\n"
-           "+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+\n");
+            "            |     0     |     1     |     2     |     3     |     4     |     5     |     6     |     7     |     8     |     9     |\n"
+            "+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+\n");
     for (int i = 0; i < n; i++) {
         printf("| ACTUAL %d  ", i);
         for (int j = 0; j < n; j++) {
-            printf("|   %5d   ", cm[n*i + j]);
+            printf("|   %5d   ", cm[n * i + j]);
         }
         printf("|\n+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+\n");
     }
-
-    // get the number of correct predictions from the confusion matrix
-    int truePositives = 0;
-    for (int i = 0; i < MNISTCLASSIFICATIONS; i++) {
-        truePositives += confusionMatrix[i * MNISTCLASSIFICATIONS + i];
-    }
-    float accuracy = (float) truePositives / numberOfTestSamples;
-    float misclassificationRate = 1.0 - accuracy;
-
-    // print out the accuracy and misclassification rate
-    printf("Accuracy = %3.2f%%\nMisclassificationRate = %3.2f%%\n\n", accuracy*100, misclassificationRate*100);
-
-}//end printConfusionMatrix function
+} //end printConfusionMatrix function
 
 /*
  * printFarewellMSG - prints out one final insult before we crash
@@ -217,7 +205,7 @@ void onCudaKernelLaunchFailure(const char* kernel, const cudaError_t cudaStatus)
     fprintf(stderr, "ERROR: %s launch failed: %s\n", kernel, cudaGetErrorString(cudaStatus));
     printFarewellMSG();
     exit(1);
-}//end onCudaKernelLaunchFailure function
+} //end onCudaKernelLaunchFailure function
 
 /*
  * onCudaDeviceSynchronizeError - crashes the program when called (SOS, we're going down)
@@ -226,7 +214,7 @@ void onCudaDeviceSynchronizeError(const char* kernel, const cudaError_t cudaStat
     fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching %s!\n", cudaStatus, kernel);
     printFarewellMSG();
     exit(1);
-}//end onCudaDeviceSynchronizeError function
+} //end onCudaDeviceSynchronizeError function
 
 /*
  * onCudaMallocError - crashes the program when called (SOS, we're going down)

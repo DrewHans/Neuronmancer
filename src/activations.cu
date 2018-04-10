@@ -83,11 +83,13 @@ __host__ __device__ float reluDerivative(const float d) {
 /*
  * cudaKernel_ActivateLayerUsingSigmoid - applies Sigmoid activation to every neuron in a layer
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * __restrict__ decoration tells NVCC this function's pointer-parameters are not aliased
  * @params: devNeurons - a pointer to an array of float values in GPU device memory
  * @params: indexOfFirstNeuronInLayer - the index of the first neuron in the layer
  * @params: numberOfNeuronsInLayer - the total number of neurons in the layer
  */
-__global__ void cudaKernel_ActivateLayerUsingSigmoid(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer) {
+__global__ void cudaKernel_ActivateLayerUsingSigmoid(float* __restrict__ devNeurons, const unsigned int indexOfFirstNeuronInLayer,
+        const unsigned int numberOfNeuronsInLayer) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)
@@ -99,11 +101,13 @@ __global__ void cudaKernel_ActivateLayerUsingSigmoid(float* devNeurons, const un
 /*
  * cudaKernel_ActivateLayerUsingTanh - applies TanH activation to every neuron in a layer
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * __restrict__ decoration tells NVCC this function's pointer-parameters are not aliased
  * @params: devNeurons - a pointer to an array of float values in GPU device memory
  * @params: indexOfFirstNeuronInLayer - the index of the first neuron in the layer
  * @params: numberOfNeuronsInLayer - the total number of neurons in the layer
  */
-__global__ void cudaKernel_ActivateLayerUsingTanh(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer) {
+__global__ void cudaKernel_ActivateLayerUsingTanh(float* __restrict__ devNeurons, const unsigned int indexOfFirstNeuronInLayer,
+        const unsigned int numberOfNeuronsInLayer) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)
@@ -115,11 +119,13 @@ __global__ void cudaKernel_ActivateLayerUsingTanh(float* devNeurons, const unsig
 /*
  * cudaKernel_ActivateLayerUsingRelu - applies ReLU activation to every neuron in a layer
  * __global__ decoration tells NVCC this function should run on GPU, and be callable from the CPU host
+ * __restrict__ decoration tells NVCC this function's pointer-parameters are not aliased
  * @params: devNeurons - a pointer to an array of float values in GPU device memory
  * @params: indexOfFirstNeuronInLayer - the index of the first neuron in the layer
  * @params: numberOfNeuronsInLayer - the total number of neurons in the layer
  */
-__global__ void cudaKernel_ActivateLayerUsingRelu(float* devNeurons, const unsigned int indexOfFirstNeuronInLayer, const unsigned int numberOfNeuronsInLayer) {
+__global__ void cudaKernel_ActivateLayerUsingRelu(float* __restrict__ devNeurons, const unsigned int indexOfFirstNeuronInLayer,
+        const unsigned int numberOfNeuronsInLayer) {
     volatile unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
 
     // check that this thread is within our desired range (extra threads may have been launched for GPU optimization)
