@@ -54,3 +54,6 @@ dkms.conf
 # ignore mnist/*.csv files
 mnist/*.csv
 
+# ignore Nsight Eclipse Markup files
+.cproject
+.project
