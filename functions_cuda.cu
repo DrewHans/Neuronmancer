@@ -357,19 +357,19 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
     }
 
     // cudaMemcpy device variable values into host variables
-    cudaStatus = cudaMemcpy(il, dev_il, sizeof(InputLayer), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(il, dev_il, sizeof(*dev_il), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {
         printf("Abort! Could not cudaMemcpy dev_il to il!\n");
         exit(1);
     }
 
-    cudaStatus = cudaMemcpy(hl, dev_hl, sizeof(HiddenLayer), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(hl, dev_hl, sizeof(*dev_hl), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {
         printf("Abort! Could not cudaMemcpy dev_hl to hl!\n");
         exit(1);
     }
 
-    cudaStatus = cudaMemcpy(ol, dev_ol, sizeof(OutputLayer), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(ol, dev_ol, sizeof(*dev_ol), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {
         printf("Abort! Could not cudaMemcpy dev_ol to ol!\n");
         exit(1);
@@ -443,7 +443,7 @@ __global__ void cudakernel_feedInputLayer(InputLayer* dev_il, int sample) {
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
     if (id < IL_SIZE) {
         // if dev_image->pixel[i] !0 then set dev_il->input[i] to 1, else set to 0
-        dev_il->input[id] = dev_trainImages[sample].pixel[id] ? 1 : 0;
+        dev_il->input[id] = (dev_trainImages[sample].pixel[id] ? 1 : 0);
     }
 
 } //end cudakernel_feedInputLayer function
@@ -522,7 +522,7 @@ __global__ void cudakernel_getExpectedOutput(ExpectedOutput* __restrict__ dev_ex
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
     if (id < OL_SIZE) {
         // if id == dev_trainLabels[sample] set dev_expected->value[i] to 1, else set to 0
-        dev_expected->value[id] = (id == dev_trainLabels[sample]) ? 1 : 0;
+        dev_expected->value[id] = (id == dev_trainLabels[sample] ? 1 : 0);
     }
 
 } //end cudakernel_getExpectedOutput function

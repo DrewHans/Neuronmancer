@@ -55,7 +55,7 @@ void feedInputLayer(InputLayer* il, MNIST_Image* image) {
     // for each il->input[i]
     for (int i = 0; i < IL_SIZE; i++) {
         // if image->pixel[i] !0 then set il->input[i] to 1, else set to 0
-        il->input[i] = image->pixel[i] ? 1 : 0;
+        il->input[i] = (image->pixel[i] ? 1 : 0);
     }
 
 } //end feedInputLayer function
@@ -155,7 +155,7 @@ ExpectedOutput getExpectedOutput(int mnistLabel) {
     ExpectedOutput expected;
     for (int i = 0; i < OL_SIZE; i++) {
         // if i == mnistLabel set expected.value[i] to 1, else set to 0
-        expected.value[i] = (i == mnistLabel) ? 1 : 0;
+        expected.value[i] = (i == mnistLabel ? 1 : 0);
     }
     return expected;
 } //end getExpectedOutput function
