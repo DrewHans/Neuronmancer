@@ -247,8 +247,12 @@ float sigmoidPrime(const float x) {
  */
 void train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
 
+    printf("\n--- beginning training on host ---\n");
+
     // for each epoch
     for (int epoch = 0; epoch < EPOCHS; epoch++) {
+        printf(" --- starting epoch %d of %d ---\n", epoch + 1, EPOCHS);
+
         // open MNIST files
         FILE* imageFile, *labelFile;
         imageFile = openMNISTImageFile(MNIST_TRAINING_SET_IMAGES_LOCATION);
@@ -261,16 +265,18 @@ void train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
             MNIST_Label label = getLabel(labelFile);
             trainNetwork(il, hl, ol, &image, label);
 
-            if (sample + 1 == 10000 || sample + 1 == 20000 || sample + 1 == 30000 || sample + 1 == 40000 || sample + 1 == 50000 || sample + 1 == 60000) {
-                printf("   => sample %d of %d complete\n", sample + 1, MNIST_TRAINING_SET_SIZE);
+            if ((sample + 1) % 10000 == 0) {
+                printf("    => sample %d of %d complete\n", sample + 1, MNIST_TRAINING_SET_SIZE);
             }
         }
 
         // Close files
         fclose(imageFile);
         fclose(labelFile);
-        printf("--- epoch %d of %d complete ---\n", epoch + 1, EPOCHS);
+        printf(" --- epoch %d of %d complete ---\n", epoch + 1, EPOCHS);
     }
+
+    printf("\n--- training on host complete ---\n\n");
 
 } //end train function
 

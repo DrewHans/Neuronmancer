@@ -33,6 +33,8 @@ void evaluate(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
     imageFile = openMNISTImageFile(MNIST_TESTING_SET_IMAGES_LOCATION);
     labelFile = openMNISTLabelFile(MNIST_TESTING_SET_LABELS_LOCATION);
 
+    printf("\n--- beginning evaluation ---\n");
+
     // for each MNIST sample in the test set
     for (int sample = 0; sample < MNIST_TESTING_SET_SIZE; sample++) {
         // read the next sample image and label
@@ -43,8 +45,13 @@ void evaluate(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
 
         // update confusion matrix
         confusionMatrix[((int) label) * 10 + prediction] += 1;
-        printf("--- sample %d of %d complete ---\n", sample + 1, MNIST_TESTING_SET_SIZE);
+
+        if ((sample + 1) % 1000 == 0) {
+            printf("   => sample %d of %5d complete\n", sample + 1, MNIST_TESTING_SET_SIZE);
+        }
     }
+
+    printf("--- evaluation complete ---\n\n");
 
     fclose(imageFile);
     fclose(labelFile);
@@ -139,7 +146,7 @@ int main(int argc, const char* argv[]) {
             "--- epochs : %d\n"
             "\n", IL_SIZE, HL_SIZE, OL_SIZE, LEARNING_RATE, EPOCHS);
 
-    printf("Note, these parameters can be changed in the functions_core.h file.\n\n");
+    printf("Note, these parameters can be changed in the main.h file.\n\n");
 
     // initialize the neural network
     InputLayer il;

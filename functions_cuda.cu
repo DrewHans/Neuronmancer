@@ -317,16 +317,6 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
         exit(1);
     }
 
-    /*printf("sizeof(InputLayer): %10d\n"
-     "sizeof(HiddenLayer): %10d\n"
-     "sizeof(OutputLayer): %10d\n"
-     "sizeof(*il) =: %10d\n"
-     "sizeof(*hl) =: %10d\n"
-     "sizeof(*ol) =: %10d\n"
-     "sizeof(ExpectedOutput) =: %10d\n", sizeof(InputLayer), sizeof(HiddenLayer), sizeof(OutputLayer), sizeof(*il), sizeof(*hl), sizeof(*ol),
-     sizeof(ExpectedOutput));
-     */
-
     // declare variables for holding the "optimal" number of blocks / threads for a given layer
     unsigned int iBlocks, iThreads; // "optimal" blocks / threads for input-layer cudakernels
     unsigned int hBlocks, hThreads; // "optimal" blocks / threads for hidden-layer cudakernels
@@ -338,8 +328,12 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
     getOptimalBlocksAndThreads(&oBlocks, &oThreads, OL_SIZE);
 
     // begin training
+
+    printf("\n--- beginning training on GPU device ---\n");
+
     // for each epoch
     for (int epoch = 0; epoch < EPOCHS; epoch++) {
+        printf(" --- starting epoch %d of %d ---\n", epoch + 1, EPOCHS);
 
         // for each MNIST sample in the training set
         for (int sample = 0; sample < MNIST_TRAINING_SET_SIZE; sample++) {
@@ -347,14 +341,16 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
             cuda_trainNetwork(dev_il, dev_hl, dev_ol, dev_expected, sample, iBlocks, iThreads, hBlocks, hThreads, oBlocks, oThreads);
 
             if (sample + 1 == 10000 || sample + 1 == 20000 || sample + 1 == 30000 || sample + 1 == 40000 || sample + 1 == 50000 || sample + 1 == 60000) {
-                printf("   => sample %d of %d complete\n", sample + 1, MNIST_TRAINING_SET_SIZE);
+                printf("    => sample %d of %d complete\n", sample + 1, MNIST_TRAINING_SET_SIZE);
             }
 
         }
 
-        printf("--- epoch %d of %d complete ---\n", epoch + 1, EPOCHS);
+        printf(" --- epoch %d of %d complete ---\n", epoch + 1, EPOCHS);
 
     }
+
+    printf("\n--- training on GPU device complete ---\n\n");
 
     // cudaMemcpy device variable values into host variables
     cudaStatus = cudaMemcpy(il, dev_il, sizeof(*dev_il), cudaMemcpyDeviceToHost);
@@ -436,7 +432,7 @@ __global__ void cudakernel_calculateOutputLayerDeltas(OutputLayer* __restrict__ 
  * @params InputLayer* dev_il - pointer to an InputLayer struct on device
  * @params MNIST_Image* dev_image - pointer to an MNIST_Image struct on device
  */
-__global__ void cudakernel_feedInputLayer(InputLayer* dev_il, int sample) {
+__global__ void cudakernel_feedInputLayer(InputLayer* __restrict__ dev_il, int sample) {
 
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 

@@ -17,7 +17,7 @@
 // have enough constant memory to store the arrays
 
 __device__ MNIST_Image dev_trainImages[MNIST_TRAINING_SET_SIZE];
-__device__ __constant__ MNIST_Label dev_trainLabels[MNIST_TRAINING_SET_SIZE];
+__device__ MNIST_Label dev_trainLabels[MNIST_TRAINING_SET_SIZE];
 
 /////////////////////////////////////////////////////////////////////////////////
 // define function prototypes for functions_cuda.cu /////////////////////////////
@@ -30,7 +30,7 @@ void cuda_trainNetwork(InputLayer* dev_il, HiddenLayer* dev_hl, OutputLayer* dev
 void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol);
 __global__ void cudakernel_calculateHiddenLayerDeltas(HiddenLayer* __restrict__ dev_hl, OutputLayer* __restrict__ dev_ol);
 __global__ void cudakernel_calculateOutputLayerDeltas(OutputLayer* __restrict__ dev_ol, ExpectedOutput* __restrict__ dev_expected);
-__global__ void cudakernel_feedInputLayer(InputLayer* dev_il, int sample);
+__global__ void cudakernel_feedInputLayer(InputLayer* __restrict__ dev_il, int sample);
 __global__ void cudakernel_feedHiddenLayer(HiddenLayer* __restrict__ dev_hl, InputLayer* __restrict__ dev_il);
 __global__ void cudakernel_feedOutputLayer(OutputLayer* __restrict__ dev_ol, HiddenLayer* __restrict__ dev_hl);
 __global__ void cudakernel_getExpectedOutput(ExpectedOutput* __restrict__ dev_expected, int sample);
