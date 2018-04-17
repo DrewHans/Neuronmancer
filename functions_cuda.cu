@@ -392,17 +392,16 @@ __global__ void cudakernel_calculateHiddenLayerDeltas(HiddenLayer* __restrict__ 
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
     if (id < HL_SIZE) {
-        // declare a temporary variable in local memory for storing the delta
-        float delta = 0.0; // helps us limit the number of reads/writes from/to global memory
+        dev_hl->hNeuron[id].delta = 0.0; // clear out previous delta value
 
         // for each oNeuron in OutputLayer
         for (int i = 0; i < OL_SIZE; i++) {
             // propagate ol->oNeuron[i]'s delta backwards
-            delta += dev_ol->oNeuron[i].weight[id] * dev_ol->oNeuron[i].delta;
+            dev_hl->hNeuron[id].delta += dev_ol->oNeuron[i].weight[id] * dev_ol->oNeuron[i].delta;
         }
 
         // calculate hl->hNeuron[i]'s delta
-        dev_hl->hNeuron[id].delta = cuda_sigmoidPrime(dev_hl->hNeuron[id].weightedSum) * delta;
+        dev_hl->hNeuron[id].delta = cuda_sigmoidPrime(dev_hl->hNeuron[id].weightedSum) * dev_hl->hNeuron[id].delta;
     }
 
 } //end cudakernel_calculateHiddenLayerDeltas function
@@ -457,19 +456,15 @@ __global__ void cudakernel_feedHiddenLayer(HiddenLayer* __restrict__ dev_hl, Inp
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
     if (id < HL_SIZE) {
-        // declare a temporary variable in local memory for storing the weightedSum
-        float weightedSum = 0.0; // helps us limit the number of reads/writes from/to global memory
+        dev_hl->hNeuron[id].weightedSum = 0.0; // clear out previous weightedSum
 
         // for each input[i] to HLNeuron, add il->input[i] * hNeuron[id].weight[i] to HLNeuron's weighted sum
         for (int i = 0; i < IL_SIZE; i++) {
-            weightedSum += dev_il->input[i] * dev_hl->hNeuron[id].weight[i];
+            dev_hl->hNeuron[id].weightedSum += dev_il->input[i] * dev_hl->hNeuron[id].weight[i];
         }
 
-        // store weightedSum
-        dev_hl->hNeuron[id].weightedSum = weightedSum;
-
         // apply sigmoid activation to hNeuron's weighted sum plus bias
-        dev_hl->hNeuron[id].output = cuda_sigmoid(weightedSum + dev_hl->hNeuron[id].bias);
+        dev_hl->hNeuron[id].output = cuda_sigmoid(dev_hl->hNeuron[id].weightedSum + dev_hl->hNeuron[id].bias);
     }
 
 } //end cudakernel_feedHiddenLayer function
@@ -487,19 +482,15 @@ __global__ void cudakernel_feedOutputLayer(OutputLayer* __restrict__ dev_ol, Hid
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
     if (id < OL_SIZE) {
-        // declare a temporary variable in local memory for storing the weightedSum
-        float weightedSum = 0.0; // helps us limit the number of reads/writes from/to global memory
+        dev_ol->oNeuron[id].weightedSum = 0.0; // clear out previous weightedSum
 
         // for each input[i] to HLNeuron, add il->input[i] * hNeuron[id].weight[i] to HLNeuron's weighted sum
         for (int i = 0; i < OL_SIZE; i++) {
-            weightedSum += dev_hl->hNeuron[i].output * dev_ol->oNeuron[id].weight[i];
+            dev_ol->oNeuron[id].weightedSum += dev_hl->hNeuron[i].output * dev_ol->oNeuron[id].weight[i];
         }
 
-        // store weightedSum
-        dev_ol->oNeuron[id].weightedSum = weightedSum;
-
         // apply sigmoid activation to the hln's weighted sum plus bias
-        dev_ol->oNeuron[id].output = cuda_sigmoid(weightedSum + dev_ol->oNeuron[id].bias);
+        dev_ol->oNeuron[id].output = cuda_sigmoid(dev_ol->oNeuron[id].weightedSum + dev_ol->oNeuron[id].bias);
     }
 
 } //end cudakernel_feedOutputLayer function
