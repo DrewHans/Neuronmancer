@@ -10,7 +10,7 @@
 #define FUNCTIONS_CUDA_H
 
 /////////////////////////////////////////////////////////////////////////////////
-// define device copies of training images and labels in constant device memory /
+// define device copies of training images and labels in device memory //////////
 
 // Consider adding __constant__ after __device__ to store array in constant memory on the GPU device.
 // If you get "ptxas error : File uses too much global constant data" then your device doesn't
