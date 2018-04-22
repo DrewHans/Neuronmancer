@@ -103,8 +103,9 @@ void printTimeCollector(TimeCollector* tc) {
     printf("Average time spent feedforwarding:  %4.2f seconds\n"
             "Average time spent backpropagating: %4.2f seconds\n"
             "Average time spent updating:        %4.2f seconds\n"
-            "Average time spent epoching:        %4.2f seconds\n", tc->averageFeedforwardTime, tc->averageBackpropagationTime, tc->averageUpdateTime,
-            tc->averageEpochTime);
+            "Average time spent epoching:        %4.2f seconds\n", 
+            tc->averageFeedforwardTime, tc->averageBackpropagationTime, 
+            tc->averageUpdateTime, tc->averageEpochTime);
 } //end printTimeCollector function
 
 /*
@@ -119,7 +120,8 @@ void onInvalidInput(const int myPatience) {
     } else if (myPatience == 0) {
         printf("Sigh... you just can't do anything right, can you?\n\n");
     } else {
-        printf("Look dude, I've got all day. If you wanna keep wasting your time then that's fine by me. You know what you're supposed to do.\n\n");
+        printf("Look dude, I've got all day. If you wanna keep wasting your time then that's fine by me. "
+                "You know what you're supposed to do.\n\n");
     }
 } //end onInvalidInput function
 
