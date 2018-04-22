@@ -239,7 +239,7 @@ float sigmoidPrime(const float x) {
     return sigmoid(x) * (1.0 - sigmoid(x));
 } //end sigmoidPrime function
 
-/**
+/*
  * train - trains a neural network using the host machine
  * @params InputLayer* il - pointer to an InputLayer struct
  * @params HiddenLayer* hl - pointer to a HiddenLayer struct
