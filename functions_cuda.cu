@@ -93,8 +93,10 @@ __device__ float cuda_sigmoidPrime(const float x) {
  * @params unsigned int oBlocks - the "optimal" number of blocks for OutputLayer cudakernels
  * @params unsigned int oThreads - the "optimal" number of threads for OutputLayer cudakernels
  */
-void cuda_trainNetwork(InputLayer* dev_il, HiddenLayer* dev_hl, OutputLayer* dev_ol, ExpectedOutput* dev_expected, int sample, unsigned int iBlocks,
-        unsigned int iThreads, unsigned int hBlocks, unsigned int hThreads, unsigned int oBlocks, unsigned int oThreads) {
+void cuda_trainNetwork(InputLayer* dev_il, HiddenLayer* dev_hl, OutputLayer* dev_ol, ExpectedOutput* dev_expected, int sample, 
+                        unsigned int iBlocks, unsigned int iThreads, 
+                        unsigned int hBlocks, unsigned int hThreads, 
+                        unsigned int oBlocks, unsigned int oThreads) {
 
     // (A) Feedforward Step
     // (A1) FeedInputLayer
@@ -340,7 +342,7 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
 
             cuda_trainNetwork(dev_il, dev_hl, dev_ol, dev_expected, sample, iBlocks, iThreads, hBlocks, hThreads, oBlocks, oThreads);
 
-            if (sample + 1 == 10000 || sample + 1 == 20000 || sample + 1 == 30000 || sample + 1 == 40000 || sample + 1 == 50000 || sample + 1 == 60000) {
+            if ((sample + 1) % 10000 == 0) {
                 printf("    => sample %d of %d complete\n", sample + 1, MNIST_TRAINING_SET_SIZE);
             }
 
@@ -419,7 +421,8 @@ __global__ void cudakernel_calculateOutputLayerDeltas(OutputLayer* __restrict__ 
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
     if (id < OL_SIZE) {
-        dev_ol->oNeuron[id].delta = cuda_sigmoidPrime(dev_ol->oNeuron[id].weightedSum) * (dev_expected->value[id] - dev_ol->oNeuron[id].output);
+        dev_ol->oNeuron[id].delta = ( cuda_sigmoidPrime(dev_ol->oNeuron[id].weightedSum) 
+                                       * (dev_expected->value[id] - dev_ol->oNeuron[id].output) );
     }
 
 } //end cudakernel_calculateOutputLayerDeltas function
