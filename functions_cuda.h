@@ -25,8 +25,10 @@ __device__ MNIST_Label dev_trainLabels[MNIST_TRAINING_SET_SIZE];
 void cuda_loadMNISTTrainingSetToDevice();
 __device__ float cuda_sigmoid(const float x);
 __device__ float cuda_sigmoidPrime(const float x);
-void cuda_trainNetwork(InputLayer* dev_il, HiddenLayer* dev_hl, OutputLayer* dev_ol, ExpectedOutput* dev_expected, int sample, unsigned int iBlocks,
-        unsigned int iThreads, unsigned int hBlocks, unsigned int hThreads, unsigned int oBlocks, unsigned int oThreads);
+void cuda_trainNetwork(InputLayer* dev_il, HiddenLayer* dev_hl, OutputLayer* dev_ol, ExpectedOutput* dev_expected, int sample, 
+                        unsigned int iBlocks, unsigned int iThreads, 
+                        unsigned int hBlocks, unsigned int hThreads, 
+                        unsigned int oBlocks, unsigned int oThreads);
 void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol);
 __global__ void cudakernel_calculateHiddenLayerDeltas(HiddenLayer* __restrict__ dev_hl, OutputLayer* __restrict__ dev_ol);
 __global__ void cudakernel_calculateOutputLayerDeltas(OutputLayer* __restrict__ dev_ol, ExpectedOutput* __restrict__ dev_expected);
