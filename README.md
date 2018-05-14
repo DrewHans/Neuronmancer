@@ -1,5 +1,5 @@
 # Neuronmancer
-Neuronmancer is a C/CUDA program for implementing feedforward artificial neural networks that learning using backpropagation.
+Neuronmancer is a C / CUDA program for creating, training, and evaluating feedforward artificial neural networks that learn to recognized handwritten digits using backpropagation. Training can be performed on the host machine or GPU device.
 
 ### Project Prerequisites
 * cuda-toolkit-8-0 or higher
