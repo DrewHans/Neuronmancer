@@ -30,8 +30,8 @@ void cuda_loadMNISTTrainingSetToDevice() {
 
     // open MNIST files
     FILE* imageFile, *labelFile;
-    imageFile = openMNISTImageFile(MNIST_TRAINING_SET_IMAGES_LOCATION);
-    labelFile = openMNISTLabelFile(MNIST_TRAINING_SET_LABELS_LOCATION);
+    imageFile = openMNISTImageFile(MNIST_TRAINING_SET_IMAGES_PATH);
+    labelFile = openMNISTLabelFile(MNIST_TRAINING_SET_LABELS_PATH);
 
     // copy file data into host variables
     for (int sample = 0; sample < MNIST_TRAINING_SET_SIZE; sample++) {
@@ -291,7 +291,7 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
         printf("Abort! Could not cudaMemcpy il to dev_il!\n");
         exit(1);
     }
-    cudaStatus = cudaMemcpy(dev_il->input, il->input, sizeof(uint8_t) * IL_SIZE, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_il->input, il->input, sizeof(uint8_t) * INPUT_LAYER_SIZE, cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
         printf("Abort! Could not cudaMemcpy il->input to dev_il->input!\n");
         exit(1);
@@ -302,7 +302,7 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
         printf("Abort! Could not cudaMemcpy hl to dev_hl!\n");
         exit(1);
     }
-    cudaStatus = cudaMemcpy(dev_hl->hNeuron, hl->hNeuron, sizeof(HLNeuron) * HL_SIZE, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_hl->hNeuron, hl->hNeuron, sizeof(HLNeuron) * HIDDEN_LAYER_SIZE, cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
         printf("Abort! Could not cudaMemcpy hl->hNeuron to dev_hl->hNeuron!\n");
         exit(1);
@@ -313,7 +313,7 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
         printf("Abort! Could not cudaMemcpy ol to dev_ol!\n");
         exit(1);
     }
-    cudaStatus = cudaMemcpy(dev_ol->oNeuron, ol->oNeuron, sizeof(OLNeuron) * OL_SIZE, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_ol->oNeuron, ol->oNeuron, sizeof(OLNeuron) * OUTPUT_LAYER_SIZE, cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
         printf("Abort! Could not cudaMemcpy ol->oNeuron to dev_ol->oNeuron!\n");
         exit(1);
@@ -325,9 +325,9 @@ void cuda_train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
     unsigned int oBlocks, oThreads; // "optimal" blocks / threads for output-layer cudakernels
 
     // calculate the "optimal" number of blocks / threads for each layer
-    getOptimalBlocksAndThreads(&iBlocks, &iThreads, IL_SIZE);
-    getOptimalBlocksAndThreads(&hBlocks, &hThreads, HL_SIZE);
-    getOptimalBlocksAndThreads(&oBlocks, &oThreads, OL_SIZE);
+    getOptimalBlocksAndThreads(&iBlocks, &iThreads, INPUT_LAYER_SIZE);
+    getOptimalBlocksAndThreads(&hBlocks, &hThreads, HIDDEN_LAYER_SIZE);
+    getOptimalBlocksAndThreads(&oBlocks, &oThreads, OUTPUT_LAYER_SIZE);
 
     // begin training
 
@@ -393,11 +393,11 @@ __global__ void cudakernel_calculateHiddenLayerDeltas(HiddenLayer* __restrict__ 
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
-    if (id < HL_SIZE) {
+    if (id < HIDDEN_LAYER_SIZE) {
         dev_hl->hNeuron[id].delta = 0.0; // clear out previous delta value
 
         // for each oNeuron in OutputLayer
-        for (int i = 0; i < OL_SIZE; i++) {
+        for (int i = 0; i < OUTPUT_LAYER_SIZE; i++) {
             // propagate ol->oNeuron[i]'s delta backwards
             dev_hl->hNeuron[id].delta += dev_ol->oNeuron[i].weight[id] * dev_ol->oNeuron[i].delta;
         }
@@ -420,7 +420,7 @@ __global__ void cudakernel_calculateOutputLayerDeltas(OutputLayer* __restrict__ 
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
-    if (id < OL_SIZE) {
+    if (id < OUTPUT_LAYER_SIZE) {
         dev_ol->oNeuron[id].delta = ( cuda_sigmoidPrime(dev_ol->oNeuron[id].weightedSum) 
                                        * (dev_expected->value[id] - dev_ol->oNeuron[id].output) );
     }
@@ -439,7 +439,7 @@ __global__ void cudakernel_feedInputLayer(InputLayer* __restrict__ dev_il, int s
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
-    if (id < IL_SIZE) {
+    if (id < INPUT_LAYER_SIZE) {
         // if dev_image->pixel[i] !0 then set dev_il->input[i] to 1, else set to 0
         dev_il->input[id] = (dev_trainImages[sample].pixel[id] ? 1 : 0);
     }
@@ -458,11 +458,11 @@ __global__ void cudakernel_feedHiddenLayer(HiddenLayer* __restrict__ dev_hl, Inp
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
-    if (id < HL_SIZE) {
+    if (id < HIDDEN_LAYER_SIZE) {
         dev_hl->hNeuron[id].weightedSum = 0.0; // clear out previous weightedSum
 
         // for each input[i] to HLNeuron, add il->input[i] * hNeuron[id].weight[i] to HLNeuron's weighted sum
-        for (int i = 0; i < IL_SIZE; i++) {
+        for (int i = 0; i < INPUT_LAYER_SIZE; i++) {
             dev_hl->hNeuron[id].weightedSum += dev_il->input[i] * dev_hl->hNeuron[id].weight[i];
         }
 
@@ -484,11 +484,11 @@ __global__ void cudakernel_feedOutputLayer(OutputLayer* __restrict__ dev_ol, Hid
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
-    if (id < OL_SIZE) {
+    if (id < OUTPUT_LAYER_SIZE) {
         dev_ol->oNeuron[id].weightedSum = 0.0; // clear out previous weightedSum
 
         // for each input[i] to HLNeuron, add il->input[i] * hNeuron[id].weight[i] to HLNeuron's weighted sum
-        for (int i = 0; i < OL_SIZE; i++) {
+        for (int i = 0; i < OUTPUT_LAYER_SIZE; i++) {
             dev_ol->oNeuron[id].weightedSum += dev_hl->hNeuron[i].output * dev_ol->oNeuron[id].weight[i];
         }
 
@@ -510,7 +510,7 @@ __global__ void cudakernel_getExpectedOutput(ExpectedOutput* __restrict__ dev_ex
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
-    if (id < OL_SIZE) {
+    if (id < OUTPUT_LAYER_SIZE) {
         // if id == dev_trainLabels[sample] set dev_expected->value[i] to 1, else set to 0
         dev_expected->value[id] = (id == dev_trainLabels[sample] ? 1 : 0);
     }
@@ -529,9 +529,9 @@ __global__ void cudakernel_updateHiddenLayerWeightsAndBiases(HiddenLayer* __rest
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
-    if (id < HL_SIZE) {
+    if (id < HIDDEN_LAYER_SIZE) {
         // update each weight between InputLayer and hNeuron[id]
-        for (int i = 0; i < IL_SIZE; i++) {
+        for (int i = 0; i < INPUT_LAYER_SIZE; i++) {
             dev_hl->hNeuron[id].weight[i] += LEARNING_RATE * dev_il->input[i] * dev_hl->hNeuron[id].delta;
         }
 
@@ -553,9 +553,9 @@ __global__ void cudakernel_updateOutputLayerWeightsAndBiases(OutputLayer* __rest
     unsigned int id = threadIdx.x + blockIdx.x * blockDim.x; // calculate the thread id
 
     // check that thread id is within our desired range (extra threads may have been launched for GPU optimization)
-    if (id < OL_SIZE) {
+    if (id < OUTPUT_LAYER_SIZE) {
         // update each weight between HiddenLayer and oNeuron[id]
-        for (int i = 0; i < HL_SIZE; i++) {
+        for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
             dev_ol->oNeuron[id].weight[i] += LEARNING_RATE * dev_hl->hNeuron[i].output * dev_ol->oNeuron[id].delta;
         }
 

@@ -16,11 +16,11 @@
 void calculateHiddenLayerDeltas(HiddenLayer* hl, OutputLayer* ol) {
 
     // for each hNeuron in HiddenLayer
-    for (int i = 0; i < HL_SIZE; i++) {
+    for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
         hl->hNeuron[i].delta = 0.0; // clear out any garbage
 
         // for each oNeuron in OutputLayer
-        for (int j = 0; j < OL_SIZE; j++) {
+        for (int j = 0; j < OUTPUT_LAYER_SIZE; j++) {
             // propagate ol->oNeuron[j]'s delta backwards
             hl->hNeuron[i].delta += ol->oNeuron[j].weight[i] * ol->oNeuron[j].delta;
         }
@@ -39,7 +39,7 @@ void calculateHiddenLayerDeltas(HiddenLayer* hl, OutputLayer* ol) {
 void calculateOutputLayerDeltas(OutputLayer* ol, ExpectedOutput* expected) {
 
     // for each oNeuron in OutputLayer
-    for (int i = 0; i < OL_SIZE; i++) {
+    for (int i = 0; i < OUTPUT_LAYER_SIZE; i++) {
         ol->oNeuron[i].delta = sigmoidPrime(ol->oNeuron[i].weightedSum) * (expected->value[i] - ol->oNeuron[i].output);
     }
 
@@ -53,7 +53,7 @@ void calculateOutputLayerDeltas(OutputLayer* ol, ExpectedOutput* expected) {
 void feedInputLayer(InputLayer* il, MNIST_Image* image) {
 
     // for each il->input[i]
-    for (int i = 0; i < IL_SIZE; i++) {
+    for (int i = 0; i < INPUT_LAYER_SIZE; i++) {
         // if image->pixel[i] !0 then set il->input[i] to 1, else set to 0
         il->input[i] = (image->pixel[i] ? 1 : 0);
     }
@@ -68,7 +68,7 @@ void feedInputLayer(InputLayer* il, MNIST_Image* image) {
 void feedHiddenLayer(HiddenLayer* hl, InputLayer* il) {
 
     // for each hl->hNeuron[i], feedHLNeuron
-    for (int i = 0; i < HL_SIZE; i++) {
+    for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
         feedHLNeuron(&(hl->hNeuron[i]), il);
     }
 
@@ -84,7 +84,7 @@ void feedHLNeuron(HLNeuron* hln, InputLayer* il) {
     hln->weightedSum = 0.0; // clear out any garbage
 
     // for each input[i] to HLNeuron, add il->input[i] * hln->weight[i] to HLNeuron's weighted sum
-    for (int i = 0; i < IL_SIZE; i++) {
+    for (int i = 0; i < INPUT_LAYER_SIZE; i++) {
         hln->weightedSum += il->input[i] * hln->weight[i];
     }
 
@@ -123,7 +123,7 @@ void feedOLNeuron(OLNeuron* oln, HiddenLayer* hl) {
     oln->weightedSum = 0.0; // clear out any garbage
 
     // for each input[i] to OLNeuron, add hl->hNeuron[i].output * oln->weight[i] to OLNeuron's weighted sum
-    for (int i = 0; i < HL_SIZE; i++) {
+    for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
         oln->weightedSum += hl->hNeuron[i].output * oln->weight[i];
     }
 
@@ -140,7 +140,7 @@ void feedOLNeuron(OLNeuron* oln, HiddenLayer* hl) {
 void feedOutputLayer(OutputLayer* ol, HiddenLayer* hl) {
 
     // for each ol->oNeuron[i], feedOLNeuron
-    for (int i = 0; i < OL_SIZE; i++) {
+    for (int i = 0; i < OUTPUT_LAYER_SIZE; i++) {
         feedOLNeuron(&(ol->oNeuron[i]), hl);
     }
 
@@ -153,7 +153,7 @@ void feedOutputLayer(OutputLayer* ol, HiddenLayer* hl) {
 ExpectedOutput getExpectedOutput(int mnistLabel) {
 
     ExpectedOutput expected;
-    for (int i = 0; i < OL_SIZE; i++) {
+    for (int i = 0; i < OUTPUT_LAYER_SIZE; i++) {
         // if i == mnistLabel set expected.value[i] to 1, else set to 0
         expected.value[i] = (i == mnistLabel ? 1 : 0);
     }
@@ -170,7 +170,7 @@ int getNetworkPrediction(OutputLayer* ol) {
     int classification = 0;
 
     // for each oNeuron in OutputLayer
-    for (int i = 0; i < OL_SIZE; i++) {
+    for (int i = 0; i < OUTPUT_LAYER_SIZE; i++) {
         // if output is greater than anything we've seen so far
         if (ol->oNeuron[i].output > highest) {
             highest = ol->oNeuron[i].output;
@@ -192,10 +192,10 @@ void initNetwork(HiddenLayer* hl, OutputLayer* ol) {
     srand(time(NULL));
 
     // for all HLNeurons in HiddenLayer
-    for (int i = 0; i < HL_SIZE; i++) {
+    for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
         // for all hNeurons:
         // (A) set weight to random in range -1.0 - 1.0 inclusive
-        for (int j = 0; j < IL_SIZE; j++) {
+        for (int j = 0; j < INPUT_LAYER_SIZE; j++) {
             hl->hNeuron[i].weight[j] = 2 * (rand() / (float) (RAND_MAX)) - 1;
         }
 
@@ -207,10 +207,10 @@ void initNetwork(HiddenLayer* hl, OutputLayer* ol) {
     }
 
     // for all OLNeurons in OutputLayer
-    for (int i = 0; i < OL_SIZE; i++) {
+    for (int i = 0; i < OUTPUT_LAYER_SIZE; i++) {
         // for all oNeurons:
         // (A) set weight to random in range -1.0 - 1.0 inclusive
-        for (int j = 0; j < HL_SIZE; j++) {
+        for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
             ol->oNeuron[i].weight[j] = 2 * (rand() / (float) (RAND_MAX)) - 1;
         }
 
@@ -255,8 +255,8 @@ void train(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
 
         // open MNIST files
         FILE* imageFile, *labelFile;
-        imageFile = openMNISTImageFile(MNIST_TRAINING_SET_IMAGES_LOCATION);
-        labelFile = openMNISTLabelFile(MNIST_TRAINING_SET_LABELS_LOCATION);
+        imageFile = openMNISTImageFile(MNIST_TRAINING_SET_IMAGES_PATH);
+        labelFile = openMNISTLabelFile(MNIST_TRAINING_SET_LABELS_PATH);
 
         // for each MNIST sample in the training set
         for (int sample = 0; sample < MNIST_TRAINING_SET_SIZE; sample++) {
@@ -313,7 +313,7 @@ void trainNetwork(InputLayer* il, HiddenLayer* hl, OutputLayer* ol, MNIST_Image*
 void updateHLNeuronWeightsAndBiases(HLNeuron* hln, InputLayer* il) {
 
     // update each weight between InputLayer and HLNeuron
-    for (int i = 0; i < IL_SIZE; i++) {
+    for (int i = 0; i < INPUT_LAYER_SIZE; i++) {
         hln->weight[i] += LEARNING_RATE * il->input[i] * hln->delta;
     }
 
@@ -331,12 +331,12 @@ void updateHLNeuronWeightsAndBiases(HLNeuron* hln, InputLayer* il) {
 void updateNetworkWeightsAndBiases(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
 
     // for each hNeuron in HiddenLayer
-    for (int i = 0; i < HL_SIZE; i++) {
+    for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
         updateHLNeuronWeightsAndBiases(&(hl->hNeuron[i]), il);
     }
 
     // for each oNeuron in OutputLayer
-    for (int i = 0; i < OL_SIZE; i++) {
+    for (int i = 0; i < OUTPUT_LAYER_SIZE; i++) {
         updateOLNeuronWeightsAndBiases(&(ol->oNeuron[i]), hl);
     }
 
@@ -350,7 +350,7 @@ void updateNetworkWeightsAndBiases(InputLayer* il, HiddenLayer* hl, OutputLayer*
 void updateOLNeuronWeightsAndBiases(OLNeuron* oln, HiddenLayer* hl) {
 
     // update each weight between HiddenLayer and OLNeuron
-    for (int i = 0; i < HL_SIZE; i++) {
+    for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
         oln->weight[i] += LEARNING_RATE * hl->hNeuron[i].output * oln->delta;
     }
 

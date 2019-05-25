@@ -30,8 +30,8 @@ void evaluate(InputLayer* il, HiddenLayer* hl, OutputLayer* ol) {
 
     // open MNIST files
     FILE* imageFile, *labelFile;
-    imageFile = openMNISTImageFile(MNIST_TESTING_SET_IMAGES_LOCATION);
-    labelFile = openMNISTLabelFile(MNIST_TESTING_SET_LABELS_LOCATION);
+    imageFile = openMNISTImageFile(MNIST_TESTING_SET_IMAGES_PATH);
+    labelFile = openMNISTLabelFile(MNIST_TESTING_SET_LABELS_PATH);
 
     printf("\n--- beginning evaluation ---\n");
 
@@ -146,7 +146,7 @@ int main(int argc, const char* argv[]) {
             "--- output-layer size : %d\n"
             "--- learning rate : %f\n"
             "--- epochs : %d\n"
-            "\n", IL_SIZE, HL_SIZE, OL_SIZE, LEARNING_RATE, EPOCHS);
+            "\n", INPUT_LAYER_SIZE, HIDDEN_LAYER_SIZE, OUTPUT_LAYER_SIZE, LEARNING_RATE, EPOCHS);
 
     printf("Note, these parameters can be changed in the main.h file.\n\n");
 
