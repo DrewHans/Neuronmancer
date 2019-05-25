@@ -161,7 +161,9 @@ typedef struct
 
 // define function prototypes for main.c
 void evaluate(InputLayer *il, HiddenLayer *hl, OutputLayer *ol);
-void printConfusionMatrix(const int *cm);
+
+void printConfusionMatrix(const int *confusionMatrix);
+
 void onInvalidInput(const int myPatience);
 
 #endif /* MAIN_H */
